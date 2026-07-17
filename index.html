@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>TYRE HUNT — Spot & Collect</title>
+<meta name="theme-color" content="#0A0B0E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TYRE HUNT">
+<link rel="manifest" href='data:application/manifest+json,{"name":"TYRE HUNT","short_name":"TYRE HUNT","start_url":".","display":"standalone","background_color":"%230A0B0E","theme_color":"%230A0B0E","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 rx=%27112%27 fill=%27%230A0B0E%27/%3E%3Ccircle cx=%27256%27 cy=%27236%27 r=%27138%27 fill=%27none%27 stroke=%27%23FF8A1E%27 stroke-width=%2732%27/%3E%3Ctext x=%27256%27 y=%27296%27 font-family=%27Arial Black,Arial%27 font-size=%27164%27 font-weight=%27900%27 fill=%27%23FFC24B%27 text-anchor=%27middle%27%3ET%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any"}]}'>
+<!-- self-hosted: add a real sw.js + PNG icons for offline shell; single-file mode installs without offline cache -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
 
@@ -309,6 +316,47 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .place .prow{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .place .phunt{font-size:11px;color:var(--ember);letter-spacing:.04em;margin-top:8px;font-weight:600}
 
+/* reveal juice */
+#vcard{perspective:1000px}
+#vcard.reveal .vph{animation:flipin .55s ease}
+@keyframes flipin{from{transform:rotateY(80deg) scale(.96);opacity:.2}}
+#vcard .vph{overflow:hidden;position:relative}
+#vcard .vph.holo::after{content:"";position:absolute;inset:-60%;background:linear-gradient(115deg,transparent 42%,rgba(255,224,160,.4) 50%,rgba(150,190,255,.28) 56%,transparent 66%);animation:holo 2s ease-in-out infinite}
+@keyframes holo{from{transform:translateX(-55%)}to{transform:translateX(55%)}}
+#flash{position:absolute;inset:0;z-index:40;pointer-events:none;background:radial-gradient(circle at 50% 42%,rgba(255,235,190,.95),rgba(255,180,60,.5) 40%,transparent 75%);opacity:0}
+#flash.on{animation:flashout .55s ease}
+@keyframes flashout{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+.chip.cond{color:var(--pulse-hi);border-color:rgba(110,160,255,.45)}
+.ptitle{font:800 11px var(--disp);letter-spacing:.22em;color:var(--gold);margin-top:6px;text-transform:uppercase}
+.bdg.eq{border-color:var(--pulse-hi);box-shadow:0 0 12px rgba(110,160,255,.22)}
+button.bdg[disabled]{cursor:default}
+@media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard .vph.holo::after,#flash.on{animation:none}}
+
+/* codex entry sheet */
+#cxSheet{position:absolute;inset:0;z-index:21;display:none;flex-direction:column;background:var(--carbon)}
+#cxSheet.on{display:flex}
+#ceHero{position:relative;aspect-ratio:16/10;background:#0E1013 center/cover no-repeat;flex:0 0 auto;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.1);font:900 64px var(--disp)}
+#ceHero .back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-weight:800;font-size:11px;letter-spacing:.12em}
+.lore{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-top:10px}
+.lore .lh{font:800 9px var(--disp);letter-spacing:.24em;color:var(--ember);margin-bottom:5px}
+.lore p{font-size:13px;line-height:1.55;color:var(--ink)}
+.sights{display:flex;gap:8px;overflow-x:auto;padding:2px 0;margin-top:10px;-webkit-overflow-scrolling:touch}
+.sights button{flex:0 0 auto;width:84px;height:84px;border-radius:11px;background:#000 center/cover no-repeat;border:1px solid var(--line)}
+.cxcard{cursor:pointer}
+
+/* install pill */
+#installPill{position:relative;z-index:5;margin:6px auto 0;display:none;font:700 10px var(--mono);letter-spacing:.14em;color:var(--gold);border:1px solid rgba(255,194,75,.5);border-radius:999px;padding:6px 13px;background:rgba(12,14,19,.7)}
+
+/* first-run intro */
+#intro{position:absolute;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:radial-gradient(120% 90% at 50% 0%,#171A21 0%,#0A0B0E 70%);padding:24px}
+#intro.on{display:flex}
+.introcard{max-width:380px;width:100%}
+.introcard .iw{font-size:34px;font-weight:900;letter-spacing:.16em;text-align:center;background:linear-gradient(180deg,#FFFFFF 20%,var(--gold) 65%,var(--ember) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.introcard .isub{font-size:10px;font-weight:600;letter-spacing:.46em;color:var(--ember);text-transform:uppercase;text-align:center;margin:4px 0 22px}
+.ibeat{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:11px}
+.ibeat b{font-size:14.5px;display:block;margin-bottom:4px}
+.ibeat p{font-size:12.5px;color:var(--muted);line-height:1.55}
+
 /* toast */
 #toast{position:absolute;left:50%;bottom:120px;transform:translate(-50%,20px);z-index:30;background:#171A22;border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;max-width:88%}
 #toast.on{opacity:1;transform:translate(-50%,0)}
@@ -358,6 +406,7 @@ input[type=file]{display:none}
 
   <button id="eventPill">SET EVENT</button>
   <button id="queuePill">● 0 QUEUED</button>
+  <button id="installPill">⤓ INSTALL TYRE HUNT</button>
 
   <div id="detect">
     <div class="ai" id="detIcon"><svg width="15" height="17" viewBox="0 0 13 15" fill="none"><path d="M6.5 1l5 2v4c0 3.2-2.1 5.6-5 7-2.9-1.4-5-3.8-5-7V3l5-2z" stroke="currentColor" stroke-width="1.3"/><path d="M4.3 7.4l1.6 1.6 2.9-3" stroke="currentColor" stroke-width="1.3"/></svg></div>
@@ -418,6 +467,7 @@ input[type=file]{display:none}
     </div>
     <div class="vbody">
       <div id="segSpots">
+        <button class="btn hot" id="top8Btn" style="width:100%;margin-bottom:12px;display:none">SHARE MY TOP 8</button>
         <div id="ggrid"></div>
         <div class="rowbtns">
           <button class="btn" id="exportBtn">EXPORT DATA</button>
@@ -459,10 +509,13 @@ input[type=file]{display:none}
 
   <!-- ============ QUESTS ============ -->
   <section class="view" id="view-quests">
-    <div class="vhead">
-      <div class="eyebrow">Daily</div>
-      <h2>Quests</h2>
-      <div class="meta" id="questMeta">Resets at midnight local</div>
+    <div class="vhead" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div>
+        <div class="eyebrow">Daily</div>
+        <h2>Quests</h2>
+        <div class="meta" id="questMeta">Resets at midnight local</div>
+      </div>
+      <button id="huntPlanBtn" style="background:linear-gradient(145deg,var(--ember),var(--ember-deep));color:#1B0E00;border-radius:999px;padding:10px 14px;font-weight:800;font-size:10px;letter-spacing:.12em;flex:0 0 auto">PLAN MY HUNT</button>
     </div>
     <div class="vbody" id="questList"></div>
   </section>
@@ -481,6 +534,12 @@ input[type=file]{display:none}
         <div class="rstats" id="rankStats">0 models · 0 rare · 0 legendary</div>
         <div class="rnext" id="rankNext"></div>
       </div>
+      <div class="sechead">Season</div>
+      <div id="seasonCard"></div>
+      <div class="sechead">Records</div>
+      <div id="recordList"></div>
+      <div class="sechead">Titles</div>
+      <div id="titleGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
       <div class="sechead">Badges</div>
       <div id="badgeGrid"></div>
     </div>
@@ -521,8 +580,10 @@ input[type=file]{display:none}
       <div class="vrow">
         <span class="chip" id="vChip">CLASSIC</span>
         <span class="conf" id="vConf"></span>
+        <span id="vConds" style="display:contents"></span>
       </div>
       <p class="blurb" id="vBlurb"></p>
+      <p class="blurb" id="vShotNote" style="margin-top:5px;font-size:11.5px"></p>
       <div class="payline" id="vPayline">
         <div class="crest sm"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg></div>
         <div><div class="pv" id="vPay">—</div><div class="pl" id="vPayLbl">FILED TO CODEX</div></div>
@@ -535,6 +596,12 @@ input[type=file]{display:none}
       </div>
     </div>
   </div>
+
+  <!-- ============ CODEX ENTRY ============ -->
+  <section id="cxSheet">
+    <div id="ceHero"><span id="ceQ">?</span><button class="back" id="ceBack">‹ CODEX</button></div>
+    <div id="ceBody" class="vbody"></div>
+  </section>
 
   <!-- ============ PROFILE / CREW ============ -->
   <section id="profile">
@@ -579,6 +646,20 @@ input[type=file]{display:none}
     </div>
   </section>
 
+  <!-- ============ FIRST RUN ============ -->
+  <section id="intro">
+    <div class="introcard">
+      <h1 class="iw">TYRE HUNT</h1>
+      <div class="isub">Spot &amp; Collect</div>
+      <div class="ibeat"><b>Point. Shoot. Verified.</b><p>Aim at real metal and hit the shutter — the app identifies the car on the spot and files it.</p></div>
+      <div class="ibeat"><b>The codex is the score.</b><p>Every model you find fills a numbered field guide. Rank comes from what you've seen — nothing else.</p></div>
+      <div class="ibeat"><b>Live captures only.</b><p>Plates blur automatically. Old photos don't count. You have to be there.</p></div>
+      <button class="btn hot" id="introGo" style="width:100%;margin-top:16px;padding:15px;font-size:13px">START HUNTING</button>
+      <p class="pfnote">Camera and location power the hunt — nothing is shared unless you share it.</p>
+    </div>
+  </section>
+
+  <div id="flash"></div>
   <div id="toast"></div>
   <input type="file" id="fileCam" accept="image/*" capture="environment">
   <input type="file" id="fileGal" accept="image/*">
@@ -588,56 +669,17 @@ input[type=file]{display:none}
 
 <script>
 /* ================= CONFIG ================= */
-/* ---- Supabase schema — paste into the SQL editor, fill CONFIG, and accounts go live ----
-create table profiles (
-  id uuid primary key references auth.users on delete cascade,
-  handle text unique not null,
-  code text unique not null,
-  models int default 0, legends int default 0, streak int default 0, spots int default 0,
-  updated_at timestamptz default now()
-);
-create table friends (
-  user_id uuid references profiles(id) on delete cascade,
-  friend_id uuid references profiles(id) on delete cascade,
-  primary key (user_id, friend_id)
-);
-alter table profiles enable row level security;
-alter table friends enable row level security;
-create policy "profiles read" on profiles for select to authenticated using (true);
-create policy "profiles self insert" on profiles for insert to authenticated with check (auth.uid() = id);
-create policy "profiles self update" on profiles for update to authenticated using (auth.uid() = id);
-create policy "friends self" on friends for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create table captures (
-  id bigint generated always as identity primary key,
-  user_id uuid references profiles(id) on delete cascade,
-  make text, model text, year_range text,
-  rarity text, classification text, confidence int,
-  decade text, tags text[], tyres int,
-  phash text, source text, flagged text,
-  event text, lat double precision, lng double precision,
-  taken_at timestamptz, created_at timestamptz default now()
-);
-alter table captures enable row level security;
-create policy "captures read" on captures for select to authenticated using (true);
-create policy "captures self insert" on captures for insert to authenticated with check (auth.uid() = user_id);
--- the census, one line:
--- create view model_census as
---   select make, model, count(*) sightings, count(distinct user_id) hunters,
---          min(created_at) first_seen from captures group by 1, 2;
--- photos: create a public storage bucket "captures" when ready; thumbs upload next pass.
--- ANTI-CHEAT, server side — REQUIRED before Tyres bridge to TYRE on Base:
---   everything in this file is client-authoritative and therefore advisory.
---   final architecture: client uploads photo + meta -> edge function runs the
---   vision verifier server-side, dedupes phash across ALL users, rate-limits
---   per user, sanity-checks geo, computes payout, writes an append-only ledger.
---   the client never writes tyres. until then, do not flip the bridge on.
--- create index captures_phash_idx on captures (phash);  -- cross-user dupe lookups
------------------------------------------------------------------------------------------- */
+/* ---- Supabase go-live: run tyre-hunt-schema.sql (ships alongside this file) in the
+   SQL editor, then fill supabaseUrl + supabaseAnon below. Accounts, global census,
+   world/regional firsts, event lobbies, duels, territory, and the crew feed all
+   activate. Server-side verification + owner claim land in the edge-function pass —
+   do NOT bridge Tyres/TYRE before that exists. ---- */
 const CONFIG = {
   apiKey: "",            // self-hosted: paste an Anthropic API key. Inside claude.ai artifacts, leave blank.
   model: "claude-sonnet-4-6",
-  supabaseUrl: "",       // e.g. https://xyz.supabase.co — blank = local play, no accounts
-  supabaseAnon: "",      // anon public key
+  supabaseUrl: "https://kokxlzygppakgcebkygc.supabase.co",
+  supabaseAnon: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtva3hsenlncHBha2djZWJreWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMTM5ODgsImV4cCI6MjA5OTg4OTk4OH0.c8N8aevxB-etS_b8HhG3M4BNlV3lM2gX3BO12vJRQCo",
+  launch: "2026-08-16", // Pebble Beach anchor — all seasons/WANTED rotate procedurally from here
   strictCapture: false,  // true = only live camera captures pay; gallery/file imports save at 0
   thumbEdge: 640,        // stored thumbnail long edge
   sendEdge: 1100         // long edge sent to the verifier
@@ -650,10 +692,12 @@ let state = {
   tyres: 0, streak: 0, lastSpotDay: null,
   day: null, daySpots: 0, dayBonus: false, dayQ: { ids: [], done: {} }, dayMakes: [],
   profile: null, crew: [],
-  activeEvent: "",
+  activeEvent: "", activeEventCode: "",
   week: null, wantedIds: [], wantedDone: {}, setsDone: {}, badges: {},
   boosts: { shield: 0, turboUntil: 0 },
   lastPaidTs: 0, dayPaid: 0,
+  bestStreak: 0, cotdStamps: {}, title: "", aiHunt: null, lore: {},
+  sound: true, seenIntro: false,
   spots: [], redemptions: [], queue: []
 };
 const $ = id => document.getElementById(id);
@@ -682,13 +726,19 @@ function ensureDay(){
   if (!state.dayQ || !Array.isArray(state.dayQ.ids)) state.dayQ = { ids: [], done: {} };
   if (!Array.isArray(state.dayMakes)) state.dayMakes = [];
   if (!state.dayQ.ids.length) state.dayQ.ids = dailyQuests();
-  const wk = Math.floor(Date.now() / 6048e5);
+  const wk = launchWeek();
   if (state.week !== wk){ state.week = wk; state.wantedDone = {}; state.wantedIds = pickWanted(wk); }
   if (!Array.isArray(state.wantedIds) || !state.wantedIds.length) state.wantedIds = pickWanted(wk);
   if (!state.wantedDone) state.wantedDone = {};
   if (!state.setsDone) state.setsDone = {};
   if (!state.badges) state.badges = {};
   if (!Array.isArray(state.queue)) state.queue = [];
+  if (!state.cotdStamps) state.cotdStamps = {};
+  if (typeof state.bestStreak !== "number") state.bestStreak = 0;
+  if (!state.lore) state.lore = {};
+  if (typeof state.sound !== "boolean") state.sound = true;
+  if (typeof state.activeEventCode !== "string") state.activeEventCode = "";
+  if (state.seenIntro === undefined) state.seenIntro = state.spots.length > 0;
   if (!state.boosts) state.boosts = { shield: 0, turboUntil: 0 };
   if (typeof state.dayPaid !== "number") state.dayPaid = 0;
 }
@@ -735,7 +785,9 @@ const QUEST_POOL = [
   { id:"loud",     cat:"W", name:"Highlighter Pack", desc:"Yellow or orange paint", pay:50, match:a=>a.color==="yellow" || a.color==="orange" },
   { id:"murdered", cat:"W", name:"Murdered Out", desc:"Capture a black car", pay:30, match:a=>a.color==="black" },
   { id:"unicorn",  cat:"W", name:"The Unicorn", desc:"Land a legendary", pay:400, match:a=>a.rarity==="legendary" },
-  { id:"badges",   cat:"W", name:"Badge Collector", desc:"Three different makes today", pay:100, match:a=>a.dayMakesCount>=3, prog:()=>Math.min((state.dayMakes||[]).length,3)+" / 3" }
+  { id:"badges",   cat:"W", name:"Badge Collector", desc:"Three different makes today", pay:100, match:a=>a.dayMakesCount>=3, prog:()=>Math.min((state.dayMakes||[]).length,3)+" / 3" },
+  { id:"afterdark", cat:"W", name:"After Dark", desc:"Capture anything at night", match:a=>a.conds.includes("night") },
+  { id:"storm",    cat:"W", name:"Storm Chaser", desc:"A capture in rain or snow", match:a=>a.conds.includes("rain")||a.conds.includes("snow") }
 ];
 const questById = id => QUEST_POOL.find(q => q.id === id);
 function dailyQuests(){
@@ -751,6 +803,12 @@ function dailyQuests(){
 function renderFeaturedQuest(){
   const el = $("questTitle");
   if (!el) return;
+  const cd = carOfTheDay();
+  if (cd && !(state.cotdStamps || {})["n" + cd.n]){
+    el.textContent = "Car of the Day · " + cd.name;
+    $("questDesc").textContent = "Land one today for a dated codex stamp";
+    return;
+  }
   const next = ((state.dayQ && state.dayQ.ids) || []).map(questById).filter(Boolean).find(q => !state.dayQ.done[q.id]);
   if (next){
     el.textContent = next.name;
@@ -812,7 +870,7 @@ function matcherTest(mt, s){
   if (mt.decades && !mt.decades.includes(s.decade)) return false;
   return true;
 }
-const CODEX_SEED = [
+const CODEX_BASE = [
   { name:"Ferrari F40", tier:"legendary", m:["ferrari","f40"] },
   { name:"Ferrari Enzo", tier:"legendary", m:["ferrari","enzo"] },
   { name:"Ferrari 250", tier:"legendary", m:["ferrari","250"] },
@@ -873,7 +931,101 @@ const CODEX_SEED = [
   { name:"Porsche Cayman / Boxster", tier:"everyday", m:[["cayman"],["boxster"]] },
   { name:"Ford F-150", tier:"everyday", m:[["f-150"],["f150"]] },
   { name:"Toyota Tacoma", tier:"everyday", m:["tacoma"] }
-].map((e, i) => ({ ...e, n: i + 1 }));
+];
+
+/* ================= SEASONS (procedural — infinite from CONFIG.launch) ================= */
+const LAUNCH = new Date(CONFIG.launch + "T00:00:00");
+const WEEK_MS = 6048e5, SEASON_WEEKS = 8, SEASON_MS = SEASON_WEEKS * WEEK_MS;
+// theme pool — each defines a codex volume + a goal predicate keyed to captures.
+// cycles loop forever; every Nth pass escalates the goal target (answer: escalate).
+const SEASON_THEMES = [
+  { key:"jdm", name:"JDM", tag:"RISING SUN", goal:"Japanese models", need:2, metric:jdmModels,
+    volume:[
+      { name:"Nissan Silvia", tier:"classic", m:[["silvia"],["180sx"],["240sx"]] },
+      { name:"Toyota AE86", tier:"classic", m:[["ae86"],["trueno"],["levin"],["corolla gt-s"]] },
+      { name:"Mitsubishi Lancer Evo", tier:"rare", m:[["evolution"],["lancer evo"],["evo "]] },
+      { name:"Toyota Celica GT-Four", tier:"rare", m:[["celica"]] },
+      { name:"Honda S2000", tier:"rare", m:[["s2000"]] },
+      { name:"Nissan 300ZX", tier:"classic", m:[["300zx"]] },
+      { name:"Toyota Chaser", tier:"classic", m:[["chaser"]] },
+      { name:"Mazda Cosmo", tier:"legendary", m:[["cosmo"]] },
+      { name:"Lexus LFA", tier:"legendary", m:[["lfa"]] },
+      { name:"Datsun 510", tier:"classic", m:[["datsun","510"]] } ] },
+  { key:"prewar", name:"Pre-War", tag:"BRASS & IRON", goal:"pre-1946 machines", need:2, metric:prewarModels,
+    volume:[
+      { name:"Bugatti Type 35", tier:"legendary", m:[["type 35"]] },
+      { name:"Bentley Blower", tier:"legendary", m:[["blower"]] },
+      { name:"Alfa Romeo 8C", tier:"legendary", m:[["alfa","8c"]] },
+      { name:"Duesenberg", tier:"legendary", m:[["duesenberg"]] },
+      { name:"Ford Model A", tier:"classic", m:[["model a"]] },
+      { name:"Ford Model T", tier:"classic", m:[["model t"]] },
+      { name:"Packard", tier:"classic", m:[["packard"]] },
+      { name:"Auburn Speedster", tier:"legendary", m:[["auburn"]] } ] },
+  { key:"exotic", name:"Exotica", tag:"HOLY BADGES", goal:"exotic models", need:3, metric:exoticModels,
+    volume:[
+      { name:"Ferrari 288 GTO", tier:"legendary", m:[["288"]] },
+      { name:"Lamborghini Diablo", tier:"rare", m:[["diablo"]] },
+      { name:"Jaguar XJ220", tier:"legendary", m:[["xj220"]] },
+      { name:"Maserati MC12", tier:"legendary", m:[["mc12"]] },
+      { name:"Ferrari 512 BB", tier:"rare", m:[["512","bb"],["berlinetta boxer"]] },
+      { name:"Lamborghini Espada", tier:"rare", m:[["espada"]] },
+      { name:"Aston Martin Vulcan", tier:"legendary", m:[["vulcan"]] },
+      { name:"Ferrari 456", tier:"classic", m:[["456"]] } ] },
+  { key:"muscle", name:"American Muscle", tag:"DETROIT IRON", goal:"muscle models", need:3, metric:muscleModels,
+    volume:[
+      { name:"Plymouth Barracuda", tier:"rare", m:[["barracuda"],["'cuda"],["cuda"]] },
+      { name:"Pontiac GTO", tier:"classic", m:[["gto"],["pontiac","judge"]] },
+      { name:"Buick Grand National", tier:"rare", m:[["grand national"],["gnx"]] },
+      { name:"Oldsmobile 442", tier:"classic", m:[["442"]] },
+      { name:"AMC Javelin", tier:"classic", m:[["javelin"],["amc","amx"]] },
+      { name:"Dodge Challenger", tier:"classic", m:[["challenger"]] },
+      { name:"Chevrolet Chevelle", tier:"classic", m:[["chevelle"]] },
+      { name:"Ford Torino", tier:"classic", m:[["torino"]] } ] },
+  { key:"euro", name:"Euro Classics", tag:"CONTINENTAL", goal:"European classics", need:3, metric:euroModels,
+    volume:[
+      { name:"Citroën SM", tier:"rare", m:[["citro","sm"]] },
+      { name:"Lancia Delta", tier:"rare", m:[["lancia","delta"]] },
+      { name:"BMW M1", tier:"legendary", m:[["bmw","m1"]] },
+      { name:"Mercedes 300SEL 6.3", tier:"classic", m:[["300sel"],["6.3"]] },
+      { name:"Alpine A110", tier:"rare", m:[["alpine","a110"]] },
+      { name:"Lotus Elan", tier:"classic", m:[["elan"]] },
+      { name:"Porsche 914", tier:"classic", m:[["914"]] },
+      { name:"Fiat Dino", tier:"classic", m:[["fiat","dino"]] } ] }
+];
+function seasonMeta(i){
+  const t = SEASON_THEMES[i % SEASON_THEMES.length];
+  const pass = Math.floor(i / SEASON_THEMES.length);      // 0 first loop, 1 next…
+  const year = LAUNCH.getFullYear() + Math.floor((i * SEASON_WEEKS) / 52);
+  return {
+    idx: i, theme: t,
+    name: t.name + (pass ? " " + (pass + 1) : "") + " Season",
+    tag: t.tag,
+    badge: t.name + " " + year,
+    need: t.need + pass,                                    // escalate each loop
+    volume: pass === 0 ? t.volume : []                      // new cars only on first pass
+  };
+}
+function seasonIndex(){
+  if (Date.now() < LAUNCH.getTime()) return -1;
+  return Math.floor((Date.now() - LAUNCH.getTime()) / SEASON_MS);
+}
+function seasonEnds(i){ return LAUNCH.getTime() + (i + 1) * SEASON_MS; }
+function seasonState(i){
+  const m = seasonMeta(i);
+  const have = m.theme.metric();
+  return { meta: m, have, done: have >= m.need,
+    prog: Math.min(have, m.need) + " / " + m.need,
+    pct: Math.min(have / m.need, 1),
+    goalDesc: "Log " + m.need + " " + m.theme.goal };
+}
+// codex grows with every season whose start has passed (first-pass volumes only)
+function unlockedVolumes(){
+  const out = [];
+  const last = seasonIndex();
+  for (let i = 0; i <= last; i++) out.push(...seasonMeta(i).volume);
+  return out;
+}
+const CODEX_SEED = CODEX_BASE.concat(unlockedVolumes()).map((e, i) => ({ ...e, n: i + 1 }));
 
 const RANKS = [
   { name:"ROOKIE",  req:"", need: () => true },
@@ -962,13 +1114,220 @@ const WANTED_POOL = [
   { id:"daytona", name:"Ferrari Daytona", pay:1200, m:[["ferrari","daytona"],["365 gtb"]] }
 ];
 const wantedById = id => WANTED_POOL.find(w => w.id === id);
+function launchWeek(){ return Math.floor((Date.now() - LAUNCH.getTime()) / WEEK_MS); }
 function pickWanted(wk){
-  let h = ((wk || 0) * 2654435761) >>> 0;
-  const rnd = () => { h = (h * 1664525 + 1013904223) >>> 0; return h / 4294967296; };
-  const pool = WANTED_POOL.map(w => w.id);
-  for (let i = pool.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-  return pool.slice(0, 3);
+  // deterministic rotating window over the pool — same for everyone, never dry
+  const w = (typeof wk === "number" ? wk : launchWeek());
+  const n = WANTED_POOL.length, base = ((w % n) + n) % n;
+  const step = 5; // co-prime-ish stride so the trio varies week to week
+  return [0, 1, 2].map(k => WANTED_POOL[(base + k * step) % n].id);
 }
+
+/* ================= TITLES / RECORDS / COTD / MASTERY ================= */
+function codexAgg(){
+  const caught = {};
+  state.spots.forEach(s => {
+    if (s.flagged) return;
+    const en = CODEX_SEED.find(e => entryMatches(e, s));
+    const key = en ? "n" + en.n : "x:" + spotStr(s).trim();
+    const sc = s.shot ? s.shot.score : -1;
+    if (!caught[key]){
+      caught[key] = { count: 0, img: s.img, bestScore: sc, bestId: s.id, name: en ? en.name : (s.make + " " + s.model).trim(), tier: en ? en.tier : s.rarity, tags: new Set(), colors: new Set() };
+    } else if (sc > caught[key].bestScore){
+      caught[key].img = s.img;
+      caught[key].bestScore = sc;
+      caught[key].bestId = s.id;
+    }
+    caught[key].count++;
+    (s.tags || []).forEach(t => caught[key].tags.add(t));
+    if (s.color) caught[key].colors.add(String(s.color).toLowerCase());
+  });
+  return caught;
+}
+function masteryOf(c){ return (c.count >= 5 || c.colors.size >= 3) ? "MASTERED" : (c.count >= 3 ? "TRACKED" : "SPOTTED"); }
+function masteredCount(){ return Object.values(codexAgg()).filter(c => masteryOf(c) === "MASTERED").length; }
+function cellCount(){
+  const c = {};
+  state.spots.forEach(s => { if (s.lat == null) return; c[Math.floor(s.lat / 0.01) + "_" + Math.floor(s.lng / 0.01)] = 1; });
+  return Object.keys(c).length;
+}
+function jdmModels(){
+  const set = new Set();
+  state.spots.forEach(s => {
+    if (s.flagged) return;
+    if (MAKESETS.jdm.some(m => spotStr(s).includes(m))){
+      const en = CODEX_SEED.find(e => entryMatches(e, s));
+      set.add(en ? "n" + en.n : spotStr(s).trim());
+    }
+  });
+  return set.size;
+}
+function prewarModels(){
+  const set = new Set();
+  state.spots.forEach(s => {
+    if (s.flagged || s.decade !== "pre-1946") return;
+    const en = CODEX_SEED.find(e => entryMatches(e, s));
+    set.add(en ? "n" + en.n : spotStr(s).trim());
+  });
+  return set.size;
+}
+function modelsWhere(pred){
+  const set = new Set();
+  state.spots.forEach(s => {
+    if (s.flagged || !pred(s)) return;
+    const en = CODEX_SEED.find(e => entryMatches(e, s));
+    set.add(en ? "n" + en.n : spotStr(s).trim());
+  });
+  return set.size;
+}
+function exoticModels(){ return modelsWhere(s => s.cls === "exotic" || s.rarity === "legendary" || s.rarity === "rare"); }
+function muscleModels(){ return modelsWhere(s => (s.tags || []).includes("american_muscle") || (inSet({ make: spotStr(s), model: "" }, MAKESETS.american) && (s.decade === "1960s" || s.decade === "1970s"))); }
+function euroModels(){ return modelsWhere(s => { const a = { make: spotStr(s), model: "" }; return (inSet(a, MAKESETS.italian) || inSet(a, MAKESETS.british) || spotStr(s).includes("mercedes") || spotStr(s).includes("bmw") || spotStr(s).includes("audi") || spotStr(s).includes("porsche") || spotStr(s).includes("citro") || spotStr(s).includes("volkswagen")) && ["1950s","1960s","1970s","1980s"].includes(s.decade); }); }
+function recordsData(){
+  const byDay = {}, byDayNew = {};
+  state.spots.forEach(s => {
+    if (s.flagged) return;
+    const d = (s.ts || "").slice(0, 10);
+    byDay[d] = (byDay[d] || 0) + 1;
+    if (s.cxNew) byDayNew[d] = (byDayNew[d] || 0) + 1;
+  });
+  const st = hunterStats();
+  const legendSpot = state.spots.filter(s => !s.flagged && s.rarity === "legendary").sort((a, b) => new Date(a.ts) - new Date(b.ts))[0];
+  const rareSpot = legendSpot || state.spots.filter(s => !s.flagged && s.rarity === "rare")[0];
+  const ex = expeditions().sort((a, b) => b.count - a.count)[0];
+  let bs = null;
+  state.spots.forEach(s => { if (!s.flagged && s.shot && (!bs || s.shot.score > bs.score)) bs = { score: s.shot.score, name: (s.make + " " + s.model).trim() }; });
+  return {
+    bestDay: Math.max(0, ...Object.values(byDay)),
+    bestDayNew: Math.max(0, ...Object.values(byDayNew)),
+    bestStreak: Math.max(state.bestStreak || 0, state.streak || 0),
+    rarest: rareSpot ? (rareSpot.make + " " + rareSpot.model).trim() : "—",
+    bigExp: ex ? ex.name + " · " + ex.count : "—",
+    bestShot: bs ? bs.score + " · " + bs.name : "—",
+    legends: st.legend
+  };
+}
+function carOfTheDay(){
+  const s = state.day || dayKey();
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) >>> 0;
+  return CODEX_SEED[h % CODEX_SEED.length];
+}
+const TITLES = [
+  { id:"rookie-no-more", title:"Rookie No More", req:"5 codex models", test:st => st.models >= 5 },
+  { id:"legend-hunter", title:"Legend Hunter", req:"3 legendary models", test:st => st.legend >= 3 },
+  { id:"curator-of-speed", title:"Curator of Speed", req:"Reach Curator rank", test:st => { const r = currentRank(st).name; return r === "CURATOR" || r === "LEGEND"; } },
+  { id:"night-stalker", title:"Night Stalker", req:"5 night captures of rare+ metal", test:() => state.spots.filter(s => !s.flagged && (s.conds || []).includes("night") && (s.rarity === "rare" || s.rarity === "legendary")).length >= 5 },
+  { id:"storm-chaser", title:"Storm Chaser", req:"3 rain or snow captures", test:() => state.spots.filter(s => !s.flagged && ((s.conds || []).includes("rain") || (s.conds || []).includes("snow"))).length >= 3 },
+  { id:"air-cooled-apostle", title:"Air-Cooled Apostle", req:"Complete Air-Cooled Icons", test:() => !!state.setsDone["air-cooled"] },
+  { id:"poster-child", title:"Poster Child", req:"Complete Poster Wall", test:() => !!state.setsDone["poster-wall"] },
+  { id:"streak-freak", title:"Streak Freak", req:"14-day streak", test:() => (state.bestStreak || state.streak || 0) >= 14 },
+  { id:"master-class", title:"Master Class", req:"Master 3 codex entries", test:() => masteredCount() >= 3 },
+  { id:"globetrotter", title:"Globetrotter", req:"Claim 10 map cells", test:() => cellCount() >= 10 }
+];
+function titlesUnlocked(){
+  const st = hunterStats();
+  return TITLES.filter(t => { try{ return t.test(st); }catch(e){ return false; } }).map(t => t.id);
+}
+function titleNameOf(id){ const t = TITLES.find(x => x.id === id); return t ? t.title : ""; }
+
+async function planHunt(force){
+  ensureDay();
+  if (!force && state.aiHunt && state.aiHunt.day === state.day) return;
+  toast("Planning your hunt…");
+  try{
+    const agg = codexAgg();
+    const missing = CODEX_SEED.filter(e => !agg["n" + e.n]).sort(() => Math.random() - .5).slice(0, 8).map(e => e.name);
+    const here = groundsGeo || state.spots.find(s => s.lat != null) || null;
+    const openQ = state.dayQ.ids.map(questById).filter(q => q && !state.dayQ.done[q.id]).map(q => q.name + " (" + q.desc + ")");
+    const prompt = 'You are the hunt master for TYRE HUNT, a car-spotting game. Build today\'s custom hunt plan for one player. Respond ONLY with minified JSON, no markdown fences: {"title":string,"brief":string,"targets":[{"name":string,"why":string}]}. Rules: 4-5 targets, realistically spottable in a normal day (one easy, mostly medium, one stretch), enthusiast voice, each why under 12 words, no emoji, title under 5 words. Context — local time: ' + new Date().toString() + '; approx location: ' + (here ? here.lat + "," + here.lng : "unknown") + '; active event: ' + (state.activeEvent || "none") + '; codex gaps worth weighing: ' + (missing.join(", ") || "none") + '; open daily hunts: ' + (openQ.join("; ") || "none") + '.';
+    const headers = { "Content-Type": "application/json" };
+    if (CONFIG.apiKey){
+      headers["x-api-key"] = CONFIG.apiKey;
+      headers["anthropic-version"] = "2023-06-01";
+      headers["anthropic-dangerous-direct-browser-access"] = "true";
+    }
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers,
+      body: JSON.stringify({ model: CONFIG.model, max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+    });
+    if (!r.ok) throw new Error("api " + r.status);
+    const data = await r.json();
+    const text = (data.content || []).map(b => b.type === "text" ? b.text : "").join("").replace(/```json|```/g, "").trim();
+    const plan = JSON.parse(text);
+    state.aiHunt = { day: state.day, plan };
+    await Store.save();
+    renderQuests();
+    toast("Hunt planned · " + (plan.title || ""));
+  }catch(e){ toast("Couldn't plan the hunt — try again"); }
+}
+$("huntPlanBtn").addEventListener("click", () => planHunt(true));
+
+/* ================= SOUND / INSTALL ================= */
+let AC = null;
+function ac(){
+  if (!state.sound) return null;
+  try{
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+    return AC;
+  }catch(e){ return null; }
+}
+function tone(f, off, dur, type, gain){
+  const a = ac(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type || "sine";
+  o.frequency.value = f;
+  const t0 = a.currentTime + (off || 0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(gain || .16, t0 + .012);
+  g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  o.connect(g).connect(a.destination);
+  o.start(t0);
+  o.stop(t0 + dur + .05);
+}
+function sfx(kind){
+  if (!state.sound) return;
+  if (kind === "shutter"){ tone(1200, 0, .05, "square", .07); tone(320, .02, .06, "square", .05); }
+  else if (kind === "everyday"){ tone(660, 0, .15); }
+  else if (kind === "classic"){ tone(587, 0, .1); tone(880, .09, .18); }
+  else if (kind === "rare"){ tone(523, 0, .09); tone(659, .09, .09); tone(784, .18, .22); }
+  else if (kind === "legendary"){ [523, 659, 784, 1046].forEach((f, i) => tone(f, i * .09, .13)); tone(1568, .4, .5, "triangle", .06); }
+  else if (kind === "extra"){ tone(1318, 0, .08, "triangle", .1); }
+  else if (kind === "miss"){ tone(170, 0, .22, "square", .1); }
+  else if (kind === "flag"){ tone(220, 0, .16, "square", .1); tone(160, .14, .2, "square", .08); }
+}
+
+let deferredPrompt = null;
+function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function isStandalone(){ return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; }
+function renderInstallPill(){
+  const p = $("installPill");
+  if (!p) return;
+  p.style.display = (!isStandalone() && (deferredPrompt || isIOS())) ? "block" : "none";
+}
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  renderInstallPill();
+});
+window.addEventListener("appinstalled", () => { deferredPrompt = null; renderInstallPill(); toast("Installed — hunt from your home screen"); });
+$("installPill").addEventListener("click", async () => {
+  if (deferredPrompt){
+    deferredPrompt.prompt();
+    try{ await deferredPrompt.userChoice; }catch(e){}
+    deferredPrompt = null;
+    renderInstallPill();
+  } else if (isIOS()){
+    toast("Share → Add to Home Screen to install");
+  }
+});
+$("introGo").addEventListener("click", async () => {
+  state.seenIntro = true;
+  await Store.save();
+  $("intro").classList.remove("on");
+  startCam();
+});
 
 /* ================= UI helpers ================= */
 let toastT;
@@ -1067,7 +1426,7 @@ function handleFile(file, input, src){
 
 const PROMPT = `You are the vision verifier for TYRE HUNT, a car-spotting game. Analyze the attached photo taken by a player on the street.
 Respond with ONLY minified JSON, no markdown fences, exactly this shape:
-{"is_vehicle":boolean,"make":string,"model":string,"year_range":string,"classification":"classic"|"exotic"|"sports"|"everyday"|"not_a_vehicle","rarity":"everyday"|"classic"|"rare"|"legendary","confidence":number,"authenticity":"live"|"suspect","decade":string,"color":string,"tags":string[],"plate_box":{"x":number,"y":number,"w":number,"h":number}|null,"blurb":string}
+{"is_vehicle":boolean,"make":string,"model":string,"year_range":string,"classification":"classic"|"exotic"|"sports"|"everyday"|"not_a_vehicle","rarity":"everyday"|"classic"|"rare"|"legendary","confidence":number,"authenticity":"live"|"suspect","decade":string,"color":string,"tags":string[],"conditions":string[],"shot":{"score":number,"note":string},"plate_box":{"x":number,"y":number,"w":number,"h":number}|null,"blurb":string}
 Rules:
 - is_vehicle: true only if a real car, truck, or motorcycle is the clear subject (not a toy, poster, or screen).
 - classification: "classic" for collector-era cars (broadly pre-1995 or recognized modern classics), "exotic" for supercars/hypercars, "sports" for performance cars, "everyday" for common vehicles, "not_a_vehicle" otherwise.
@@ -1077,6 +1436,8 @@ Rules:
 - decade: the model's era, exactly one of "pre-1946","1950s","1960s","1970s","1980s","1990s","2000s","2010s","2020s".
 - color: primary body color as one lowercase word (e.g. "red","black","silver","grey","white","blue","green","yellow","orange","brown").
 - tags: every tag that clearly applies, chosen ONLY from ["race_car","convertible","wagon","pickup","suv","van","motorcycle","big_wing","widebody","lifted_4x4","air_cooled","american_muscle","lowrider","electric"]. race_car means livery, race numbers, or full race prep. Empty array if none apply.
+- conditions: shooting conditions that clearly apply, chosen ONLY from ["night","rain","snow","fog","golden_hour","motion"]. Empty array if unsure.
+- shot: grade the photograph itself as a car photo. score 0-100 for composition, light, angle, and sharpness — 50 is an average phone snap, 80+ is genuinely good. note: one specific tip or piece of praise for the photographer, under 12 words.
 - plate_box: if a license plate is visible, its bounding box as PERCENTAGES of image width/height ({"x":left,"y":top,"w":width,"h":height}), else null.
 - blurb: one enthusiast-voice sentence about this spot, max 18 words, no emoji.
 - If unsure of exact model, give your best guess and lower confidence. Make and model must never be empty when is_vehicle is true.`;
@@ -1111,6 +1472,7 @@ function detectUI(mode, data){
 
 async function runVerify(canvas, source){
   busy = true; $("shutter").disabled = true;
+  sfx("shutter");
   const fz = $("freeze");
   fz.style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
   fz.style.display = "block";
@@ -1234,8 +1596,12 @@ async function processResult(res, canvas, source, ctx){
   const pseudo = { make: res.make || "", model: res.model || "" };
   const en = CODEX_SEED.find(e => entryMatches(e, pseudo));
   const keyStr = spotStr(pseudo).trim();
-  const prior = state.spots.filter(sp => !sp.flagged && (en ? entryMatches(en, sp) : spotStr(sp).trim() === keyStr)).length;
+  const priorSpots = state.spots.filter(sp => !sp.flagged && (en ? entryMatches(en, sp) : spotStr(sp).trim() === keyStr));
+  const prior = priorSpots.length;
+  const prevBestShot = Math.max(-1, ...priorSpots.map(sp => sp.shot ? sp.shot.score : -1));
   const rankBefore = currentRank(hunterStats()).name;
+  const recBefore = recordsData();
+  const titlesBefore = titlesUnlocked();
 
   lastQuestHits = [];
   lastRankUp = "";
@@ -1244,8 +1610,22 @@ async function processResult(res, canvas, source, ctx){
     const today = dayKey();
     if (state.lastSpotDay !== today){
       const y = dayKey(new Date(Date.now() - 864e5));
-      state.streak = (state.lastSpotDay === y) ? state.streak + 1 : 1;
+      if (state.lastSpotDay === y) state.streak = state.streak + 1;
+      else if (state.streak > 0 && (state.boosts.shield || 0) > 0){
+        state.boosts.shield--;
+        state.streak = state.streak + 1;
+        toast("Streak Shield burned — streak saved");
+      }
+      else state.streak = 1;
       state.lastSpotDay = today;
+      if (state.streak > 0 && state.streak % 7 === 0){
+        state.boosts.shield = (state.boosts.shield || 0) + 1;
+        toast("7-day milestone — Streak Shield earned");
+      }
+      if (state.streak > (state.bestStreak || 0)){
+        state.bestStreak = state.streak;
+        if (state.streak >= 3) lastQuestHits.push({ label: "RECORD", name: "LONGEST STREAK · " + state.streak + " DAYS" });
+      }
     }
     // daily progress + hunts
     state.daySpots++;
@@ -1260,6 +1640,7 @@ async function processResult(res, canvas, source, ctx){
       tags: Array.isArray(res.tags) ? res.tags : [],
       decade: res.decade || "",
       color: (res.color || "").toLowerCase(),
+      conds: Array.isArray(res.conditions) ? res.conditions : [],
       dayMakesCount: state.dayMakes.length
     };
     state.dayQ.ids.forEach(id => {
@@ -1293,17 +1674,48 @@ async function processResult(res, canvas, source, ctx){
     make: res.make || "Unknown", model: res.model || "", year: res.year_range || "",
     cls: res.classification, rarity, confidence: Math.round(res.confidence ?? 0),
     nth: prior + 1, cxNew: counts && prior === 0, cxNo: en ? en.n : null,
+    cxKey: en ? "n" + en.n : "x:" + keyStr,
+    cxName: en ? en.name : ((res.make || "") + " " + (res.model || "")).trim(),
     blurb: res.blurb || "", plate: plateBlurred,
     phash, source: source || "camera", flagged: flags.join("; "),
     lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,
     event: (ctx && ctx.event !== undefined) ? (ctx.event || "") : (state.activeEvent || ""),
+    eventCode: (ctx && ctx.eventCode !== undefined) ? (ctx.eventCode || "") : (state.activeEventCode || ""),
     place: "", story: "", color: (res.color || ""), owner: "",
     fav: false, hv: false, tags: Array.isArray(res.tags) ? res.tags : [], decade: res.decade || "",
+    conds: Array.isArray(res.conditions) ? res.conditions : [],
+    shot: (res.shot && typeof res.shot.score === "number") ? { score: Math.round(res.shot.score), note: res.shot.note || "" } : null,
     ai: { make: res.make || "", model: res.model || "", year: res.year_range || "" }
   };
   state.spots.unshift(spot);
   if (counts){
     checkSets().forEach(h => lastQuestHits.push(h));
+    if (spot.shot && prior > 0 && spot.shot.score > prevBestShot){
+      lastQuestHits.push({ label: "RECORD", name: "NEW BEST SHOT · " + spot.shot.score });
+    }
+    const cd = carOfTheDay();
+    if (en && cd && en.n === cd.n && !state.cotdStamps["n" + en.n]){
+      state.cotdStamps["n" + en.n] = state.day;
+      lastQuestHits.push({ label: "CAR OF THE DAY", name: en.name });
+      toast("Car of the Day stamped · " + en.name);
+    }
+    const recAfter = recordsData();
+    if (recAfter.bestDay > recBefore.bestDay && recAfter.bestDay >= 3){
+      lastQuestHits.push({ label: "RECORD", name: "MOST CARS IN A DAY · " + recAfter.bestDay });
+    }
+    const si = seasonIndex();
+    if (si >= 0 && !state.badges["season:" + si]){
+      const ss = seasonState(si);
+      if (ss.done){
+        state.badges["season:" + si] = true;
+        lastQuestHits.push({ label: "SEASON", name: ss.meta.badge });
+        toast("Season badge · " + ss.meta.badge);
+      }
+    }
+    titlesUnlocked().filter(id => !titlesBefore.includes(id)).forEach(id => {
+      const t = TITLES.find(x => x.id === id);
+      if (t){ lastQuestHits.push({ label: "TITLE", name: t.title }); toast("Title unlocked · " + t.title); }
+    });
     const rn = currentRank(hunterStats()).name;
     if (rn !== rankBefore){ lastRankUp = rn; toast("Rank up · " + rn); }
   }
@@ -1330,6 +1742,14 @@ function openVerdict(spot, canvas, raw){
     $("vChip").className = "chip " + spot.rarity;
     $("vChip").textContent = spot.rarity.toUpperCase();
     $("vConf").textContent = (spot.flagged ? "CHECKED" : "VERIFIED") + " · " + spot.confidence + "%";
+    $("vConds").innerHTML = (spot.conds || []).map(c => '<span class="chip cond">' + c.replace(/_/g, " ").toUpperCase() + '</span>').join("");
+    if (spot.shot){
+      const sc = spot.shot.score;
+      $("vShotNote").style.color = sc >= 80 ? "var(--gold)" : sc >= 60 ? "var(--pulse-hi)" : "var(--muted)";
+      $("vShotNote").textContent = "SHOT " + sc + (spot.shot.note ? " — " + spot.shot.note : "");
+    } else {
+      $("vShotNote").textContent = "";
+    }
     $("vBlurb").textContent = spot.blurb;
     if (spot.flagged){
       $("vPayline").style.display = "none";
@@ -1357,11 +1777,36 @@ function openVerdict(spot, canvas, raw){
     $("vYear").textContent = "";
     $("vChip").style.display = "none";
     $("vConf").textContent = raw && typeof raw.confidence === "number" ? "CHECKED" : "";
+    $("vConds").innerHTML = "";
+    $("vShotNote").textContent = "";
     $("vBlurb").textContent = (raw && raw.blurb) ? raw.blurb : "The verifier couldn't find a vehicle as the clear subject.";
     $("vPayline").style.display = "none";
     $("vQuests").innerHTML = "";
     const m = $("vMiss"); m.style.display = "block";
     m.textContent = "No Tyres this time. Get the whole car in frame, in decent light, and fire again.";
+  }
+  const vc = $("vcard"), ph = $("vPhoto");
+  vc.classList.remove("reveal");
+  ph.classList.remove("holo");
+  if (spot && !spot.flagged){
+    void vc.offsetWidth;
+    vc.classList.add("reveal");
+    sfx(spot.rarity);
+    if (lastRankUp || lastQuestHits.length) setTimeout(() => sfx("extra"), 320);
+    if (spot.rarity === "legendary"){
+      ph.classList.add("holo");
+      const f = $("flash");
+      f.classList.remove("on"); void f.offsetWidth; f.classList.add("on");
+    }
+    try{
+      if (navigator.vibrate && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+        navigator.vibrate(spot.rarity === "legendary" ? [40, 60, 40, 60, 120] : spot.rarity === "rare" ? [30, 40, 60] : 20);
+      }
+    }catch(e){}
+  } else if (spot && spot.flagged){
+    sfx("flag");
+  } else {
+    sfx("miss");
   }
   v.classList.add("on");
 }
@@ -1383,6 +1828,7 @@ function renderGarage(){
   const g = $("ggrid");
   const st = hunterStats();
   $("garageMeta").textContent = state.spots.length + " spot" + (state.spots.length===1?"":"s") + " · " + st.models + " models · " + st.legend + " legendary";
+  $("top8Btn").style.display = state.spots.some(s => s.fav) ? "" : "none";
   if (!state.spots.length){
     g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="e1">Empty garage</div><p>Every verified capture parks here with its make, rarity, and payout. Hit the shutter.</p></div>';
     return;
@@ -1417,28 +1863,185 @@ $("codexPill").addEventListener("click", () => {
   if (cb) cb.click();
 });
 $("codexPill").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); $("codexPill").click(); } });
-function cxCard(n, name, tier, c){
+
+/* ================= CODEX ENTRY SHEET / LORE / TOP 8 ================= */
+let ceKey = null;
+$("cxGrid").addEventListener("click", e => {
+  const b = e.target.closest(".cxcard");
+  if (b && b.dataset.key) openEntry(b.dataset.key);
+});
+$("ceBack").addEventListener("click", () => $("cxSheet").classList.remove("on"));
+function entryInfo(key){
+  const agg = codexAgg();
+  const c = agg[key] || null;
+  let name, tier, n = null;
+  if (key.startsWith("n")){
+    const en = CODEX_SEED.find(e => "n" + e.n === key);
+    if (!en) return null;
+    name = en.name; tier = en.tier; n = en.n;
+  } else {
+    name = c ? c.name : key.slice(2);
+    tier = c ? c.tier : "everyday";
+  }
+  const spots = state.spots.filter(sp => {
+    if (sp.flagged) return false;
+    const en2 = CODEX_SEED.find(e => entryMatches(e, sp));
+    return (en2 ? "n" + en2.n : "x:" + spotStr(sp).trim()) === key;
+  });
+  return { c, name, tier, n, spots };
+}
+function openEntry(key){
+  ceKey = key;
+  $("cxSheet").classList.add("on");
+  renderEntry();
+}
+function renderEntry(){
+  const info = entryInfo(ceKey);
+  if (!info) return;
+  const hero = $("ceHero");
+  if (info.c){
+    hero.style.backgroundImage = "url(" + info.c.img + ")";
+    $("ceQ").style.display = "none";
+  } else {
+    hero.style.backgroundImage = "none";
+    $("ceQ").style.display = "";
+  }
+  const no = info.n ? "No. " + String(info.n).padStart(3, "0") : "FIELD ENTRY";
+  const stamp = info.n && (state.cotdStamps || {})["n" + info.n];
+  const lore = state.lore[ceKey];
+  const loreHtml = lore ? `
+    <div class="lore"><div class="lh">WHY IT MATTERS</div><p>${esc(lore.matters || "")}</p></div>
+    <div class="lore"><div class="lh">THE NUMBERS</div><p>${esc(lore.numbers || "")}</p></div>
+    <div class="lore"><div class="lh">SPOTTER'S NOTE</div><p>${esc(lore.note || "")}</p></div>`
+    : '<div class="lore"><div class="lh">FIELD GUIDE</div><p><span class="spin"></span>&nbsp; Writing the entry…</p></div>';
+  $("ceBody").innerHTML = `
+    <div class="vrow" style="margin:0 0 6px">
+      <span class="chip ${info.tier}">${info.tier.toUpperCase()}</span>
+      <span class="vyr">${no}${stamp ? " · ★ COTD " + stamp : ""}</span>
+    </div>
+    <div class="vmk" style="margin-top:2px">${esc(info.name)}</div>
+    ${info.c
+      ? `<div class="vyr" style="margin-top:5px">×${info.c.count} · ${masteryOf(info.c)}${info.c.bestScore >= 0 ? " · BEST SHOT " + info.c.bestScore : ""}</div>`
+      : `<div class="vyr" style="margin-top:5px">UNSPOTTED — the note below is your intel</div>`}
+    <div id="ceGlobal"></div>
+    ${loreHtml}
+    ${info.spots.length ? `<div class="sechead">Your sightings</div>
+      <div class="sights">${info.spots.map(sp => `<button data-sight="${sp.id}" style="background-image:url('${sp.img}')"></button>`).join("")}</div>` : ""}
+    ${info.c ? `<div class="vbtns" style="margin-top:14px"><button class="btn hot" id="ceShare">SHARE BEST SHOT</button></div>` : ""}`;
+  if (!lore) loreFor(ceKey, info.name, info.tier, info.spots[0] ? info.spots[0].year : "").then(l => {
+    if (l && ceKey && state.lore[ceKey] && $("cxSheet").classList.contains("on")) renderEntry();
+  });
+  fillGlobal();
+}
+$("ceBody").addEventListener("click", e => {
+  const t = e.target.closest("[data-sight]");
+  if (t){
+    $("cxSheet").classList.remove("on");
+    openDossier(+t.dataset.sight);
+    return;
+  }
+  if (e.target.closest("#ceShare")){
+    const info = entryInfo(ceKey);
+    if (info && info.c){
+      const best = info.spots.find(sp => sp.id === info.c.bestId) || info.spots[0];
+      if (best) shareCard(best);
+    }
+  }
+});
+async function loreFor(key, name, tier, yearHint){
+  if (state.lore[key]) return state.lore[key];
+  try{
+    const prompt = 'Field-guide entry for the ' + name + (yearHint ? ' (' + yearHint + ')' : '') + ', a ' + tier + '-tier car in a car-spotting game codex. Respond ONLY with minified JSON, no markdown fences: {"matters":string,"numbers":string,"note":string}. matters: why this car matters, 2 sentences. numbers: production run, era, and one key spec in a single line. note: how a spotter recognizes one in the wild, 1 sentence. Enthusiast voice, no emoji, under 90 words total.';
+    const headers = { "Content-Type": "application/json" };
+    if (CONFIG.apiKey){
+      headers["x-api-key"] = CONFIG.apiKey;
+      headers["anthropic-version"] = "2023-06-01";
+      headers["anthropic-dangerous-direct-browser-access"] = "true";
+    }
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers,
+      body: JSON.stringify({ model: CONFIG.model, max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+    });
+    if (!r.ok) throw new Error("api " + r.status);
+    const data = await r.json();
+    const text = (data.content || []).map(b => b.type === "text" ? b.text : "").join("").replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(text);
+    state.lore[key] = parsed;
+    await Store.save();
+    return parsed;
+  }catch(e){ return null; }
+}
+
+async function shareTop8(){
+  const favs = state.spots.filter(s => s.fav).slice(0, 8);
+  if (!favs.length){ toast("Star some spots in their dossiers first"); return; }
+  try{
+    const imgs = await Promise.all(favs.map(s => loadImg(s.img)));
+    const W = 1080, H = 1350, c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    x.fillStyle = "#0A0B0E"; x.fillRect(0, 0, W, H);
+    x.textBaseline = "top";
+    x.fillStyle = "#FF8A1E"; x.font = "800 26px 'Archivo', sans-serif";
+    x.fillText("THE COLLECTION", 64, 40);
+    x.fillStyle = "#F2F3F6"; x.font = "900 76px 'Archivo', sans-serif";
+    x.fillText("TOP 8", 64, 74);
+    const RC = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+    const gw = W / 2, gh = 250, gy0 = 176;
+    favs.forEach((s, i) => {
+      const im = imgs[i];
+      const gx = (i % 2) * gw, gy = gy0 + Math.floor(i / 2) * gh;
+      const sc = Math.max(gw / im.width, gh / im.height);
+      const dw = im.width * sc, dh = im.height * sc;
+      x.save(); x.beginPath(); x.rect(gx, gy, gw, gh); x.clip();
+      x.drawImage(im, gx + (gw - dw) / 2, gy + (gh - dh) / 2, dw, dh);
+      const g = x.createLinearGradient(0, gy + gh - 70, 0, gy + gh);
+      g.addColorStop(0, "rgba(10,11,14,0)"); g.addColorStop(1, "rgba(10,11,14,.9)");
+      x.fillStyle = g; x.fillRect(gx, gy + gh - 70, gw, 70);
+      x.fillStyle = "#F2F3F6"; x.font = "700 21px 'Archivo', sans-serif";
+      x.fillText((s.make + " " + s.model).trim().slice(0, 30), gx + 16, gy + gh - 36);
+      x.restore();
+      x.fillStyle = RC[s.rarity] || RC.everyday;
+      x.fillRect(gx, gy, gw, 4);
+    });
+    x.fillStyle = "#FF8A1E"; x.font = "800 27px 'Archivo', sans-serif";
+    x.fillText("TYRE HUNT", 64, H - 86);
+    x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
+    x.fillText("SPOT & COLLECT", 276, H - 82);
+    if (state.profile && state.profile.handle){
+      if (state.title){
+        x.fillStyle = "#FFC24B"; x.font = "800 22px 'Archivo', sans-serif";
+        x.textAlign = "right";
+        x.fillText(titleNameOf(state.title).toUpperCase(), W - 64, H - 122);
+        x.textAlign = "left";
+      }
+      x.fillStyle = "#F2F3F6"; x.font = "700 26px 'JetBrains Mono', monospace";
+      x.textAlign = "right";
+      x.fillText("@" + state.profile.handle, W - 64, H - 86);
+      x.textAlign = "left";
+    }
+    deliverCard(c, "tyrehunt-top8.jpg", "My Top 8 · TYRE HUNT");
+  }catch(e){ toast("Couldn't build the Top 8 card"); }
+}
+$("top8Btn").addEventListener("click", shareTop8);
+function cxCard(n, name, tier, c, key){
   const no = "No. " + String(n).padStart(3, "0");
-  if (!c) return `<div class="cxcard lk"><div class="cph">?</div><div class="cin"><div class="cno">${no}</div><div class="cnm">${esc(name)}</div><div class="cpop">UNSPOTTED</div></div></div>`;
-  return `<div class="cxcard"><div class="cph" style="background-image:url('${c.img}')"></div><div class="cin"><div class="cno">${no} · ${tier.toUpperCase()}</div><div class="cnm">${esc(name)}</div><div class="cpop">×${c.count}${c.tags.size ? " · " + [...c.tags].slice(0, 2).join(", ") : ""}</div></div></div>`;
+  if (!c) return `<button class="cxcard lk" data-key="${key}"><div class="cph">?</div><div class="cin"><div class="cno">${no}</div><div class="cnm">${esc(name)}</div><div class="cpop">UNSPOTTED</div></div></button>`;
+  const m = masteryOf(c);
+  const mCol = m === "MASTERED" ? "var(--gold)" : (m === "TRACKED" ? "var(--pulse-hi)" : "var(--muted)");
+  const stamp = (state.cotdStamps || {})["n" + n] ? " · ★" : "";
+  return `<button class="cxcard" data-key="${key}"><div class="cph" style="background-image:url('${c.img}')"></div><div class="cin"><div class="cno">${no} · ${tier.toUpperCase()}</div><div class="cnm">${esc(name)}</div><div class="cpop" style="color:${mCol}">×${c.count} · ${m}${stamp}</div></div></button>`;
 }
 function renderCodex(){
-  const caught = {};
-  state.spots.forEach(s => {
-    const en = CODEX_SEED.find(e => entryMatches(e, s));
-    const key = en ? "n" + en.n : "x:" + spotStr(s).trim();
-    if (!caught[key]) caught[key] = { count: 0, img: s.img, name: en ? en.name : (s.make + " " + s.model).trim(), tier: en ? en.tier : s.rarity, tags: new Set() };
-    caught[key].count++;
-    (s.tags || []).forEach(t => caught[key].tags.add(t));
-  });
+  const caught = codexAgg();
   const got = CODEX_SEED.filter(en => caught["n" + en.n]).length;
   $("cxPct").textContent = Math.round(got / CODEX_SEED.length * 100) + "%";
   $("cxCount").textContent = got + " / " + CODEX_SEED.length + " SPOTTED";
   const seedCards = CODEX_SEED.map(en => {
     const c = caught["n" + en.n];
-    return cxCard(en.n, en.name, en.tier, c || null);
+    return cxCard(en.n, en.name, en.tier, c || null, "n" + en.n);
   });
-  const extras = Object.keys(caught).filter(k => k.startsWith("x:")).map((k, i) => cxCard(CODEX_SEED.length + i + 1, caught[k].name, caught[k].tier, caught[k]));
+  const extras = Object.keys(caught).filter(k => k.startsWith("x:")).map((k, i) => cxCard(CODEX_SEED.length + i + 1, caught[k].name, caught[k].tier, caught[k], k));
   $("cxGrid").innerHTML = seedCards.join("") + extras.join("");
 }
 
@@ -1522,12 +2125,29 @@ function renderMap(){
     ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI*2); ctx.fillStyle = "#0A0B0E"; ctx.fill();
     mapPts.push({ x, y, p });
   });
+  overlayTerritory(ctx, X, Y, minLa, maxLa, minLo, maxLo);
 }
 $("mapc").addEventListener("click", e => {
   const r = $("mapc").getBoundingClientRect();
   const x = e.clientX - r.left, y = e.clientY - r.top;
   let best = null, bd = 26;
   mapPts.forEach(m => { const d = Math.hypot(m.x-x, m.y-y); if (d < bd){ bd = d; best = m.p; } });
+  if (!best){
+    const cell = othersCells.find(c => x >= c.x1 && x <= c.x2 && y >= c.y1 && y <= c.y2);
+    if (cell){
+      $("mapinfo").innerHTML = `
+        <div class="qcard" style="margin-top:14px">
+          <div class="qic" style="color:var(--pulse-hi);border-color:rgba(110,160,255,.4)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>
+          </div>
+          <div>
+            <div class="qn">${cell.r.handle ? "@" + esc(cell.r.handle) : "A rival hunter"} holds this block</div>
+            <div class="qd">${cell.r.cnt} spot${cell.r.cnt === 1 ? "" : "s"} here · out-spot them to take it</div>
+          </div>
+        </div>`;
+      return;
+    }
+  }
   $("mapinfo").innerHTML = best ? `
     <div class="qcard" style="margin-top:14px">
       <div class="qic" style="background:url('${best.img}') center/cover;border:0;width:48px;height:48px;border-radius:10px"></div>
@@ -1585,8 +2205,33 @@ function renderQuests(){
       </div>`;
   }).join("");
   const n = Math.min(state.daySpots, 3);
+  let aiCard = "";
+  if (state.aiHunt && state.aiHunt.day === state.day && state.aiHunt.plan){
+    const pl = state.aiHunt.plan;
+    aiCard = '<div class="sechead" style="margin-top:2px">Your hunt — ' + esc(pl.title || "") + '</div>' +
+      `<div class="qcard" style="align-items:flex-start">
+        <div class="qic" style="color:var(--ember);border-color:rgba(255,138,30,.4)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l2.2 6.8H21l-5.6 4 2.2 6.7L12 15.4l-5.6 4.1 2.2-6.7L3 8.8h6.8L12 2z"/></svg></div>
+        <div style="flex:1">
+          <div class="qd" style="margin-bottom:9px">${esc(pl.brief || "")}</div>
+          ${(pl.targets || []).map(t => `<div style="margin-bottom:8px"><div class="qn" style="font-size:12.5px">${esc(t.name || "")}</div><div class="qd">${esc(t.why || "")}</div></div>`).join("")}
+        </div>
+      </div>`;
+  }
+  const cd = carOfTheDay();
+  const stamped = cd && !!(state.cotdStamps || {})["n" + cd.n];
+  const cotdCard = cd ? `<div class="sechead"${aiCard ? "" : ' style="margin-top:2px"'}>Car of the day</div>
+    <div class="qcard want ${stamped ? "done" : ""}">
+      <div class="qic">${stamped ? check : target}</div>
+      <div>
+        <div class="qn">${cd.name}</div>
+        <div class="qd">${stamped ? "Stamped today" : "Capture one today for a dated codex stamp"}</div>
+      </div>
+      <div class="qpay"><div class="v">${stamped ? "STAMPED" : "TODAY"}</div><div class="u"></div></div>
+    </div>` : "";
   $("questList").innerHTML =
-    '<div class="sechead" style="margin-top:2px">Today\'s hunts</div>' + qcards +
+    '<div id="lobbyBox"></div>' +
+    aiCard + cotdCard +
+    '<div class="sechead">Today\'s hunts</div>' + qcards +
     '<div class="sechead">Wanted this week</div>' + wcards +
     `<div class="sechead">Challenge</div>
      <div class="qcard ${state.dayBonus ? "done" : ""}">
@@ -1609,6 +2254,7 @@ function renderQuests(){
          <div class="qd">Spot at least one car a day to keep it alive</div>
        </div>
      </div>`;
+  fillLobby();
 }
 
 /* ================= HALL ================= */
@@ -1619,9 +2265,63 @@ function renderRewards(){
   $("rankStats").textContent = st.models + " models · " + st.rare + " rare · " + st.legend + " legendary";
   const nxt = RANKS[RANKS.indexOf(r) + 1];
   $("rankNext").textContent = nxt ? "Next — " + nxt.name + ": " + nxt.req : "Top of the mountain.";
+  const si = seasonIndex();
+  if (si >= 0){
+    const ss = seasonState(si);
+    const sn = ss.meta;
+    const daysLeft = Math.max(0, Math.ceil((seasonEnds(si) - Date.now()) / 864e5));
+    const got = !!state.badges["season:" + si];
+    $("seasonCard").innerHTML = `
+      <div class="qcard want ${got ? "done" : ""}" style="align-items:flex-start">
+        <div style="flex:1">
+          <div class="qn">${sn.name} <span class="qd" style="display:inline">· ${sn.tag}</span></div>
+          <div class="qd">${ss.goalDesc} · ${daysLeft} day${daysLeft === 1 ? "" : "s"} left</div>
+          <div class="qbar" style="margin-top:9px;width:100%"><i style="width:${Math.round(ss.pct * 100)}%"></i></div>
+        </div>
+        <div class="qpay"><div class="v">${got ? "EARNED" : ss.prog}</div><div class="u">${got ? "" : "BADGE"}</div></div>
+      </div>`;
+  } else {
+    const d = Math.max(0, Math.ceil((LAUNCH.getTime() - Date.now()) / 864e5));
+    $("seasonCard").innerHTML = '<p class="pfnote">Season one drops at launch' + (d ? " — " + d + " day" + (d === 1 ? "" : "s") + " out" : "") + '.</p>';
+  }
+  const rec = recordsData();
+  $("recordList").innerHTML = [
+    ["MOST CARS IN A DAY", rec.bestDay || "—"],
+    ["MOST NEW IN A DAY", rec.bestDayNew || "—"],
+    ["LONGEST STREAK", rec.bestStreak ? rec.bestStreak + " days" : "—"],
+    ["RAREST FIND", rec.rarest],
+    ["BEST SHOT", rec.bestShot],
+    ["BIGGEST EXPEDITION", rec.bigExp],
+    ["LEGENDARIES LOGGED", rec.legends || "—"]
+  ].map(x => `<div class="redemption"><span>${x[0]}</span><b>${esc(String(x[1]))}</b></div>`).join("")
+    + '<div class="redemption"><span>WORLD FIRSTS</span><b id="recWF">' + (sb && sbSession ? "…" : "—") + '</b></div>'
+    + '<div class="redemption"><span>REGIONAL FIRSTS</span><b id="recRF">' + (sb && sbSession ? "…" : "—") + '</b></div>';
+  fillFirsts();
+  const unlocked = titlesUnlocked();
+  $("titleGrid").innerHTML = TITLES.map(t => {
+    const got = unlocked.includes(t.id), eq = state.title === t.id;
+    return `<button class="bdg ${got ? "got" : ""} ${eq ? "eq" : ""}" data-title="${t.id}" ${got ? "" : "disabled"} style="text-align:left">
+      <div class="bk">TITLE</div>
+      <div class="bn">${t.title}</div>
+      <div class="bs">${eq ? "EQUIPPED" : (got ? "TAP TO EQUIP" : t.req.toUpperCase())}</div>
+    </button>`;
+  }).join("");
+  document.querySelectorAll("[data-title]").forEach(b => b.addEventListener("click", async () => {
+    state.title = state.title === b.dataset.title ? "" : b.dataset.title;
+    await Store.save();
+    renderRewards();
+    if ($("profile").classList.contains("on")) renderProfile();
+    syncProfile();
+  }));
   const badges = [];
   SETS.forEach(s => badges.push({ name: s.name, kind: "SET", got: !!state.setsDone[s.id] }));
   WANTED_POOL.forEach(w => badges.push({ name: w.name, kind: "WANTED", got: !!(state.badges && state.badges["w:" + w.id]) }));
+  Object.keys(state.badges || {}).filter(k => k.startsWith("season:")).forEach(k => {
+    const i = +k.split(":")[1];
+    badges.push({ name: seasonMeta(i).badge, kind: "SEASON", got: true });
+  });
+  const cur = seasonIndex();
+  if (cur >= 0 && !state.badges["season:" + cur]) badges.push({ name: seasonMeta(cur).badge, kind: "SEASON", got: false });
   $("badgeGrid").innerHTML = badges.map(b => `
     <div class="bdg ${b.got ? "got" : ""}">
       <div class="bk">${b.kind}</div>
@@ -1632,15 +2332,45 @@ function renderRewards(){
 
 /* ================= DOSSIER / EVENT MODE ================= */
 $("eventPill").addEventListener("click", async () => {
-  const v = prompt("Event mode — every capture tags to this until cleared. Blank to clear.", state.activeEvent || "");
+  const v = prompt("Event mode — name a new event to host, or enter a 4-character lobby code to join. Blank clears.", "");
   if (v === null) return;
-  state.activeEvent = v.trim();
+  const input = v.trim();
+  if (!input){
+    state.activeEvent = "";
+    state.activeEventCode = "";
+    renderEventPill();
+    await Store.save();
+    return;
+  }
+  if (/^[A-Z0-9]{4}$/i.test(input)){
+    if (!sb || !sbSession){ toast("Lobby codes need an account — set the event by name instead"); return; }
+    try{
+      const { data } = await sb.from("events").select("code,name").eq("code", input.toUpperCase()).maybeSingle();
+      if (!data){ toast("No lobby with that code"); return; }
+      state.activeEvent = data.name;
+      state.activeEventCode = data.code;
+      toast("Joined lobby · " + data.name);
+    }catch(e){ toast("Couldn't join the lobby"); return; }
+  } else {
+    state.activeEvent = input;
+    state.activeEventCode = "";
+    if (sb && sbSession){
+      const code = Array.from({ length: 4 }, () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 31)]).join("");
+      try{
+        await sb.from("events").insert({ code, name: input, created_by: sbSession.user.id });
+        state.activeEventCode = code;
+        toast("Lobby live · code " + code + " — crew types it to join");
+      }catch(e){ toast("Event set locally — lobby didn't create"); }
+    }
+  }
   renderEventPill();
   await Store.save();
 });
 function renderEventPill(){
   const p = $("eventPill");
-  p.textContent = state.activeEvent ? "● " + state.activeEvent.toUpperCase() : "SET EVENT";
+  p.textContent = state.activeEvent
+    ? "● " + state.activeEvent.toUpperCase() + (state.activeEventCode ? " · " + state.activeEventCode : "")
+    : "SET EVENT";
   p.classList.toggle("on", !!state.activeEvent);
 }
 
@@ -1659,7 +2389,7 @@ function openDossier(id){
   $("dStory").value = s.story || ""; $("dColor").value = s.color || ""; $("dOwner").value = s.owner || "";
   $("dMetaChip").className = "chip " + s.rarity;
   $("dMetaChip").textContent = s.rarity.toUpperCase();
-  $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
+  $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + (s.shot ? " · SHOT " + s.shot.score : "") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
   $("dossier").classList.add("on");
 }
 $("dBack").addEventListener("click", () => { $("dossier").classList.remove("on"); renderGarage(); });
@@ -1728,6 +2458,12 @@ function shareCard(s){
     x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
     x.fillText("SPOT & COLLECT", 276, H - 82);
     if (state.profile && state.profile.handle){
+      if (state.title){
+        x.fillStyle = "#FFC24B"; x.font = "800 22px 'Archivo', sans-serif";
+        x.textAlign = "right";
+        x.fillText(titleNameOf(state.title).toUpperCase(), W - 64, H - 122);
+        x.textAlign = "left";
+      }
       x.fillStyle = "#F2F3F6"; x.font = "700 26px 'JetBrains Mono', monospace";
       x.textAlign = "right";
       x.fillText("@" + state.profile.handle, W - 64, H - 86);
@@ -1781,6 +2517,7 @@ async function syncProfile(){
       code: state.profile.code,
       models: st.models,
       legends: st.legend,
+      title: state.title || null,
       streak: state.streak,
       spots: state.spots.length,
       updated_at: new Date().toISOString()
@@ -1795,8 +2532,9 @@ async function syncCapture(s){
       make: s.make, model: s.model, year_range: s.year,
       rarity: s.rarity, classification: s.cls, confidence: s.confidence,
       decade: s.decade || "", tags: s.tags || [],
+      cx_key: s.cxKey || null, cx_name: s.cxName || null,
       phash: s.phash || null, source: s.source || null, flagged: s.flagged || null,
-      event: s.event || "", lat: s.lat, lng: s.lng, taken_at: s.ts
+      event: s.event || "", event_code: s.eventCode || null, lat: s.lat, lng: s.lng, taken_at: s.ts
     });
   }catch(e){}
 }
@@ -1812,11 +2550,11 @@ async function sbAddFriend(code){
 async function refreshCrew(){
   if (!sb || !sbSession || !state.crew.length) return;
   try{
-    const { data } = await sb.from("profiles").select("handle,code,models").in("code", state.crew.map(c => c.code));
+    const { data } = await sb.from("profiles").select("id,handle,code,models").in("code", state.crew.map(c => c.code));
     if (data){
       data.forEach(d => {
         const c = state.crew.find(x => x.code === d.code);
-        if (c){ c.models = d.models; c.handle = d.handle; }
+        if (c){ c.models = d.models; c.handle = d.handle; c.id = d.id; }
       });
       await Store.save();
     }
@@ -1862,8 +2600,8 @@ function renderProfile(){
     return;
   }
   const myStats = hunterStats();
-  const rows = [{ handle: p.handle, models: myStats.models, me: true, code: p.code }]
-    .concat(state.crew.map(c => ({ handle: c.handle, models: c.models, code: c.code })))
+  const rows = [{ handle: p.handle, models: myStats.models, me: true, code: p.code, id: sbSession ? sbSession.user.id : null }]
+    .concat(state.crew.map(c => ({ handle: c.handle, models: c.models, code: c.code, id: c.id })))
     .sort((a, b) => ((b.models == null ? -1 : b.models) - (a.models == null ? -1 : a.models)));
   const acct = sb
     ? (sbSession
@@ -1876,6 +2614,7 @@ function renderProfile(){
     <div id="tagCard">
       <div class="th">@${esc(p.handle)}</div>
       <div class="tc">${p.code}</div>
+      ${state.title ? '<div class="ptitle">' + esc(titleNameOf(state.title)) + '</div>' : ""}
       <div class="qrwrap"><div id="qrBox"></div></div>
       <p class="pfnote" style="margin-top:8px">Crew scans this or types your code</p>
     </div>
@@ -1885,6 +2624,7 @@ function renderProfile(){
     </div>
     <div class="sechead">Account</div>
     ${acct}
+    <button class="btn" id="pfSound" style="width:100%;margin-top:10px">SOUND: ${state.sound ? "ON" : "OFF"}</button>
     <div class="sechead">Add hunter</div>
     <div style="display:flex;gap:10px;align-items:flex-start">
       <div class="dfield" style="flex:1;margin:0"><input id="pfAdd" placeholder="TH-XXXX-XXXX" autocapitalize="characters"></div>
@@ -1896,9 +2636,15 @@ function renderProfile(){
         <span class="rk">${i + 1}</span>
         <span class="hd">${r.handle ? "@" + esc(r.handle) : esc(r.code)}</span>
         <span class="ty">${r.models == null ? "—" : r.models + " cars"}</span>
+        ${r.me || !r.id || !sbSession ? "" : `<button data-duel="${r.id}" aria-label="Duel" style="color:var(--ember);font-size:15px;padding:2px 6px">⚔</button>`}
         ${r.me ? "" : `<button class="rm" data-code="${esc(r.code)}" aria-label="Remove">✕</button>`}
       </div>`).join("")}
-    ${state.crew.length ? "" : '<p class="pfnote">No crew yet. Trade codes at the next cars &amp; coffee.</p>'}`;
+    ${state.crew.length ? "" : '<p class="pfnote">No crew yet. Trade codes at the next cars &amp; coffee.</p>'}
+    ${sb && sbSession ? `
+    <div class="sechead">Duels · 48h · most models wins</div>
+    <div id="duelList"><p class="pfnote">Loading…</p></div>
+    <div class="sechead">Crew feed</div>
+    <div id="crewFeed"><p class="pfnote">Loading…</p></div>` : ""}`;
   drawQR();
   $("pfShareTag").addEventListener("click", async () => {
     const msg = "Add me on TYRE HUNT — hunter code " + p.code;
@@ -1906,6 +2652,12 @@ function renderProfile(){
     copyText(msg);
   });
   $("pfCopy").addEventListener("click", () => copyText(p.code));
+  $("pfSound").addEventListener("click", async () => {
+    state.sound = !state.sound;
+    await Store.save();
+    renderProfile();
+    if (state.sound) sfx("classic");
+  });
   $("pfAddBtn").addEventListener("click", addCrew);
   const magic = $("pfMagic");
   if (magic) magic.addEventListener("click", async () => {
@@ -1921,17 +2673,19 @@ function renderProfile(){
     await Store.save();
     renderProfile();
   }));
+  body.querySelectorAll("[data-duel]").forEach(b => b.addEventListener("click", () => createDuel(b.dataset.duel)));
+  if (sb && sbSession){ loadDuels(); fillFeed(); }
 }
 async function addCrew(){
   const code = ($("pfAdd").value || "").toUpperCase().trim();
   if (!/^TH-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)){ toast("Codes look like TH-XXXX-XXXX"); return; }
   if (state.profile && code === state.profile.code){ toast("That's your own code"); return; }
   if (state.crew.some(c => c.code === code)){ toast("Already in your crew"); return; }
-  let entry = { code, handle: null, models: null };
+  let entry = { code, handle: null, models: null, id: null };
   if (sb && sbSession){
     const d = await sbAddFriend(code);
     if (!d){ toast("No hunter found with that code"); return; }
-    entry = { code: d.code, handle: d.handle, models: d.models };
+    entry = { code: d.code, handle: d.handle, models: d.models, id: d.id };
   }
   state.crew.push(entry);
   await Store.save();
@@ -2038,6 +2792,12 @@ async function shareExpedition(e){
     x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
     x.fillText("SPOT & COLLECT", 276, H - 82);
     if (state.profile && state.profile.handle){
+      if (state.title){
+        x.fillStyle = "#FFC24B"; x.font = "800 22px 'Archivo', sans-serif";
+        x.textAlign = "right";
+        x.fillText(titleNameOf(state.title).toUpperCase(), W - 64, H - 122);
+        x.textAlign = "left";
+      }
       x.fillStyle = "#F2F3F6"; x.font = "700 26px 'JetBrains Mono', monospace";
       x.textAlign = "right";
       x.fillText("@" + state.profile.handle, W - 64, H - 86);
@@ -2110,7 +2870,8 @@ async function queueCapture(canvas, source){
     id: Date.now(), ts: new Date().toISOString(),
     img: t.toDataURL("image/jpeg", .72),
     source: source || "camera", geo,
-    event: state.activeEvent || ""
+    event: state.activeEvent || "",
+    eventCode: state.activeEventCode || ""
   });
   await Store.save();
   renderQueuePill();
@@ -2129,7 +2890,7 @@ async function processQueue(){
       c.getContext("2d").drawImage(img, 0, 0);
       const b64 = c.toDataURL("image/jpeg", .82).split(",")[1];
       const res = await verifyWithClaude(b64);
-      await processResult(res, c, item.source, { ts: item.ts, geo: item.geo, event: item.event, queued: true, silent: true });
+      await processResult(res, c, item.source, { ts: item.ts, geo: item.geo, event: item.event, eventCode: item.eventCode, queued: true, silent: true });
       state.queue.shift();
       ok++;
       await Store.save();
@@ -2143,6 +2904,181 @@ async function processQueue(){
 $("queuePill").addEventListener("click", processQueue);
 window.addEventListener("online", processQueue);
 
+/* ================= MULTIPLAYER (dormant until CONFIG keys) ================= */
+function ago(ts){
+  const s = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (s < 3600) return Math.max(1, Math.round(s / 60)) + "m";
+  if (s < 86400) return Math.round(s / 3600) + "h";
+  return Math.round(s / 86400) + "d";
+}
+
+let lobbyCache = { code: null, ts: 0, html: "" };
+async function fillLobby(){
+  const box = $("lobbyBox");
+  if (!box) return;
+  if (!(state.activeEventCode && sb && sbSession)){ box.innerHTML = ""; return; }
+  const code = state.activeEventCode;
+  const head = '<div class="sechead" style="margin-top:2px">Live lobby · ' + esc(state.activeEvent || code) + ' · ' + code + '</div>';
+  if (lobbyCache.code === code && Date.now() - lobbyCache.ts < 30000){ box.innerHTML = lobbyCache.html; return; }
+  box.innerHTML = head + '<p class="pfnote">Loading the board…</p>';
+  try{
+    const { data: caps } = await sb.from("captures").select("user_id,cx_key").eq("event_code", code).is("flagged", null);
+    let html;
+    if (!caps || !caps.length){
+      html = head + '<p class="pfnote">Board is empty — first capture takes the lead.</p>';
+    } else {
+      const byUser = {};
+      caps.forEach(c => { if (!c.cx_key) return; (byUser[c.user_id] = byUser[c.user_id] || new Set()).add(c.cx_key); });
+      const ids = Object.keys(byUser);
+      const { data: profs } = await sb.from("profiles").select("id,handle").in("id", ids);
+      const rows = ids.map(id => {
+        const pp = (profs || []).find(x => x.id === id);
+        return { id, handle: pp ? pp.handle : "hunter", n: byUser[id].size };
+      }).sort((a, b) => b.n - a.n).slice(0, 8);
+      html = head + rows.map((r, i) => `
+        <div class="crewrow ${r.id === sbSession.user.id ? "me" : ""}">
+          <span class="rk">${i + 1}</span>
+          <span class="hd">@${esc(r.handle)}</span>
+          <span class="ty">${r.n} model${r.n === 1 ? "" : "s"}</span>
+        </div>`).join("");
+    }
+    lobbyCache = { code, ts: Date.now(), html };
+    box.innerHTML = html;
+  }catch(e){ box.innerHTML = ""; }
+}
+
+const cxGlobal = {};
+async function fillGlobal(){
+  const box = $("ceGlobal");
+  if (!box) return;
+  if (!(sb && sbSession && ceKey)){ box.innerHTML = ""; return; }
+  const k = ceKey;
+  if (cxGlobal[k] && Date.now() - cxGlobal[k].ts < 60000){ box.innerHTML = cxGlobal[k].html; return; }
+  box.innerHTML = '<div class="lore"><div class="lh">GLOBAL CENSUS</div><p><span class="spin"></span>&nbsp; Counting…</p></div>';
+  try{
+    const [cenRes, fstRes] = await Promise.all([
+      sb.from("model_census").select("sightings,hunters,first_seen").eq("cx_key", k).maybeSingle(),
+      sb.from("model_firsts").select("user_id,created_at").eq("cx_key", k).maybeSingle()
+    ]);
+    const cen = cenRes.data, fst = fstRes.data;
+    let firstBy = "";
+    if (fst){
+      const { data: pp } = await sb.from("profiles").select("handle").eq("id", fst.user_id).maybeSingle();
+      firstBy = pp ? "@" + pp.handle : "a hunter";
+    }
+    const html = cen
+      ? `<div class="lore"><div class="lh">GLOBAL CENSUS</div><p>${cen.sightings} sighting${cen.sightings === 1 ? "" : "s"} · ${cen.hunters} hunter${cen.hunters === 1 ? "" : "s"} worldwide${fst ? " · first spotted by " + esc(firstBy) + " · " + new Date(fst.created_at).toLocaleDateString() : ""}</p></div>`
+      : '<div class="lore"><div class="lh">GLOBAL CENSUS</div><p>No verified sightings worldwide yet. Be the first.</p></div>';
+    cxGlobal[k] = { ts: Date.now(), html };
+    if (ceKey === k) box.innerHTML = html;
+  }catch(e){ box.innerHTML = ""; }
+}
+
+async function fillFirsts(){
+  if (!sb || !sbSession) return;
+  try{
+    const me = sbSession.user.id;
+    const [wf, rf] = await Promise.all([
+      sb.from("model_firsts").select("cx_key", { count: "exact", head: true }).eq("user_id", me),
+      sb.from("regional_firsts").select("cx_key", { count: "exact", head: true }).eq("user_id", me)
+    ]);
+    const w = $("recWF"), r = $("recRF");
+    if (w) w.textContent = wf.count ?? 0;
+    if (r) r.textContent = rf.count ?? 0;
+  }catch(e){}
+}
+
+async function createDuel(oppId){
+  if (!sb || !sbSession){ toast("Duels need an account"); return; }
+  try{
+    const ends = new Date(Date.now() + 48 * 36e5).toISOString();
+    await sb.from("duels").insert({ challenger: sbSession.user.id, opponent: oppId, ends_at: ends });
+    toast("Duel is live — 48 hours, most models wins");
+    loadDuels();
+  }catch(e){ toast("Couldn't start the duel"); }
+}
+async function loadDuels(){
+  const box = $("duelList");
+  if (!box || !sb || !sbSession) return;
+  try{
+    const me = sbSession.user.id;
+    const { data: ds } = await sb.from("duels").select("id,challenger,opponent,starts_at,ends_at")
+      .or("challenger.eq." + me + ",opponent.eq." + me)
+      .order("created_at", { ascending: false }).limit(5);
+    if (!ds || !ds.length){ box.innerHTML = '<p class="pfnote">No duels yet. Hit ⚔ on a crew member.</p>'; return; }
+    const ids = [...new Set(ds.flatMap(d => [d.challenger, d.opponent]))];
+    const minStart = ds.reduce((a, d) => a < d.starts_at ? a : d.starts_at, ds[0].starts_at);
+    const [profsRes, capsRes] = await Promise.all([
+      sb.from("profiles").select("id,handle").in("id", ids),
+      sb.from("captures").select("user_id,cx_key,created_at").in("user_id", ids).gte("created_at", minStart).is("flagged", null)
+    ]);
+    const profs = profsRes.data || [], caps = capsRes.data || [];
+    const nameOf = id => { const pp = profs.find(x => x.id === id); return pp ? "@" + pp.handle : "hunter"; };
+    box.innerHTML = ds.map(d => {
+      const score = uid => new Set(caps.filter(c => c.user_id === uid && c.cx_key && c.created_at >= d.starts_at && c.created_at <= d.ends_at).map(c => c.cx_key)).size;
+      const a = score(d.challenger), b = score(d.opponent);
+      const over = Date.now() > new Date(d.ends_at).getTime();
+      const left = Math.max(0, Math.round((new Date(d.ends_at).getTime() - Date.now()) / 36e5));
+      const status = over ? (a === b ? "DRAW" : (a > b ? nameOf(d.challenger) : nameOf(d.opponent)) + " WINS") : left + "h LEFT";
+      return `<div class="crewrow"><span class="hd" style="font-size:12.5px">${nameOf(d.challenger)} ${a} — ${b} ${nameOf(d.opponent)}</span><span class="ty">${status}</span></div>`;
+    }).join("");
+  }catch(e){}
+}
+
+async function fillFeed(){
+  const box = $("crewFeed");
+  if (!box) return;
+  if (!(sb && sbSession)){ box.innerHTML = ""; return; }
+  const ids = state.crew.map(c => c.id).filter(Boolean);
+  if (!ids.length){ box.innerHTML = '<p class="pfnote">Crew spots land here once your crew is synced.</p>'; return; }
+  try{
+    const { data } = await sb.from("captures").select("user_id,cx_name,make,model,created_at")
+      .in("user_id", ids).is("flagged", null)
+      .order("created_at", { ascending: false }).limit(12);
+    if (!data || !data.length){ box.innerHTML = '<p class="pfnote">Quiet out there. For now.</p>'; return; }
+    box.innerHTML = data.map(c => {
+      const who = state.crew.find(x => x.id === c.user_id);
+      const nm = c.cx_name || ((c.make || "") + " " + (c.model || "")).trim();
+      return `<div class="redemption"><span>@${esc(who ? (who.handle || who.code) : "crew")} · ${esc(nm)}</span><b>${ago(c.created_at)}</b></div>`;
+    }).join("");
+  }catch(e){ box.innerHTML = ""; }
+}
+
+let othersCells = [];
+let terrCache = { key: "", ts: 0, rows: [] };
+async function overlayTerritory(ctx, X, Y, minLa, maxLa, minLo, maxLo){
+  othersCells = [];
+  if (!sb || !sbSession) return;
+  try{
+    const la1 = Math.floor(minLa / 0.01), la2 = Math.floor(maxLa / 0.01);
+    const lo1 = Math.floor(minLo / 0.01), lo2 = Math.floor(maxLo / 0.01);
+    const key = la1 + "_" + la2 + "_" + lo1 + "_" + lo2;
+    let rows = terrCache.rows;
+    if (terrCache.key !== key || Date.now() - terrCache.ts > 60000){
+      const { data } = await sb.from("cell_owners").select("cell_la,cell_lo,user_id,cnt")
+        .gte("cell_la", la1).lte("cell_la", la2)
+        .gte("cell_lo", lo1).lte("cell_lo", lo2).limit(400);
+      rows = data || [];
+      const ids = [...new Set(rows.map(r => r.user_id))].filter(id => id !== sbSession.user.id);
+      let profs = [];
+      if (ids.length){
+        const res = await sb.from("profiles").select("id,handle").in("id", ids);
+        profs = res.data || [];
+      }
+      rows.forEach(r => { const pp = profs.find(x => x.id === r.user_id); r.handle = pp ? pp.handle : null; });
+      terrCache = { key, ts: Date.now(), rows };
+    }
+    rows.forEach(r => {
+      if (r.user_id === sbSession.user.id) return;
+      const x1 = X(r.cell_lo * 0.01), x2 = X((r.cell_lo + 1) * 0.01);
+      const y1 = Y((r.cell_la + 1) * 0.01), y2 = Y(r.cell_la * 0.01);
+      ctx.fillStyle = "rgba(94,151,255," + Math.min(.08 + r.cnt * .04, .3) + ")";
+      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+      othersCells.push({ x1, y1, x2, y2, r });
+    });
+  }catch(e){}
+}
+
 /* ================= BOOT ================= */
 (async function boot(){
   const saved = await Store.load();
@@ -2151,9 +3087,11 @@ window.addEventListener("online", processQueue);
   renderHUD();
   renderEventPill();
   renderQueuePill();
+  renderInstallPill();
   await Store.save();
   initSupabase();
-  startCam();
+  if (state.seenIntro){ startCam(); }
+  else { $("intro").classList.add("on"); }
   if (navigator.onLine) processQueue();
 })();
 </script>
