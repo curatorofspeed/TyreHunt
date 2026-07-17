@@ -233,6 +233,82 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .dgrid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hv{display:inline-flex;align-items:center;gap:4px;font:800 9px var(--disp);letter-spacing:.14em;color:var(--ok);border:1px solid rgba(62,207,142,.4);border-radius:999px;padding:3px 8px}
 
+#vQuests .qhit{display:flex;justify-content:space-between;font:700 12px var(--mono);letter-spacing:.04em;color:var(--ok);border:1px solid rgba(62,207,142,.35);background:rgba(62,207,142,.07);border-radius:12px;padding:10px 13px;margin-top:10px}
+
+/* profile / crew */
+#profile{position:absolute;inset:0;z-index:24;display:none;flex-direction:column;background:var(--carbon)}
+#profile.on{display:flex}
+#tagCard{background:linear-gradient(160deg,#191512,#100E0B 60%);border:1px solid rgba(255,194,75,.3);border-radius:20px;padding:20px;text-align:center}
+#tagCard .th{font-size:26px;font-weight:900;letter-spacing:.02em}
+#tagCard .tc{font:700 15px var(--mono);color:var(--gold);letter-spacing:.12em;margin-top:6px}
+.qrwrap{background:#fff;border-radius:14px;padding:10px;width:max-content;margin:16px auto 4px}
+.pfnote{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:12px;text-align:center}
+.crewrow{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:9px}
+.crewrow .rk{font:800 12px var(--mono);color:var(--muted);width:18px}
+.crewrow .hd{font-weight:700;font-size:14px}
+.crewrow.me{border-color:rgba(255,138,30,.45)}
+.crewrow .ty{margin-left:auto;font:700 13px var(--mono);color:var(--gold)}
+.crewrow .rm{color:var(--muted);font-size:16px;padding:2px 6px}
+.streak{cursor:pointer}
+
+/* segmented control */
+.seg{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;width:max-content;margin-top:10px}
+.seg button{font:800 10px var(--disp);letter-spacing:.16em;color:var(--muted);padding:7px 14px;border-radius:999px}
+.seg button.on{background:rgba(255,138,30,.14);color:var(--ember)}
+
+/* codex */
+#cxHead{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+#cxHead .pct{font:800 24px var(--mono);color:var(--gold)}
+#cxHead .sub{font:700 10px var(--disp);color:var(--muted);letter-spacing:.16em}
+#cxGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.cxcard{background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden;text-align:left}
+.cxcard .cph{aspect-ratio:1/1;background:#000 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.12);font:900 30px var(--disp)}
+.cxcard.lk .cph{background:#0E1013}
+.cxcard .cin{padding:7px 8px 8px}
+.cxcard .cno{font:700 8.5px var(--mono);color:var(--muted);letter-spacing:.1em}
+.cxcard .cnm{font-weight:800;font-size:10.5px;line-height:1.25;margin-top:2px;min-height:26px}
+.cxcard.lk .cnm{color:var(--muted)}
+.cxcard .cpop{font:600 8.5px var(--mono);color:var(--gold);margin-top:3px}
+.cxcard.lk .cpop{color:rgba(152,160,172,.55)}
+
+/* sets & wanted */
+.qcard.want{border-color:rgba(255,194,75,.5);background:linear-gradient(160deg,#191512,#12100B)}
+.setchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.setchip{font:700 8px var(--disp);letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.setchip.got{color:var(--ok);border-color:rgba(62,207,142,.45)}
+
+/* power-ups */
+.pucard{display:flex;align-items:center;gap:13px;background:var(--panel);border:1px solid rgba(94,151,255,.35);border-radius:16px;padding:13px 14px;margin-bottom:11px}
+.puic{width:42px;height:42px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:1px solid rgba(94,151,255,.35);color:var(--pulse-hi)}
+
+/* codex-first chrome */
+.crest{width:26px;height:26px;border-radius:50%;background:#101218;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;color:var(--gold);box-shadow:0 0 10px rgba(255,194,75,.3);flex:0 0 auto}
+.crest.sm{width:20px;height:20px}
+#balhero .rname{font:900 34px var(--disp);letter-spacing:.08em;color:var(--gold);position:relative}
+#balhero .rstats{font:600 12px var(--mono);color:var(--muted);margin-top:10px;position:relative}
+#balhero .rnext{font-size:11px;color:var(--muted);margin-top:8px;position:relative}
+#badgeGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bdg{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;opacity:.5}
+.bdg.got{opacity:1;border-color:rgba(255,194,75,.45)}
+.bdg .bk{font:800 8px var(--disp);letter-spacing:.22em;color:var(--muted)}
+.bdg .bn{font-weight:800;font-size:12.5px;margin-top:4px;line-height:1.3}
+.bdg .bs{font:700 9px var(--mono);color:var(--muted);margin-top:6px;letter-spacing:.12em}
+.bdg.got .bs{color:var(--gold)}
+
+/* queue pill */
+#queuePill{position:relative;z-index:5;margin:6px auto 0;display:none;font:700 10px var(--mono);letter-spacing:.14em;color:var(--pulse-hi);border:1px solid rgba(110,160,255,.5);border-radius:999px;padding:6px 13px;background:rgba(12,14,19,.7)}
+
+/* expeditions */
+.expcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:11px}
+.exphead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.expthumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:11px}
+.expthumbs div{aspect-ratio:1/1;border-radius:9px;background:#000 center/cover no-repeat;border:1px solid var(--line)}
+
+/* hunting grounds */
+.place{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:11px}
+.place .prow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.place .phunt{font-size:11px;color:var(--ember);letter-spacing:.04em;margin-top:8px;font-weight:600}
+
 /* toast */
 #toast{position:absolute;left:50%;bottom:120px;transform:translate(-50%,20px);z-index:30;background:#171A22;border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;max-width:88%}
 #toast.on{opacity:1;transform:translate(-50%,0)}
@@ -256,7 +332,7 @@ input[type=file]{display:none}
   <div id="frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>
 
   <header id="hud">
-    <div class="streak" title="Day streak">
+    <div class="streak" id="profileBtn" role="button" tabindex="0" title="Your hunter tag">
       <svg width="52" height="52" viewBox="0 0 52 52">
         <circle cx="26" cy="26" r="22" fill="rgba(10,11,14,.7)" stroke="rgba(255,255,255,.1)" stroke-width="4"/>
         <circle id="streakArc" cx="26" cy="26" r="22" fill="none" stroke="url(#sg)" stroke-width="4" stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="138.2"/>
@@ -268,9 +344,9 @@ input[type=file]{display:none}
       <h1>TYRE HUNT</h1>
       <div class="sub">Spot &amp; Collect</div>
     </div>
-    <div class="balance" id="balancePill">
-      <div class="coin">T</div>
-      <div><span class="amt" id="balAmt">0</span><span class="lbl">TYRES</span></div>
+    <div class="balance" id="codexPill" role="button" tabindex="0" title="Open your codex">
+      <div class="crest"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+      <div><span class="amt" id="cxTop">0/60</span><span class="lbl" id="rankTop">ROOKIE</span></div>
     </div>
   </header>
 
@@ -281,9 +357,10 @@ input[type=file]{display:none}
   </div>
 
   <button id="eventPill">SET EVENT</button>
+  <button id="queuePill">● 0 QUEUED</button>
 
   <div id="detect">
-    <div class="ai" id="detIcon">AI</div>
+    <div class="ai" id="detIcon"><svg width="15" height="17" viewBox="0 0 13 15" fill="none"><path d="M6.5 1l5 2v4c0 3.2-2.1 5.6-5 7-2.9-1.4-5-3.8-5-7V3l5-2z" stroke="currentColor" stroke-width="1.3"/><path d="M4.3 7.4l1.6 1.6 2.9-3" stroke="currentColor" stroke-width="1.3"/></svg></div>
     <div>
       <div class="dt" id="detTitle">Verifying…</div>
       <div class="dc" id="detSub"><span class="spin"></span> Reading the shot</div>
@@ -303,15 +380,15 @@ input[type=file]{display:none}
         <div class="qt" id="questTitle">Spot a classic car</div>
         <div class="qd" id="questDesc">Snap a photo of any classic</div>
       </div>
-      <div class="pay"><div class="v" id="questPay">+75</div><div class="u">TYRES</div></div>
+      <div class="pay" id="questMark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="color:var(--ember)"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 1.5v4M22.5 12h-4M12 22.5v-4M1.5 12h4"/></svg></div>
     </div>
 
     <div id="verifynote">
       <div class="h">
         <svg width="13" height="15" viewBox="0 0 13 15" fill="none"><path d="M6.5 1l5 2v4c0 3.2-2.1 5.6-5 7-2.9-1.4-5-3.8-5-7V3l5-2z" stroke="currentColor" stroke-width="1.3"/><path d="M4.3 7.4l1.6 1.6 2.9-3" stroke="currentColor" stroke-width="1.3"/></svg>
-        AI VERIFY ON CAPTURE
+        VERIFIED ON CAPTURE
       </div>
-      <p>Every shot is checked on the spot. Approved captures earn you Tyres — plates blur automatically.</p>
+      <p>Every shot is verified and filed to your codex on the spot — plates blur automatically.</p>
     </div>
 
     <div id="controls">
@@ -334,12 +411,25 @@ input[type=file]{display:none}
       <div class="eyebrow">Collection</div>
       <h2>Garage</h2>
       <div class="meta" id="garageMeta">0 spots · 0 Tyres earned</div>
+      <div class="seg" id="gSeg">
+        <button data-seg="spots" class="on">SPOTS</button>
+        <button data-seg="codex">CODEX</button>
+      </div>
     </div>
     <div class="vbody">
-      <div id="ggrid"></div>
-      <div class="rowbtns">
-        <button class="btn" id="exportBtn">EXPORT DATA</button>
-        <button class="btn" id="importBtn">IMPORT DATA</button>
+      <div id="segSpots">
+        <div id="ggrid"></div>
+        <div class="rowbtns">
+          <button class="btn" id="exportBtn">EXPORT DATA</button>
+          <button class="btn" id="importBtn">IMPORT DATA</button>
+        </div>
+      </div>
+      <div id="segCodex" style="display:none">
+        <div id="cxHead">
+          <div class="pct" id="cxPct">0%</div>
+          <div class="sub" id="cxCount">0 / 60 SPOTTED</div>
+        </div>
+        <div id="cxGrid"></div>
       </div>
     </div>
   </section>
@@ -360,6 +450,10 @@ input[type=file]{display:none}
         <span><i class="dot" style="background:var(--r-legend)"></i>Legendary</span>
       </div>
       <div id="mapinfo"></div>
+      <div class="sechead">Expeditions</div>
+      <div id="expList"></div>
+      <div class="sechead">Hunting grounds</div>
+      <div id="groundList"></div>
     </div>
   </section>
 
@@ -376,20 +470,19 @@ input[type=file]{display:none}
   <!-- ============ REWARDS ============ -->
   <section class="view" id="view-rewards">
     <div class="vhead">
-      <div class="eyebrow">Ledger</div>
-      <h2>Rewards</h2>
-      <div class="meta">Earn on the street, spend here</div>
+      <div class="eyebrow">Standing</div>
+      <h2>Hall</h2>
+      <div class="meta">What you've spotted speaks for itself</div>
     </div>
     <div class="vbody">
       <div id="balhero">
-        <div class="bh" id="balBig">0</div>
-        <div class="bl">Tyre balance</div>
-        <div class="note">Spot payouts: everyday +10 · classic +75 · rare +150 · legendary +400</div>
+        <div class="rname" id="rankName">ROOKIE</div>
+        <div class="bl">Hunter rank</div>
+        <div class="rstats" id="rankStats">0 models · 0 rare · 0 legendary</div>
+        <div class="rnext" id="rankNext"></div>
       </div>
-      <div class="sechead">Redeem</div>
-      <div id="rewardList"></div>
-      <div class="sechead">History</div>
-      <div id="redemptionList"><div class="empty" style="padding:22px"><p>No redemptions yet.</p></div></div>
+      <div class="sechead">Badges</div>
+      <div id="badgeGrid"></div>
     </div>
   </section>
 
@@ -413,8 +506,8 @@ input[type=file]{display:none}
       <span class="tl">QUESTS</span>
     </button>
     <button class="tab" data-view="rewards">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M4 12.5h16M12 9v11M12 9s-4.5.3-5.5-2C5.6 4.9 8.5 3.4 10 5c1.2 1.3 2 4 2 4s.8-2.7 2-4c1.5-1.6 4.4-.1 3.5 2-1 2.3-5.5 2-5.5 2z"/></svg>
-      <span class="tl">REWARDS</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H4.5v1.5A3.5 3.5 0 0 0 8 10M17 5h2.5v1.5A3.5 3.5 0 0 1 16 10"/><path d="M12 14v3M8.5 20h7M9.5 17h5"/></svg>
+      <span class="tl">HALL</span>
     </button>
   </nav>
 
@@ -431,15 +524,30 @@ input[type=file]{display:none}
       </div>
       <p class="blurb" id="vBlurb"></p>
       <div class="payline" id="vPayline">
-        <div class="coin sm">T</div>
-        <div><div class="pv" id="vPay">+0</div><div class="pl">TYRES EARNED · SAVED TO GARAGE</div></div>
+        <div class="crest sm"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+        <div><div class="pv" id="vPay">—</div><div class="pl" id="vPayLbl">FILED TO CODEX</div></div>
       </div>
+      <div id="vQuests"></div>
       <div class="miss" id="vMiss" style="display:none"></div>
       <div class="vbtns">
         <button class="btn hot" id="vAgain">HUNT AGAIN</button>
+        <button class="btn" id="vShare">SHARE</button>
       </div>
     </div>
   </div>
+
+  <!-- ============ PROFILE / CREW ============ -->
+  <section id="profile">
+    <div class="vhead" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div>
+        <div class="eyebrow">Hunter</div>
+        <h2>Your Tag</h2>
+        <div class="meta" id="pfMeta">Claim a tag to hunt with a crew</div>
+      </div>
+      <button id="pfClose" style="background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-weight:800;font-size:11px;letter-spacing:.12em;flex:0 0 auto">CLOSE</button>
+    </div>
+    <div id="pfBody" class="vbody"></div>
+  </section>
 
   <!-- ============ DOSSIER ============ -->
   <section id="dossier">
@@ -480,9 +588,57 @@ input[type=file]{display:none}
 
 <script>
 /* ================= CONFIG ================= */
+/* ---- Supabase schema — paste into the SQL editor, fill CONFIG, and accounts go live ----
+create table profiles (
+  id uuid primary key references auth.users on delete cascade,
+  handle text unique not null,
+  code text unique not null,
+  models int default 0, legends int default 0, streak int default 0, spots int default 0,
+  updated_at timestamptz default now()
+);
+create table friends (
+  user_id uuid references profiles(id) on delete cascade,
+  friend_id uuid references profiles(id) on delete cascade,
+  primary key (user_id, friend_id)
+);
+alter table profiles enable row level security;
+alter table friends enable row level security;
+create policy "profiles read" on profiles for select to authenticated using (true);
+create policy "profiles self insert" on profiles for insert to authenticated with check (auth.uid() = id);
+create policy "profiles self update" on profiles for update to authenticated using (auth.uid() = id);
+create policy "friends self" on friends for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create table captures (
+  id bigint generated always as identity primary key,
+  user_id uuid references profiles(id) on delete cascade,
+  make text, model text, year_range text,
+  rarity text, classification text, confidence int,
+  decade text, tags text[], tyres int,
+  phash text, source text, flagged text,
+  event text, lat double precision, lng double precision,
+  taken_at timestamptz, created_at timestamptz default now()
+);
+alter table captures enable row level security;
+create policy "captures read" on captures for select to authenticated using (true);
+create policy "captures self insert" on captures for insert to authenticated with check (auth.uid() = user_id);
+-- the census, one line:
+-- create view model_census as
+--   select make, model, count(*) sightings, count(distinct user_id) hunters,
+--          min(created_at) first_seen from captures group by 1, 2;
+-- photos: create a public storage bucket "captures" when ready; thumbs upload next pass.
+-- ANTI-CHEAT, server side — REQUIRED before Tyres bridge to TYRE on Base:
+--   everything in this file is client-authoritative and therefore advisory.
+--   final architecture: client uploads photo + meta -> edge function runs the
+--   vision verifier server-side, dedupes phash across ALL users, rate-limits
+--   per user, sanity-checks geo, computes payout, writes an append-only ledger.
+--   the client never writes tyres. until then, do not flip the bridge on.
+-- create index captures_phash_idx on captures (phash);  -- cross-user dupe lookups
+------------------------------------------------------------------------------------------ */
 const CONFIG = {
   apiKey: "",            // self-hosted: paste an Anthropic API key. Inside claude.ai artifacts, leave blank.
   model: "claude-sonnet-4-6",
+  supabaseUrl: "",       // e.g. https://xyz.supabase.co — blank = local play, no accounts
+  supabaseAnon: "",      // anon public key
+  strictCapture: false,  // true = only live camera captures pay; gallery/file imports save at 0
   thumbEdge: 640,        // stored thumbnail long edge
   sendEdge: 1100         // long edge sent to the verifier
 };
@@ -492,9 +648,13 @@ const KEY = "tyrehunt:v1";
 /* ================= STATE ================= */
 let state = {
   tyres: 0, streak: 0, lastSpotDay: null,
-  day: null, daySpots: 0, dayBonus: false, dayClassic: false, dayRare: false, dayLegend: false,
+  day: null, daySpots: 0, dayBonus: false, dayQ: { ids: [], done: {} }, dayMakes: [],
+  profile: null, crew: [],
   activeEvent: "",
-  spots: [], redemptions: []
+  week: null, wantedIds: [], wantedDone: {}, setsDone: {}, badges: {},
+  boosts: { shield: 0, turboUntil: 0 },
+  lastPaidTs: 0, dayPaid: 0,
+  spots: [], redemptions: [], queue: []
 };
 const $ = id => document.getElementById(id);
 const dayKey = (d=new Date()) => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -516,8 +676,298 @@ function ensureDay(){
   const t = dayKey();
   if (state.day !== t){
     state.day = t; state.daySpots = 0; state.dayBonus = false;
-    state.dayClassic = false; state.dayRare = false; state.dayLegend = false;
+    state.dayMakes = []; state.dayQ = { ids: [], done: {} };
+    state.dayPaid = 0;
   }
+  if (!state.dayQ || !Array.isArray(state.dayQ.ids)) state.dayQ = { ids: [], done: {} };
+  if (!Array.isArray(state.dayMakes)) state.dayMakes = [];
+  if (!state.dayQ.ids.length) state.dayQ.ids = dailyQuests();
+  const wk = Math.floor(Date.now() / 6048e5);
+  if (state.week !== wk){ state.week = wk; state.wantedDone = {}; state.wantedIds = pickWanted(wk); }
+  if (!Array.isArray(state.wantedIds) || !state.wantedIds.length) state.wantedIds = pickWanted(wk);
+  if (!state.wantedDone) state.wantedDone = {};
+  if (!state.setsDone) state.setsDone = {};
+  if (!state.badges) state.badges = {};
+  if (!Array.isArray(state.queue)) state.queue = [];
+  if (!state.boosts) state.boosts = { shield: 0, turboUntil: 0 };
+  if (typeof state.dayPaid !== "number") state.dayPaid = 0;
+}
+
+/* ================= QUEST POOL ================= */
+const MAKESETS = {
+  jdm: ["toyota","nissan","honda","mazda","subaru","mitsubishi","lexus","acura","infiniti","datsun","suzuki","isuzu"],
+  italian: ["ferrari","lamborghini","maserati","alfa","fiat","lancia","pagani","abarth","de tomaso"],
+  british: ["aston","jaguar","land rover","range rover","bentley","rolls","lotus","mclaren","mini","mg ","triumph","morgan","tvr","austin","caterham"],
+  american: ["ford","chevrolet","chevy","dodge","plymouth","pontiac","buick","cadillac","oldsmobile","amc","shelby","chrysler","gmc","lincoln","mercury","jeep","ram"]
+};
+const inSet = (a, list) => list.some(m => a.make.includes(m));
+const QUEST_POOL = [
+  // marque hunts
+  { id:"ferrari",  cat:"M", name:"Prancing Horse", desc:"Capture any Ferrari", pay:200, match:a=>a.make.includes("ferrari") },
+  { id:"porsche",  cat:"M", name:"Stuttgart Crest", desc:"Capture any Porsche", pay:150, match:a=>a.make.includes("porsche") },
+  { id:"lambo",    cat:"M", name:"Raging Bull", desc:"Capture any Lamborghini", pay:200, match:a=>a.make.includes("lamborghini") },
+  { id:"bmw",      cat:"M", name:"The Roundel", desc:"Capture any BMW", pay:50, match:a=>a.make.includes("bmw") },
+  { id:"merc",     cat:"M", name:"Three-Pointed Star", desc:"Capture any Mercedes", pay:50, match:a=>a.make.includes("mercedes") },
+  { id:"jdm",      cat:"M", name:"Rising Sun", desc:"Capture any Japanese marque", pay:50, match:a=>inSet(a, MAKESETS.jdm) },
+  { id:"italian",  cat:"M", name:"The Italian Job", desc:"Capture any Italian marque", pay:100, match:a=>inSet(a, MAKESETS.italian) },
+  { id:"british",  cat:"M", name:"British Steel", desc:"Capture any British marque", pay:75, match:a=>inSet(a, MAKESETS.british) },
+  { id:"mustang",  cat:"M", name:"Pony Up", desc:"Capture a Ford Mustang", pay:75, match:a=>a.make.includes("ford") && a.model.includes("mustang") },
+  { id:"corvette", cat:"M", name:"America's Sports Car", desc:"Capture a Corvette", pay:75, match:a=>a.model.includes("corvette") },
+  // body & build
+  { id:"racecar",  cat:"B", name:"The Race Car", desc:"Livery, numbers, full race prep", pay:250, match:a=>a.tags.includes("race_car") },
+  { id:"droptop",  cat:"B", name:"Drop Top", desc:"Capture a convertible", pay:50, match:a=>a.tags.includes("convertible") },
+  { id:"longroof", cat:"B", name:"Longroof Society", desc:"Capture a wagon", pay:75, match:a=>a.tags.includes("wagon") },
+  { id:"pickup",   cat:"B", name:"Work Horse", desc:"Capture a pickup", pay:30, match:a=>a.tags.includes("pickup") },
+  { id:"moto",     cat:"B", name:"Two Wheels", desc:"Capture a motorcycle", pay:50, match:a=>a.tags.includes("motorcycle") },
+  { id:"wing",     cat:"B", name:"Cleared for Takeoff", desc:"Capture a big rear wing", pay:75, match:a=>a.tags.includes("big_wing") },
+  { id:"wide",     cat:"B", name:"Widebody", desc:"Flares and stance", pay:100, match:a=>a.tags.includes("widebody") },
+  { id:"mud",      cat:"B", name:"Mud Plugger", desc:"Lifted 4x4 or overland rig", pay:50, match:a=>a.tags.includes("lifted_4x4") },
+  // eras
+  { id:"prewar",   cat:"E", name:"Pre-War Iron", desc:"Capture anything pre-1946", pay:400, match:a=>a.decade==="pre-1946" },
+  { id:"fifties",  cat:"E", name:"Fins & Chrome", desc:"Capture a 1950s machine", pay:250, match:a=>a.decade==="1950s" },
+  { id:"muscle",   cat:"E", name:"Muscle Era", desc:"American muscle, '60s–'70s", pay:150, match:a=>a.tags.includes("american_muscle") || (inSet(a, MAKESETS.american) && (a.decade==="1960s" || a.decade==="1970s")) },
+  { id:"radwood",  cat:"E", name:"Radwood Hero", desc:"Capture an '80s or '90s hero", pay:100, match:a=>a.decade==="1980s" || a.decade==="1990s" },
+  { id:"aircool",  cat:"E", name:"Air-Cooled", desc:"No radiator, all character", pay:150, match:a=>a.tags.includes("air_cooled") },
+  { id:"y2k",      cat:"E", name:"New Millennium", desc:"Capture a 2000s car", pay:40, match:a=>a.decade==="2000s" },
+  // wildcards
+  { id:"rosso",    cat:"W", name:"Rosso Corsa", desc:"Capture a red car", pay:40, match:a=>a.color==="red" },
+  { id:"green",    cat:"W", name:"Racing Green", desc:"Capture a green car", pay:50, match:a=>a.color==="green" },
+  { id:"loud",     cat:"W", name:"Highlighter Pack", desc:"Yellow or orange paint", pay:50, match:a=>a.color==="yellow" || a.color==="orange" },
+  { id:"murdered", cat:"W", name:"Murdered Out", desc:"Capture a black car", pay:30, match:a=>a.color==="black" },
+  { id:"unicorn",  cat:"W", name:"The Unicorn", desc:"Land a legendary", pay:400, match:a=>a.rarity==="legendary" },
+  { id:"badges",   cat:"W", name:"Badge Collector", desc:"Three different makes today", pay:100, match:a=>a.dayMakesCount>=3, prog:()=>Math.min((state.dayMakes||[]).length,3)+" / 3" }
+];
+const questById = id => QUEST_POOL.find(q => q.id === id);
+function dailyQuests(){
+  const s = state.day || dayKey();
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  const rnd = () => { h = (h * 1664525 + 1013904223) >>> 0; return h / 4294967296; };
+  return ["M","B","E","W"].map(c => {
+    const opts = QUEST_POOL.filter(q => q.cat === c);
+    return opts[Math.floor(rnd() * opts.length)].id;
+  });
+}
+function renderFeaturedQuest(){
+  const el = $("questTitle");
+  if (!el) return;
+  const next = ((state.dayQ && state.dayQ.ids) || []).map(questById).filter(Boolean).find(q => !state.dayQ.done[q.id]);
+  if (next){
+    el.textContent = next.name;
+    $("questDesc").textContent = next.desc;
+  } else {
+    el.textContent = "Hunts cleared";
+    $("questDesc").textContent = "Fresh targets drop at midnight";
+  }
+}
+
+/* ================= ANTI-CHEAT (client deterrence) ================= */
+function aHash(canvas){
+  const t = document.createElement("canvas");
+  t.width = 8; t.height = 8;
+  const cx = t.getContext("2d");
+  cx.drawImage(canvas, 0, 0, 8, 8);
+  const d = cx.getImageData(0, 0, 8, 8).data;
+  const g = [];
+  for (let i = 0; i < 64; i++){
+    const o = i * 4;
+    g.push(d[o] * .299 + d[o+1] * .587 + d[o+2] * .114);
+  }
+  const avg = g.reduce((a, b) => a + b, 0) / 64;
+  let hex = "";
+  for (let i = 0; i < 64; i += 4){
+    let n = 0;
+    for (let j = 0; j < 4; j++) n = (n << 1) | (g[i + j] > avg ? 1 : 0);
+    hex += n.toString(16);
+  }
+  return hex;
+}
+function hamming(a, b){
+  if (!a || !b || a.length !== b.length) return 64;
+  let d = 0;
+  for (let i = 0; i < a.length; i++){
+    let x = parseInt(a[i], 16) ^ parseInt(b[i], 16);
+    while (x){ d += x & 1; x >>= 1; }
+  }
+  return d;
+}
+function haversine(la1, lo1, la2, lo2){
+  const R = 6371, toR = x => x * Math.PI / 180;
+  const dLa = toR(la2 - la1), dLo = toR(lo2 - lo1);
+  const h = Math.sin(dLa/2) * Math.sin(dLa/2) + Math.cos(toR(la1)) * Math.cos(toR(la2)) * Math.sin(dLo/2) * Math.sin(dLo/2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/* ================= CODEX / SETS / WANTED ================= */
+function spotStr(s){ return ((s.make || "") + " " + (s.model || "")).toLowerCase(); }
+function hasTokens(str, m){
+  if (!m || !m.length) return false;
+  if (Array.isArray(m[0])) return m.some(g => g.every(t => str.includes(t)));
+  return m.every(t => str.includes(t));
+}
+function entryMatches(en, s){ return hasTokens(spotStr(s), en.m); }
+function matcherTest(mt, s){
+  if (mt.m && !hasTokens(spotStr(s), mt.m)) return false;
+  if (mt.tag && !(s.tags || []).includes(mt.tag)) return false;
+  if (mt.decades && !mt.decades.includes(s.decade)) return false;
+  return true;
+}
+const CODEX_SEED = [
+  { name:"Ferrari F40", tier:"legendary", m:["ferrari","f40"] },
+  { name:"Ferrari Enzo", tier:"legendary", m:["ferrari","enzo"] },
+  { name:"Ferrari 250", tier:"legendary", m:["ferrari","250"] },
+  { name:"Lamborghini Miura", tier:"legendary", m:["miura"] },
+  { name:"Lamborghini Countach", tier:"legendary", m:["countach"] },
+  { name:"McLaren F1", tier:"legendary", m:[["mclaren","f1"]] },
+  { name:"Porsche 959", tier:"legendary", m:["porsche","959"] },
+  { name:"Porsche Carrera GT", tier:"legendary", m:["carrera gt"] },
+  { name:"Mercedes 300SL", tier:"legendary", m:[["300sl"],["300 sl"]] },
+  { name:"Toyota 2000GT", tier:"legendary", m:[["2000gt"],["2000 gt"]] },
+  { name:"Ford GT40", tier:"legendary", m:[["gt40"],["gt 40"]] },
+  { name:"Shelby Cobra", tier:"legendary", m:["cobra"] },
+  { name:"Bugatti Veyron", tier:"legendary", m:["veyron"] },
+  { name:"Pagani", tier:"legendary", m:["pagani"] },
+  { name:"Koenigsegg", tier:"legendary", m:["koenigsegg"] },
+  { name:"Lancia Stratos", tier:"legendary", m:["stratos"] },
+  { name:"Ferrari Testarossa", tier:"rare", m:["testarossa"] },
+  { name:"Ferrari F355", tier:"rare", m:[["f355"],["ferrari","355"]] },
+  { name:"Porsche 911 GT3", tier:"rare", m:[["porsche","gt3"]] },
+  { name:"Porsche 930 Turbo", tier:"rare", m:[["930"],["porsche","turbo"]] },
+  { name:"Honda NSX", tier:"rare", m:[["nsx"]] },
+  { name:"Nissan Skyline GT-R", tier:"rare", m:[["skyline"],["gt-r"],["gtr"]] },
+  { name:"Toyota Supra", tier:"rare", m:["supra"] },
+  { name:"Mazda RX-7", tier:"rare", m:[["rx-7"],["rx7"]] },
+  { name:"Lancia Delta Integrale", tier:"rare", m:[["integrale"],["lancia","delta"]] },
+  { name:"Audi Quattro", tier:"rare", m:[["audi","quattro"]] },
+  { name:"BMW M3", tier:"rare", m:[["bmw","m3"]] },
+  { name:"Lotus Esprit", tier:"rare", m:["esprit"] },
+  { name:"DeLorean DMC-12", tier:"rare", m:["delorean"] },
+  { name:"Ford GT", tier:"rare", m:[["ford","gt"]] },
+  { name:"Dodge Viper", tier:"rare", m:["viper"] },
+  { name:"Lamborghini Huracán", tier:"rare", m:[["hurac"]] },
+  { name:"VW Beetle", tier:"classic", m:["beetle"] },
+  { name:"VW Bus", tier:"classic", m:[["type 2"],["kombi"],["vanagon"],["microbus"],["vw bus"],["volkswagen bus"]] },
+  { name:"Ford Mustang", tier:"classic", m:["mustang"] },
+  { name:"Chevrolet Camaro", tier:"classic", m:["camaro"] },
+  { name:"Chevrolet Corvette", tier:"classic", m:["corvette"] },
+  { name:"Dodge Charger", tier:"classic", m:["charger"] },
+  { name:"Classic Mini", tier:"classic", m:[["mini","cooper"],["austin","mini"],["morris","mini"]] },
+  { name:"Alfa Romeo", tier:"classic", m:["alfa"] },
+  { name:"MGB", tier:"classic", m:[["mgb"],["mg b"]] },
+  { name:"Triumph", tier:"classic", m:["triumph"] },
+  { name:"Datsun Z", tier:"classic", m:[["240z"],["260z"],["280z"],["fairlady"]] },
+  { name:"Mercedes SL", tier:"classic", m:[["mercedes","sl"]] },
+  { name:"BMW 2002", tier:"classic", m:[["bmw","2002"]] },
+  { name:"Citroën DS", tier:"classic", m:[["citro","ds"]] },
+  { name:"Karmann Ghia", tier:"classic", m:["karmann"] },
+  { name:"Ford Bronco", tier:"classic", m:["bronco"] },
+  { name:"Mazda Miata", tier:"everyday", m:[["miata"],["mx-5"],["mx5"]] },
+  { name:"VW Golf GTI", tier:"everyday", m:["gti"] },
+  { name:"Subaru WRX", tier:"everyday", m:[["wrx"],["sti"]] },
+  { name:"Civic Type R", tier:"everyday", m:[["type r"]] },
+  { name:"Jeep Wrangler", tier:"everyday", m:["wrangler"] },
+  { name:"Land Rover Defender", tier:"everyday", m:["defender"] },
+  { name:"Toyota Land Cruiser", tier:"everyday", m:["land cruiser"] },
+  { name:"Tesla Cybertruck", tier:"everyday", m:["cybertruck"] },
+  { name:"Tesla Model S", tier:"everyday", m:[["model s"]] },
+  { name:"Porsche Cayman / Boxster", tier:"everyday", m:[["cayman"],["boxster"]] },
+  { name:"Ford F-150", tier:"everyday", m:[["f-150"],["f150"]] },
+  { name:"Toyota Tacoma", tier:"everyday", m:["tacoma"] }
+].map((e, i) => ({ ...e, n: i + 1 }));
+
+const RANKS = [
+  { name:"ROOKIE",  req:"", need: () => true },
+  { name:"SPOTTER", req:"5 models", need: s => s.models >= 5 },
+  { name:"HUNTER",  req:"15 models · 2 rare", need: s => s.models >= 15 && s.rare >= 2 },
+  { name:"CURATOR", req:"30 models · 8 rare · 1 legendary", need: s => s.models >= 30 && s.rare >= 8 && s.legend >= 1 },
+  { name:"LEGEND",  req:"45 models · 5 legendary", need: s => s.models >= 45 && s.legend >= 5 }
+];
+function hunterStats(){
+  const models = new Set(), rare = new Set(), legend = new Set();
+  state.spots.forEach(s => {
+    if (s.flagged) return;
+    const en = CODEX_SEED.find(e => entryMatches(e, s));
+    const key = en ? "n" + en.n : spotStr(s).trim();
+    models.add(key);
+    if (s.rarity === "rare" || s.rarity === "legendary") rare.add(key);
+    if (s.rarity === "legendary") legend.add(key);
+  });
+  return { models: models.size, rare: rare.size, legend: legend.size };
+}
+function currentRank(st){
+  let r = RANKS[0];
+  RANKS.forEach(x => { if (x.need(st)) r = x; });
+  return r;
+}
+
+const SETS = [
+  { id:"poster-wall", name:"Poster Wall", desc:"The '80s bedroom lineup", bonus:1000, needs:[
+    { label:"Countach", m:["countach"] }, { label:"Testarossa", m:["testarossa"] },
+    { label:"F40", m:["f40"] }, { label:"911 Turbo", m:[["930"],["porsche","turbo"]] } ] },
+  { id:"jdm-heroes", name:"JDM Heroes", desc:"The golden-era imports", bonus:600, needs:[
+    { label:"Supra", m:["supra"] }, { label:"GT-R", m:[["gt-r"],["gtr"],["skyline"]] },
+    { label:"NSX", m:[["nsx"]] }, { label:"RX-7", m:[["rx-7"],["rx7"]] },
+    { label:"Miata", m:[["miata"],["mx-5"],["mx5"]] } ] },
+  { id:"muscle-row", name:"Muscle Row", desc:"Detroit's finest hour", bonus:400, needs:[
+    { label:"Mustang", m:["mustang"] }, { label:"Camaro", m:["camaro"] },
+    { label:"Mopar", m:[["charger"],["challenger"],["cuda"]] }, { label:"Corvette", m:["corvette"] } ] },
+  { id:"air-cooled", name:"Air-Cooled Icons", desc:"No radiator, all character", bonus:500, needs:[
+    { label:"Air-cooled 911", m:["porsche","911"], decades:["1960s","1970s","1980s","1990s"] },
+    { label:"Beetle", m:["beetle"] },
+    { label:"Vintage Bus", m:[["type 2"],["kombi"],["vanagon"],["microbus"]] } ] },
+  { id:"track-rats", name:"Track Rats", desc:"Built, not bought", bonus:500, needs:[
+    { label:"Race car", tag:"race_car" }, { label:"Big wing", tag:"big_wing" }, { label:"Widebody", tag:"widebody" } ] },
+  { id:"open-air", name:"Open Air Club", desc:"Three distinct drop tops", bonus:300, needs:[
+    { label:"Drop top 1", tag:"convertible" }, { label:"Drop top 2", tag:"convertible" }, { label:"Drop top 3", tag:"convertible" } ] },
+  { id:"exotic-trinity", name:"Exotic Trinity", desc:"The holy badges", bonus:750, needs:[
+    { label:"Ferrari", m:["ferrari"] }, { label:"Lamborghini", m:["lamborghini"] }, { label:"McLaren", m:["mclaren"] } ] },
+  { id:"work-fleet", name:"Work Fleet", desc:"The ones that earn their keep", bonus:250, needs:[
+    { label:"Pickup", tag:"pickup" }, { label:"Van", tag:"van" }, { label:"4x4", tag:"lifted_4x4" } ] },
+  { id:"radwood-five", name:"Radwood Five", desc:"Three '80s, two '90s", bonus:400, needs:[
+    { label:"'80s 1", decades:["1980s"] }, { label:"'80s 2", decades:["1980s"] }, { label:"'80s 3", decades:["1980s"] },
+    { label:"'90s 1", decades:["1990s"] }, { label:"'90s 2", decades:["1990s"] } ] }
+];
+function setProgress(set){
+  const used = new Set();
+  return set.needs.map(mt => {
+    const s = state.spots.find(sp => !used.has(sp.id) && matcherTest(mt, sp));
+    if (s){ used.add(s.id); return true; }
+    return false;
+  });
+}
+function checkSets(){
+  const hits = [];
+  SETS.forEach(set => {
+    if (state.setsDone[set.id]) return;
+    if (setProgress(set).every(Boolean)){
+      state.setsDone[set.id] = true;
+      hits.push({ label: "SET", name: set.name });
+    }
+  });
+  return hits;
+}
+
+const WANTED_POOL = [
+  { id:"countach", name:"Lamborghini Countach", pay:1500, m:["countach"] },
+  { id:"f40", name:"Ferrari F40", pay:1500, m:["f40"] },
+  { id:"mcf1", name:"McLaren F1", pay:3000, m:[["mclaren","f1"]] },
+  { id:"2000gt", name:"Toyota 2000GT", pay:2500, m:[["2000gt"],["2000 gt"]] },
+  { id:"miura", name:"Lamborghini Miura", pay:2000, m:["miura"] },
+  { id:"300sl", name:"Mercedes 300SL", pay:2000, m:[["300sl"],["300 sl"]] },
+  { id:"gt3rs", name:"Porsche 911 GT3 RS", pay:800, m:["gt3 rs"] },
+  { id:"testa", name:"Ferrari Testarossa", pay:1000, m:["testarossa"] },
+  { id:"etype", name:"Jaguar E-Type", pay:900, m:[["e-type"],["etype"],["xke"]] },
+  { id:"integrale", name:"Lancia Delta Integrale", pay:900, m:[["integrale"]] },
+  { id:"r34", name:"Skyline GT-R R34", pay:900, m:[["r34"]] },
+  { id:"daytona", name:"Ferrari Daytona", pay:1200, m:[["ferrari","daytona"],["365 gtb"]] }
+];
+const wantedById = id => WANTED_POOL.find(w => w.id === id);
+function pickWanted(wk){
+  let h = ((wk || 0) * 2654435761) >>> 0;
+  const rnd = () => { h = (h * 1664525 + 1013904223) >>> 0; return h / 4294967296; };
+  const pool = WANTED_POOL.map(w => w.id);
+  for (let i = pool.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  return pool.slice(0, 3);
 }
 
 /* ================= UI helpers ================= */
@@ -529,18 +979,20 @@ function toast(msg){
 function fmt(n){ return n.toLocaleString("en-US"); }
 
 function renderHUD(){
-  $("balAmt").textContent = fmt(state.tyres);
-  $("balBig").textContent = fmt(state.tyres);
+  ensureDay();
+  const st = hunterStats();
+  $("cxTop").textContent = st.models + "/" + CODEX_SEED.length;
+  $("rankTop").textContent = currentRank(st).name;
   $("streakNum").textContent = state.streak;
   const C = 138.2, p = Math.min(state.streak/30, 1);
   $("streakArc").style.strokeDashoffset = C * (1 - p);
-  ensureDay();
   const n = Math.min(state.daySpots, 3);
   $("chN").textContent = n;
   $("chBar").style.width = (n/3*100) + "%";
+  renderFeaturedQuest();
 }
 function bumpBalance(){
-  const b = $("balancePill"); b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+  const b = $("codexPill"); b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
 }
 
 /* ================= TABS ================= */
@@ -549,7 +1001,7 @@ function show(view){
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.view === view));
   views.forEach(v => $("view-"+v).classList.toggle("on", v === view));
   if (view === "garage") renderGarage();
-  if (view === "map") renderMap();
+  if (view === "map"){ renderMap(); renderExpeditions(); renderGrounds(); }
   if (view === "quests") renderQuests();
   if (view === "rewards") renderRewards();
 }
@@ -580,15 +1032,15 @@ $("flashBtn").addEventListener("click", async () => {
 });
 
 /* ================= CAPTURE PIPELINE ================= */
-let busy = false;
+let busy = false, lastQuestHits = [], lastVerdictSpot = null, lastRankUp = "";
 $("shutter").addEventListener("click", () => {
   if (busy) return;
   if (stream){ captureFromVideo(); }
   else { $("fileCam").click(); }
 });
 $("galleryBtn").addEventListener("click", () => { if (!busy) $("fileGal").click(); });
-$("fileCam").addEventListener("change", e => handleFile(e.target.files[0], e.target));
-$("fileGal").addEventListener("change", e => handleFile(e.target.files[0], e.target));
+$("fileCam").addEventListener("change", e => handleFile(e.target.files[0], e.target, "capture"));
+$("fileGal").addEventListener("change", e => handleFile(e.target.files[0], e.target, "import"));
 
 function captureFromVideo(){
   const v = $("cam");
@@ -596,9 +1048,9 @@ function captureFromVideo(){
   const c = $("work"), s = Math.min(1, CONFIG.sendEdge / Math.max(v.videoWidth, v.videoHeight));
   c.width = Math.round(v.videoWidth * s); c.height = Math.round(v.videoHeight * s);
   c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
-  runVerify(c);
+  runVerify(c, "camera");
 }
-function handleFile(file, input){
+function handleFile(file, input, src){
   if (!file) return;
   const img = new Image();
   img.onload = () => {
@@ -606,7 +1058,7 @@ function handleFile(file, input){
     const c = $("work"), s = Math.min(1, CONFIG.sendEdge / Math.max(img.width, img.height));
     c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
     c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-    runVerify(c);
+    runVerify(c, src);
   };
   img.onerror = () => toast("Couldn't read that image");
   img.src = URL.createObjectURL(file);
@@ -615,16 +1067,21 @@ function handleFile(file, input){
 
 const PROMPT = `You are the vision verifier for TYRE HUNT, a car-spotting game. Analyze the attached photo taken by a player on the street.
 Respond with ONLY minified JSON, no markdown fences, exactly this shape:
-{"is_vehicle":boolean,"make":string,"model":string,"year_range":string,"classification":"classic"|"exotic"|"sports"|"everyday"|"not_a_vehicle","rarity":"everyday"|"classic"|"rare"|"legendary","confidence":number,"plate_box":{"x":number,"y":number,"w":number,"h":number}|null,"blurb":string}
+{"is_vehicle":boolean,"make":string,"model":string,"year_range":string,"classification":"classic"|"exotic"|"sports"|"everyday"|"not_a_vehicle","rarity":"everyday"|"classic"|"rare"|"legendary","confidence":number,"authenticity":"live"|"suspect","decade":string,"color":string,"tags":string[],"plate_box":{"x":number,"y":number,"w":number,"h":number}|null,"blurb":string}
 Rules:
 - is_vehicle: true only if a real car, truck, or motorcycle is the clear subject (not a toy, poster, or screen).
 - classification: "classic" for collector-era cars (broadly pre-1995 or recognized modern classics), "exotic" for supercars/hypercars, "sports" for performance cars, "everyday" for common vehicles, "not_a_vehicle" otherwise.
 - rarity: "legendary" only for icons and hypercars (e.g. F40-tier, 250 GTO-tier, McLaren F1-tier, limited homologation specials). "rare" for exotics and limited performance models. "classic" for collector classics. "everyday" for everything else.
 - confidence: 0-100 certainty of the make/model identification.
+- authenticity: "suspect" if the image appears to be a photo of a screen or print (moiré, pixel grid, bezels, UI elements), a scale model or toy, a professional press/studio/catalog photo, watermarked, or otherwise unlikely to be a photo the player took themselves in the wild; else "live".
+- decade: the model's era, exactly one of "pre-1946","1950s","1960s","1970s","1980s","1990s","2000s","2010s","2020s".
+- color: primary body color as one lowercase word (e.g. "red","black","silver","grey","white","blue","green","yellow","orange","brown").
+- tags: every tag that clearly applies, chosen ONLY from ["race_car","convertible","wagon","pickup","suv","van","motorcycle","big_wing","widebody","lifted_4x4","air_cooled","american_muscle","lowrider","electric"]. race_car means livery, race numbers, or full race prep. Empty array if none apply.
 - plate_box: if a license plate is visible, its bounding box as PERCENTAGES of image width/height ({"x":left,"y":top,"w":width,"h":height}), else null.
 - blurb: one enthusiast-voice sentence about this spot, max 18 words, no emoji.
 - If unsure of exact model, give your best guess and lower confidence. Make and model must never be empty when is_vehicle is true.`;
 
+const SHIELD = '<svg width="15" height="17" viewBox="0 0 13 15" fill="none"><path d="M6.5 1l5 2v4c0 3.2-2.1 5.6-5 7-2.9-1.4-5-3.8-5-7V3l5-2z" stroke="currentColor" stroke-width="1.3"/><path d="M4.3 7.4l1.6 1.6 2.9-3" stroke="currentColor" stroke-width="1.3"/></svg>';
 function detectUI(mode, data){
   const d = $("detect"), t = $("detTitle"), s = $("detSub"), lock = $("detLock"), icon = $("detIcon");
   d.classList.remove("err");
@@ -633,12 +1090,12 @@ function detectUI(mode, data){
   d.classList.add("on");
   if (mode === "busy"){
     $("frame").classList.add("hot");
-    icon.textContent = "AI";
+    icon.innerHTML = SHIELD;
     t.textContent = "Verifying…";
     s.innerHTML = '<span class="spin"></span> Reading the shot';
   }
   if (mode === "hit"){
-    icon.textContent = "AI";
+    icon.innerHTML = SHIELD;
     t.textContent = data.title;
     s.innerHTML = 'Confidence: <b>' + data.conf + '%</b>';
     if (data.plate) lock.classList.add("on");
@@ -652,7 +1109,7 @@ function detectUI(mode, data){
   }
 }
 
-async function runVerify(canvas){
+async function runVerify(canvas, source){
   busy = true; $("shutter").disabled = true;
   const fz = $("freeze");
   fz.style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
@@ -661,10 +1118,10 @@ async function runVerify(canvas){
   try{
     const b64 = canvas.toDataURL("image/jpeg", .82).split(",")[1];
     const res = await verifyWithClaude(b64);
-    processResult(res, canvas);
+    await processResult(res, canvas, source || "camera");
   }catch(e){
-    detectUI("err", { title:"Verification failed", sub:"Check your connection and try again" });
-    toast("Couldn't reach the verifier");
+    await queueCapture(canvas, source);
+    detectUI("err", { title:"Queued — no connection", sub:"It'll verify automatically when you're back online" });
   }finally{
     busy = false; $("shutter").disabled = false;
     setTimeout(()=>{ fz.style.display = "none"; }, 400);
@@ -735,81 +1192,174 @@ function getGeo(){
   });
 }
 
-async function processResult(res, canvas){
+async function processResult(res, canvas, source, ctx){
   ensureDay();
+  const silent = !!(ctx && ctx.silent);
   if (!res || !res.is_vehicle || res.classification === "not_a_vehicle"){
+    if (silent){ toast("No car found in a queued shot"); return; }
     detectUI("err", { title:"No car detected", sub:"Keep hunting — frame the whole car" });
     openVerdict(null, canvas, res);
     return;
   }
   const rarity = PAYOUT[res.rarity] ? res.rarity : "everyday";
-  const pay = PAYOUT[rarity];
+  const geo = (ctx && "geo" in ctx) ? ctx.geo : await getGeo();
+  const phash = aHash(canvas);
+
+  // deterrence checks — client-side, advisory until verification moves server-side
+  const flags = [];
+  const dup = state.spots.find(sp => sp.phash && hamming(sp.phash, phash) <= 5);
+  if (dup) flags.push("duplicate of an earlier capture");
+  if (res.authenticity === "suspect") flags.push("didn't pass the authenticity check");
+  if (CONFIG.strictCapture && source !== "camera") flags.push("imported photos don't count in strict mode");
+  if (!(ctx && ctx.queued) && state.lastPaidTs && Date.now() - state.lastPaidTs < 20000) flags.push("captures too fast");
+  if ((state.dayPaid || 0) >= 40) flags.push("daily cap reached");
+  if (geo){
+    const prev = state.spots.find(sp => sp.lat != null && sp.lng != null);
+    if (prev){
+      const hrs = Math.max((Date.now() - new Date(prev.ts).getTime()) / 36e5, 1/60);
+      const km = haversine(prev.lat, prev.lng, geo.lat, geo.lng);
+      if (!(ctx && ctx.queued) && km > 100 && km / hrs > 900) flags.push("location jump");
+    }
+  }
+  const counts = flags.length === 0;
   const plateBlurred = res.plate_box ? pixelatePlate(canvas, res.plate_box) : false;
 
-  detectUI("hit", {
+  if (!silent) detectUI("hit", {
     title: (rarity === "everyday" ? "Car detected" : rarity.charAt(0).toUpperCase()+rarity.slice(1) + " car detected"),
     conf: Math.round(res.confidence ?? 0),
     plate: plateBlurred
   });
 
-  // streak
-  const today = dayKey();
-  if (state.lastSpotDay !== today){
-    const y = dayKey(new Date(Date.now() - 864e5));
-    state.streak = (state.lastSpotDay === y) ? state.streak + 1 : 1;
-    state.lastSpotDay = today;
+  // codex placement
+  const pseudo = { make: res.make || "", model: res.model || "" };
+  const en = CODEX_SEED.find(e => entryMatches(e, pseudo));
+  const keyStr = spotStr(pseudo).trim();
+  const prior = state.spots.filter(sp => !sp.flagged && (en ? entryMatches(en, sp) : spotStr(sp).trim() === keyStr)).length;
+  const rankBefore = currentRank(hunterStats()).name;
+
+  lastQuestHits = [];
+  lastRankUp = "";
+  if (counts){
+    // streak
+    const today = dayKey();
+    if (state.lastSpotDay !== today){
+      const y = dayKey(new Date(Date.now() - 864e5));
+      state.streak = (state.lastSpotDay === y) ? state.streak + 1 : 1;
+      state.lastSpotDay = today;
+    }
+    // daily progress + hunts
+    state.daySpots++;
+    state.dayPaid = (state.dayPaid || 0) + 1;
+    state.lastPaidTs = Date.now();
+    const makeLc = (res.make || "").toLowerCase();
+    if (makeLc && !state.dayMakes.includes(makeLc)) state.dayMakes.push(makeLc);
+    const attrs = {
+      make: makeLc,
+      model: (res.model || "").toLowerCase(),
+      rarity,
+      tags: Array.isArray(res.tags) ? res.tags : [],
+      decade: res.decade || "",
+      color: (res.color || "").toLowerCase(),
+      dayMakesCount: state.dayMakes.length
+    };
+    state.dayQ.ids.forEach(id => {
+      if (state.dayQ.done[id]) return;
+      const q = questById(id);
+      if (q && q.match(attrs)){
+        state.dayQ.done[id] = true;
+        lastQuestHits.push({ label: "QUEST", name: q.name });
+      }
+    });
+    const sstr = attrs.make + " " + attrs.model;
+    (state.wantedIds || []).forEach(id => {
+      if (state.wantedDone[id]) return;
+      const wnt = wantedById(id);
+      if (wnt && hasTokens(sstr, wnt.m)){
+        state.wantedDone[id] = true;
+        state.badges["w:" + id] = true;
+        lastQuestHits.push({ label: "WANTED", name: wnt.name });
+      }
+    });
+    if (state.daySpots >= 3 && !state.dayBonus){
+      state.dayBonus = true;
+      toast("Daily challenge complete");
+    }
   }
-  // daily flags + challenge bonus
-  state.daySpots++;
-  if (rarity === "classic") state.dayClassic = true;
-  if (rarity === "rare") state.dayRare = true;
-  if (rarity === "legendary") state.dayLegend = true;
-  let bonus = 0;
-  if (state.daySpots >= 3 && !state.dayBonus){ state.dayBonus = true; bonus = 50; }
 
-  state.tyres += pay + bonus;
-
-  const geo = await getGeo();
   const spot = {
-    id: Date.now(), ts: new Date().toISOString(),
+    id: Date.now(), ts: (ctx && ctx.ts) || new Date().toISOString(),
+    seq: state.spots.length + 1,
     img: makeThumb(canvas),
     make: res.make || "Unknown", model: res.model || "", year: res.year_range || "",
     cls: res.classification, rarity, confidence: Math.round(res.confidence ?? 0),
-    tyres: pay, blurb: res.blurb || "", plate: plateBlurred,
+    nth: prior + 1, cxNew: counts && prior === 0, cxNo: en ? en.n : null,
+    blurb: res.blurb || "", plate: plateBlurred,
+    phash, source: source || "camera", flagged: flags.join("; "),
     lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,
-    event: state.activeEvent || "", place: "", story: "", color: "", owner: "",
-    fav: false, hv: false,
+    event: (ctx && ctx.event !== undefined) ? (ctx.event || "") : (state.activeEvent || ""),
+    place: "", story: "", color: (res.color || ""), owner: "",
+    fav: false, hv: false, tags: Array.isArray(res.tags) ? res.tags : [], decade: res.decade || "",
     ai: { make: res.make || "", model: res.model || "", year: res.year_range || "" }
   };
   state.spots.unshift(spot);
+  if (counts){
+    checkSets().forEach(h => lastQuestHits.push(h));
+    const rn = currentRank(hunterStats()).name;
+    if (rn !== rankBefore){ lastRankUp = rn; toast("Rank up · " + rn); }
+  }
   await Store.save();
-  renderHUD(); bumpBalance();
-  if (bonus) toast("Daily challenge complete · +50 TYRES");
-  openVerdict(spot, canvas, res);
+  syncCapture(spot);
+  renderHUD();
+  if (spot.cxNew) bumpBalance();
+  syncProfile();
+  if (silent){
+    toast((spot.make + " " + spot.model).trim() + (spot.flagged ? " · saved, not counted" : (spot.cxNew ? " · NEW TO CODEX" : " · logged")));
+  } else {
+    openVerdict(spot, canvas, res);
+  }
 }
 
 /* ================= VERDICT ================= */
 function openVerdict(spot, canvas, raw){
   const v = $("verdict");
+  lastVerdictSpot = spot || null;
   $("vPhoto").style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
   if (spot){
     $("vMake").textContent = (spot.make + " " + spot.model).trim();
     $("vYear").textContent = spot.year;
     $("vChip").className = "chip " + spot.rarity;
     $("vChip").textContent = spot.rarity.toUpperCase();
-    $("vConf").textContent = "AI VERIFIED · " + spot.confidence + "%";
+    $("vConf").textContent = (spot.flagged ? "CHECKED" : "VERIFIED") + " · " + spot.confidence + "%";
     $("vBlurb").textContent = spot.blurb;
-    $("vPayline").style.display = "flex";
-    $("vMiss").style.display = "none";
-    countUp($("vPay"), spot.tyres);
+    if (spot.flagged){
+      $("vPayline").style.display = "none";
+      $("vQuests").innerHTML = "";
+      const fm = $("vMiss");
+      fm.style.display = "block";
+      fm.textContent = "Saved to your garage, but it won't count toward your codex — " + spot.flagged + ".";
+    } else {
+      $("vPayline").style.display = "flex";
+      if (spot.cxNew){
+        $("vPay").textContent = spot.cxNo ? "No. " + String(spot.cxNo).padStart(3, "0") : "NEW ENTRY";
+        $("vPayLbl").textContent = "NEW TO YOUR CODEX";
+      } else {
+        $("vPay").textContent = "×" + (spot.nth || 1);
+        $("vPayLbl").textContent = "SIGHTING LOGGED · CODEX UPDATED";
+      }
+      const rows = (lastRankUp ? ['<div class="qhit" style="color:var(--gold);border-color:rgba(255,194,75,.45);background:rgba(255,194,75,.08)"><span>RANK UP · ' + lastRankUp + '</span><span>★</span></div>'] : [])
+        .concat(lastQuestHits.map(q => '<div class="qhit"><span>' + q.label + ' · ' + q.name.toUpperCase() + '</span><span>✓</span></div>'));
+      $("vQuests").innerHTML = rows.join("");
+      $("vMiss").style.display = "none";
+    }
     $("vChip").style.display = "";
   } else {
     $("vMake").textContent = "No car detected";
     $("vYear").textContent = "";
     $("vChip").style.display = "none";
-    $("vConf").textContent = raw && typeof raw.confidence === "number" ? "AI CHECKED" : "";
+    $("vConf").textContent = raw && typeof raw.confidence === "number" ? "CHECKED" : "";
     $("vBlurb").textContent = (raw && raw.blurb) ? raw.blurb : "The verifier couldn't find a vehicle as the clear subject.";
     $("vPayline").style.display = "none";
+    $("vQuests").innerHTML = "";
     const m = $("vMiss"); m.style.display = "block";
     m.textContent = "No Tyres this time. Get the whole car in frame, in decent light, and fire again.";
   }
@@ -825,13 +1375,14 @@ function countUp(el, target){
   requestAnimationFrame(step);
 }
 $("vAgain").addEventListener("click", () => { $("verdict").classList.remove("on"); detectUI("off"); });
+$("vShare").addEventListener("click", () => { if (lastVerdictSpot) shareCard(lastVerdictSpot); else toast("Nothing to share on a miss"); });
 $("verdict").addEventListener("click", e => { if (e.target === $("verdict")) { $("verdict").classList.remove("on"); detectUI("off"); } });
 
 /* ================= GARAGE ================= */
 function renderGarage(){
   const g = $("ggrid");
-  const earned = state.spots.reduce((a,s)=>a+s.tyres,0);
-  $("garageMeta").textContent = state.spots.length + " spot" + (state.spots.length===1?"":"s") + " · " + fmt(earned) + " Tyres earned";
+  const st = hunterStats();
+  $("garageMeta").textContent = state.spots.length + " spot" + (state.spots.length===1?"":"s") + " · " + st.models + " models · " + st.legend + " legendary";
   if (!state.spots.length){
     g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="e1">Empty garage</div><p>Every verified capture parks here with its make, rarity, and payout. Hit the shutter.</p></div>';
     return;
@@ -844,12 +1395,52 @@ function renderGarage(){
         <div class="yr">${esc(s.year)}${s.year ? " · " : ""}${s.event ? esc(s.event) : new Date(s.ts).toLocaleDateString()}</div>
         <div class="row">
           <span class="chip ${s.rarity}">${s.rarity.toUpperCase()}</span>
-          <span class="gtyres">+${s.tyres}</span>
+          <span class="gtyres">#${s.seq || "—"}</span>
         </div>
       </div>
     </button>`).join("");
 }
 function esc(x){ return String(x ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+$("gSeg").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  document.querySelectorAll("#gSeg button").forEach(x => x.classList.toggle("on", x === b));
+  const codex = b.dataset.seg === "codex";
+  $("segSpots").style.display = codex ? "none" : "";
+  $("segCodex").style.display = codex ? "" : "none";
+  if (codex) renderCodex();
+});
+$("codexPill").addEventListener("click", () => {
+  show("garage");
+  const cb = document.querySelector('#gSeg [data-seg="codex"]');
+  if (cb) cb.click();
+});
+$("codexPill").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); $("codexPill").click(); } });
+function cxCard(n, name, tier, c){
+  const no = "No. " + String(n).padStart(3, "0");
+  if (!c) return `<div class="cxcard lk"><div class="cph">?</div><div class="cin"><div class="cno">${no}</div><div class="cnm">${esc(name)}</div><div class="cpop">UNSPOTTED</div></div></div>`;
+  return `<div class="cxcard"><div class="cph" style="background-image:url('${c.img}')"></div><div class="cin"><div class="cno">${no} · ${tier.toUpperCase()}</div><div class="cnm">${esc(name)}</div><div class="cpop">×${c.count}${c.tags.size ? " · " + [...c.tags].slice(0, 2).join(", ") : ""}</div></div></div>`;
+}
+function renderCodex(){
+  const caught = {};
+  state.spots.forEach(s => {
+    const en = CODEX_SEED.find(e => entryMatches(e, s));
+    const key = en ? "n" + en.n : "x:" + spotStr(s).trim();
+    if (!caught[key]) caught[key] = { count: 0, img: s.img, name: en ? en.name : (s.make + " " + s.model).trim(), tier: en ? en.tier : s.rarity, tags: new Set() };
+    caught[key].count++;
+    (s.tags || []).forEach(t => caught[key].tags.add(t));
+  });
+  const got = CODEX_SEED.filter(en => caught["n" + en.n]).length;
+  $("cxPct").textContent = Math.round(got / CODEX_SEED.length * 100) + "%";
+  $("cxCount").textContent = got + " / " + CODEX_SEED.length + " SPOTTED";
+  const seedCards = CODEX_SEED.map(en => {
+    const c = caught["n" + en.n];
+    return cxCard(en.n, en.name, en.tier, c || null);
+  });
+  const extras = Object.keys(caught).filter(k => k.startsWith("x:")).map((k, i) => cxCard(CODEX_SEED.length + i + 1, caught[k].name, caught[k].tier, caught[k]));
+  $("cxGrid").innerHTML = seedCards.join("") + extras.join("");
+}
 
 $("exportBtn").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
@@ -907,6 +1498,19 @@ function renderMap(){
   pts.forEach(p=>{ minLa=Math.min(minLa,p.lat); maxLa=Math.max(maxLa,p.lat); minLo=Math.min(minLo,p.lng); maxLo=Math.max(maxLo,p.lng); });
   const spanLa = Math.max(maxLa-minLa, .004), spanLo = Math.max(maxLo-minLo, .004);
   const pad = 40;
+  const X = lng => pad + (lng - minLo)/spanLo * (w - pad*2);
+  const Y = lat => h - pad - (lat - minLa)/spanLa * (h - pad*2);
+  const cells = {};
+  pts.forEach(p => { const k = Math.floor(p.lat/0.01) + "_" + Math.floor(p.lng/0.01); cells[k] = (cells[k]||0) + 1; });
+  Object.keys(cells).forEach(k => {
+    const parts = k.split("_").map(Number), ca = parts[0], co = parts[1];
+    const x1 = X(co*0.01), x2 = X((co+1)*0.01);
+    const y1 = Y((ca+1)*0.01), y2 = Y(ca*0.01);
+    ctx.fillStyle = "rgba(255,138,30," + Math.min(.09 + cells[k]*.05, .32) + ")";
+    ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+  });
+  const nc = Object.keys(cells).length;
+  $("mapMeta").textContent = pts.length + " located spot" + (pts.length===1?"":"s") + " · " + nc + " cell" + (nc===1?"":"s") + " claimed";
   const col = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
   pts.forEach(p=>{
     const x = pad + (p.lng - minLo)/spanLo * (w - pad*2);
@@ -931,7 +1535,7 @@ $("mapc").addEventListener("click", e => {
         <div class="qn">${esc(best.make)} ${esc(best.model)}</div>
         <div class="qd">${new Date(best.ts).toLocaleString()} · ${best.lat}, ${best.lng}</div>
       </div>
-      <div class="qpay"><div class="v">+${best.tyres}</div><div class="u">TYRES</div></div>
+      <div class="qpay"><div class="v">#${best.seq || "—"}</div><div class="u">SPOT</div></div>
     </div>` : "";
 });
 window.addEventListener("resize", () => { if ($("view-map").classList.contains("on")) renderMap(); });
@@ -939,26 +1543,62 @@ window.addEventListener("resize", () => { if ($("view-map").classList.contains("
 /* ================= QUESTS ================= */
 function renderQuests(){
   ensureDay();
-  const rows = [
-    { name:"Nearby challenge", desc:"Spot 3 cars today", pay:"+50", done: state.dayBonus, prog: Math.min(state.daySpots,3)/3, pn: Math.min(state.daySpots,3)+" / 3" },
-    { name:"Spot a classic", desc:"Any verified classic pays out", pay:"+75", done: state.dayClassic },
-    { name:"Spot something rare", desc:"Exotics and limited metal", pay:"+150", done: state.dayRare },
-    { name:"Land a legendary", desc:"Hypercars and icons only", pay:"+400", done: state.dayLegend }
-  ];
   const check = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 12.5l4.6 4.6L19.5 6.7"/></svg>';
   const target = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg>';
-  $("questList").innerHTML =
-    '<div class="sechead" style="margin-top:2px">Today</div>' +
-    rows.map(r => `
-      <div class="qcard ${r.done ? "done" : ""}">
-        <div class="qic">${r.done ? check : target}</div>
+  const qcards = state.dayQ.ids.map(questById).filter(Boolean).map(q => {
+    const done = !!state.dayQ.done[q.id];
+    return `
+      <div class="qcard ${done ? "done" : ""}">
+        <div class="qic">${done ? check : target}</div>
         <div>
-          <div class="qn">${r.name}</div>
-          <div class="qd">${r.done ? "Complete" : r.desc}</div>
-          ${r.prog !== undefined && !r.done ? `<div class="qbar"><i style="width:${r.prog*100}%"></i></div>` : ""}
+          <div class="qn">${q.name}</div>
+          <div class="qd">${done ? "Complete" : q.desc}</div>
         </div>
-        <div class="qpay"><div class="v">${r.done ? "PAID" : r.pay}</div><div class="u">${r.done ? "" : (r.pn || "TYRES")}</div></div>
-      </div>`).join("") +
+        <div class="qpay"><div class="v">${done ? "DONE" : "OPEN"}</div><div class="u">${done ? "" : (q.prog ? q.prog() : "")}</div></div>
+      </div>`;
+  }).join("");
+  const wcards = (state.wantedIds || []).map(wantedById).filter(Boolean).map(w => {
+    const done = !!state.wantedDone[w.id];
+    return `
+      <div class="qcard want ${done ? "done" : ""}">
+        <div class="qic">${done ? check : target}</div>
+        <div>
+          <div class="qn">${w.name}</div>
+          <div class="qd">${done ? "Captured" : "Verified capture, anywhere it hides"}</div>
+        </div>
+        <div class="qpay"><div class="v">${done ? "CAPTURED" : "AT LARGE"}</div><div class="u">${done ? "" : "BADGE"}</div></div>
+      </div>`;
+  }).join("");
+  const scards = SETS.map(set => {
+    const prog = setProgress(set);
+    const got = prog.filter(Boolean).length;
+    const done = !!state.setsDone[set.id];
+    return `
+      <div class="qcard ${done ? "done" : ""}" style="align-items:flex-start">
+        <div class="qic">${done ? check : target}</div>
+        <div style="flex:1">
+          <div class="qn">${set.name}</div>
+          <div class="qd">${done ? "Complete" : set.desc}</div>
+          <div class="setchips">${set.needs.map((mt, i) => `<span class="setchip ${prog[i] ? "got" : ""}">${mt.label}</span>`).join("")}</div>
+        </div>
+        <div class="qpay"><div class="v">${done ? "EARNED" : got + " / " + set.needs.length}</div><div class="u">${done ? "" : "BADGE"}</div></div>
+      </div>`;
+  }).join("");
+  const n = Math.min(state.daySpots, 3);
+  $("questList").innerHTML =
+    '<div class="sechead" style="margin-top:2px">Today\'s hunts</div>' + qcards +
+    '<div class="sechead">Wanted this week</div>' + wcards +
+    `<div class="sechead">Challenge</div>
+     <div class="qcard ${state.dayBonus ? "done" : ""}">
+       <div class="qic">${state.dayBonus ? check : target}</div>
+       <div>
+         <div class="qn">Nearby challenge</div>
+         <div class="qd">${state.dayBonus ? "Complete" : "Spot 3 cars today"}</div>
+         ${!state.dayBonus ? `<div class="qbar"><i style="width:${n/3*100}%"></i></div>` : ""}
+       </div>
+       <div class="qpay"><div class="v">${state.dayBonus ? "DONE" : "OPEN"}</div><div class="u">${state.dayBonus ? "" : n + " / 3"}</div></div>
+     </div>` +
+    '<div class="sechead">Sets</div>' + scards +
     `<div class="sechead">Streak</div>
      <div class="qcard">
        <div class="qic" style="color:var(--ember);border-color:rgba(255,138,30,.4)">
@@ -971,35 +1611,23 @@ function renderQuests(){
      </div>`;
 }
 
-/* ================= REWARDS ================= */
-const REWARDS = [
-  { id:"stickers", name:"Sticker pack", desc:"TYRE HUNT die-cuts, mailed", cost:500 },
-  { id:"cap", name:"Hunt cap", desc:"Ember-stitched, one size", cost:1500 },
-  { id:"feature", name:"Featured garage slot", desc:"Your best spot, front page for a week", cost:5000 }
-];
+/* ================= HALL ================= */
 function renderRewards(){
-  $("balBig").textContent = fmt(state.tyres);
-  $("rewardList").innerHTML = REWARDS.map(r => `
-    <div class="rcard">
-      <div class="coin sm">T</div>
-      <div><div class="rn">${r.name}</div><div class="rd">${r.desc}</div></div>
-      <button class="rbtn" data-id="${r.id}" ${state.tyres < r.cost ? "disabled" : ""}>${fmt(r.cost)}</button>
+  const st = hunterStats();
+  const r = currentRank(st);
+  $("rankName").textContent = r.name;
+  $("rankStats").textContent = st.models + " models · " + st.rare + " rare · " + st.legend + " legendary";
+  const nxt = RANKS[RANKS.indexOf(r) + 1];
+  $("rankNext").textContent = nxt ? "Next — " + nxt.name + ": " + nxt.req : "Top of the mountain.";
+  const badges = [];
+  SETS.forEach(s => badges.push({ name: s.name, kind: "SET", got: !!state.setsDone[s.id] }));
+  WANTED_POOL.forEach(w => badges.push({ name: w.name, kind: "WANTED", got: !!(state.badges && state.badges["w:" + w.id]) }));
+  $("badgeGrid").innerHTML = badges.map(b => `
+    <div class="bdg ${b.got ? "got" : ""}">
+      <div class="bk">${b.kind}</div>
+      <div class="bn">${b.name}</div>
+      <div class="bs">${b.got ? "EARNED" : "LOCKED"}</div>
     </div>`).join("");
-  document.querySelectorAll(".rbtn").forEach(b => b.addEventListener("click", () => redeem(b.dataset.id)));
-  const list = $("redemptionList");
-  list.innerHTML = state.redemptions.length
-    ? state.redemptions.map(r => `<div class="redemption"><span>${esc(r.name)} · ${new Date(r.ts).toLocaleDateString()}</span><b>${r.code}</b></div>`).join("")
-    : '<div class="empty" style="padding:22px"><p>No redemptions yet.</p></div>';
-}
-async function redeem(id){
-  const r = REWARDS.find(x => x.id === id);
-  if (!r || state.tyres < r.cost) return;
-  state.tyres -= r.cost;
-  const code = "TYRE-" + Math.random().toString(36).slice(2,6).toUpperCase() + "-" + Math.random().toString(36).slice(2,6).toUpperCase();
-  state.redemptions.unshift({ id, name:r.name, cost:r.cost, code, ts:new Date().toISOString() });
-  await Store.save();
-  renderHUD(); renderRewards();
-  toast(r.name + " redeemed · " + code);
 }
 
 /* ================= DOSSIER / EVENT MODE ================= */
@@ -1031,7 +1659,7 @@ function openDossier(id){
   $("dStory").value = s.story || ""; $("dColor").value = s.color || ""; $("dOwner").value = s.owner || "";
   $("dMetaChip").className = "chip " + s.rarity;
   $("dMetaChip").textContent = s.rarity.toUpperCase();
-  $("dMeta").innerHTML = " AI " + s.confidence + "% · +" + s.tyres + " · " + new Date(s.ts).toLocaleDateString() + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
+  $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
   $("dossier").classList.add("on");
 }
 $("dBack").addEventListener("click", () => { $("dossier").classList.remove("on"); renderGarage(); });
@@ -1092,17 +1720,20 @@ function shareCard(s){
     wrapText(x, (s.make + " " + s.model).trim(), 64, ph + 100, W - 128, 82);
     x.fillStyle = "#98A0AC"; x.font = "600 30px 'JetBrains Mono', monospace";
     x.fillText((s.year ? s.year + "  ·  " : "") + new Date(s.ts).toLocaleDateString(), 64, ph + 286);
-    x.fillStyle = "#FFC24B"; x.font = "700 46px 'JetBrains Mono', monospace";
-    x.fillText("+" + s.tyres + " TYRES", 64, ph + 344);
+    x.fillStyle = "#FFC24B"; x.font = "700 40px 'JetBrains Mono', monospace";
+    const cxe = CODEX_SEED.find(e => entryMatches(e, s));
+    x.fillText(cxe ? "CODEX No. " + String(cxe.n).padStart(3, "0") : "FIELD ENTRY", 64, ph + 344);
     x.fillStyle = "#FF8A1E"; x.font = "800 27px 'Archivo', sans-serif";
     x.fillText("TYRE HUNT", 64, H - 86);
     x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
     x.fillText("SPOT & COLLECT", 276, H - 82);
-    const a = document.createElement("a");
-    a.href = c.toDataURL("image/jpeg", .9);
-    a.download = "tyrehunt-" + s.id + ".jpg";
-    a.click();
-    toast("Share card saved");
+    if (state.profile && state.profile.handle){
+      x.fillStyle = "#F2F3F6"; x.font = "700 26px 'JetBrains Mono', monospace";
+      x.textAlign = "right";
+      x.fillText("@" + state.profile.handle, W - 64, H - 86);
+      x.textAlign = "left";
+    }
+    deliverCard(c, "tyrehunt-" + s.id + ".jpg", "Spotted: " + (s.make + " " + s.model).trim() + " · TYRE HUNT");
   };
   img.src = s.img;
 }
@@ -1117,6 +1748,401 @@ function wrapText(x, text, lx, ly, maxW, lh){
   x.fillText(line, lx, y);
 }
 
+/* ================= PROFILE / CREW / ACCOUNTS ================= */
+function genCode(){ const r4 = () => Math.random().toString(36).slice(2, 6).toUpperCase(); return "TH-" + r4() + "-" + r4(); }
+function loadScript(src){ return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+function copyText(t){
+  try{ navigator.clipboard.writeText(t); toast("Copied"); }
+  catch(e){ toast(t); }
+}
+
+let sb = null, sbSession = null;
+async function initSupabase(){
+  if (!CONFIG.supabaseUrl || !CONFIG.supabaseAnon) return;
+  try{
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.3/supabase.min.js");
+    sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnon);
+    const { data } = await sb.auth.getSession();
+    sbSession = (data && data.session) || null;
+    sb.auth.onAuthStateChange((_e, s) => {
+      sbSession = s;
+      syncProfile();
+      if ($("profile").classList.contains("on")) renderProfile();
+    });
+  }catch(e){ sb = null; }
+}
+async function syncProfile(){
+  if (!sb || !sbSession || !state.profile) return;
+  try{
+    const st = hunterStats();
+    await sb.from("profiles").upsert({
+      id: sbSession.user.id,
+      handle: state.profile.handle,
+      code: state.profile.code,
+      models: st.models,
+      legends: st.legend,
+      streak: state.streak,
+      spots: state.spots.length,
+      updated_at: new Date().toISOString()
+    });
+  }catch(e){}
+}
+async function syncCapture(s){
+  if (!sb || !sbSession) return;
+  try{
+    await sb.from("captures").insert({
+      user_id: sbSession.user.id,
+      make: s.make, model: s.model, year_range: s.year,
+      rarity: s.rarity, classification: s.cls, confidence: s.confidence,
+      decade: s.decade || "", tags: s.tags || [],
+      phash: s.phash || null, source: s.source || null, flagged: s.flagged || null,
+      event: s.event || "", lat: s.lat, lng: s.lng, taken_at: s.ts
+    });
+  }catch(e){}
+}
+async function sbAddFriend(code){
+  if (!sb || !sbSession) return null;
+  try{
+    const { data } = await sb.from("profiles").select("id,handle,code,models").eq("code", code).maybeSingle();
+    if (!data) return null;
+    await sb.from("friends").upsert({ user_id: sbSession.user.id, friend_id: data.id });
+    return data;
+  }catch(e){ return null; }
+}
+async function refreshCrew(){
+  if (!sb || !sbSession || !state.crew.length) return;
+  try{
+    const { data } = await sb.from("profiles").select("handle,code,models").in("code", state.crew.map(c => c.code));
+    if (data){
+      data.forEach(d => {
+        const c = state.crew.find(x => x.code === d.code);
+        if (c){ c.models = d.models; c.handle = d.handle; }
+      });
+      await Store.save();
+    }
+  }catch(e){}
+}
+
+let qrLoaded = false;
+async function drawQR(){
+  const box = $("qrBox");
+  if (!box || !state.profile) return;
+  try{
+    if (!qrLoaded){ await loadScript("https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"); qrLoaded = true; }
+    box.innerHTML = "";
+    new QRCode(box, { text: "TYREHUNT|" + state.profile.code + "|" + state.profile.handle, width: 132, height: 132, colorDark: "#0A0B0E", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  }catch(e){ if (box.parentElement) box.parentElement.style.display = "none"; }
+}
+
+$("profileBtn").addEventListener("click", openProfile);
+$("profileBtn").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openProfile(); } });
+$("pfClose").addEventListener("click", () => $("profile").classList.remove("on"));
+function openProfile(){
+  $("profile").classList.add("on");
+  renderProfile();
+  if (sb && sbSession) refreshCrew().then(renderProfile);
+}
+function renderProfile(){
+  const p = state.profile, body = $("pfBody");
+  $("pfMeta").textContent = p ? "@" + p.handle + " · " + p.code : "Claim a tag to hunt with a crew";
+  if (!p){
+    body.innerHTML = `
+      <div class="dfield"><label>Handle</label><input id="pfHandle" placeholder="curatorofspeed" maxlength="20" autocapitalize="none"></div>
+      <button class="btn hot" style="width:100%" id="pfClaim">CLAIM TAG</button>
+      <p class="pfnote">Your tag rides on every share card, and your hunter code is how a crew finds you at a meet. Nothing else required.</p>`;
+    $("pfClaim").addEventListener("click", async () => {
+      const h = ($("pfHandle").value || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
+      if (h.length < 3){ toast("Handle needs 3+ characters"); return; }
+      state.profile = { handle: h, code: genCode() };
+      await Store.save();
+      syncProfile();
+      renderProfile();
+      toast("Tag claimed · @" + h);
+    });
+    return;
+  }
+  const myStats = hunterStats();
+  const rows = [{ handle: p.handle, models: myStats.models, me: true, code: p.code }]
+    .concat(state.crew.map(c => ({ handle: c.handle, models: c.models, code: c.code })))
+    .sort((a, b) => ((b.models == null ? -1 : b.models) - (a.models == null ? -1 : a.models)));
+  const acct = sb
+    ? (sbSession
+        ? '<p class="pfnote">Signed in — your tag, codex count, and streak sync live.</p>'
+        : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
+           <button class="btn hot" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>
+           <p class="pfnote">One tap in your inbox signs you in. No password, ever.</p>`)
+    : '<p class="pfnote">Playing locally. Drop Supabase keys into CONFIG and this section becomes a one-tap magic-link sign-in with live crew totals.</p>';
+  body.innerHTML = `
+    <div id="tagCard">
+      <div class="th">@${esc(p.handle)}</div>
+      <div class="tc">${p.code}</div>
+      <div class="qrwrap"><div id="qrBox"></div></div>
+      <p class="pfnote" style="margin-top:8px">Crew scans this or types your code</p>
+    </div>
+    <div class="vbtns" style="margin-top:12px">
+      <button class="btn hot" id="pfShareTag">SHARE TAG</button>
+      <button class="btn" id="pfCopy">COPY CODE</button>
+    </div>
+    <div class="sechead">Account</div>
+    ${acct}
+    <div class="sechead">Add hunter</div>
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <div class="dfield" style="flex:1;margin:0"><input id="pfAdd" placeholder="TH-XXXX-XXXX" autocapitalize="characters"></div>
+      <button class="btn hot" id="pfAddBtn" style="flex:0 0 auto;padding:12px 18px">ADD</button>
+    </div>
+    <div class="sechead">Crew leaderboard</div>
+    ${rows.map((r, i) => `
+      <div class="crewrow ${r.me ? "me" : ""}">
+        <span class="rk">${i + 1}</span>
+        <span class="hd">${r.handle ? "@" + esc(r.handle) : esc(r.code)}</span>
+        <span class="ty">${r.models == null ? "—" : r.models + " cars"}</span>
+        ${r.me ? "" : `<button class="rm" data-code="${esc(r.code)}" aria-label="Remove">✕</button>`}
+      </div>`).join("")}
+    ${state.crew.length ? "" : '<p class="pfnote">No crew yet. Trade codes at the next cars &amp; coffee.</p>'}`;
+  drawQR();
+  $("pfShareTag").addEventListener("click", async () => {
+    const msg = "Add me on TYRE HUNT — hunter code " + p.code;
+    if (navigator.share){ try{ await navigator.share({ text: msg }); return; }catch(e){} }
+    copyText(msg);
+  });
+  $("pfCopy").addEventListener("click", () => copyText(p.code));
+  $("pfAddBtn").addEventListener("click", addCrew);
+  const magic = $("pfMagic");
+  if (magic) magic.addEventListener("click", async () => {
+    const email = ($("pfEmail").value || "").trim();
+    if (!email.includes("@")){ toast("Enter an email"); return; }
+    try{
+      await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+      toast("Magic link sent — check your inbox");
+    }catch(e){ toast("Couldn't send the link"); }
+  });
+  body.querySelectorAll(".rm").forEach(b => b.addEventListener("click", async () => {
+    state.crew = state.crew.filter(c => c.code !== b.dataset.code);
+    await Store.save();
+    renderProfile();
+  }));
+}
+async function addCrew(){
+  const code = ($("pfAdd").value || "").toUpperCase().trim();
+  if (!/^TH-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)){ toast("Codes look like TH-XXXX-XXXX"); return; }
+  if (state.profile && code === state.profile.code){ toast("That's your own code"); return; }
+  if (state.crew.some(c => c.code === code)){ toast("Already in your crew"); return; }
+  let entry = { code, handle: null, models: null };
+  if (sb && sbSession){
+    const d = await sbAddFriend(code);
+    if (!d){ toast("No hunter found with that code"); return; }
+    entry = { code: d.code, handle: d.handle, models: d.models };
+  }
+  state.crew.push(entry);
+  await Store.save();
+  renderProfile();
+  toast("Crew +1");
+}
+
+/* ================= CARD DELIVERY ================= */
+function loadImg(src){ return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+function deliverCard(c, filename, text){
+  c.toBlob(async blob => {
+    if (!blob){ toast("Couldn't render the card"); return; }
+    const file = new File([blob], filename, { type: "image/jpeg" });
+    const payload = { files: [file], title: "TYRE HUNT", text };
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      try{ await navigator.share(payload); return; }
+      catch(e){ if (e && e.name === "AbortError") return; }
+    }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast("Card saved");
+  }, "image/jpeg", .9);
+}
+
+/* ================= EXPEDITIONS ================= */
+function expeditions(){
+  const groups = {};
+  state.spots.forEach(s => {
+    const ev = (s.event || "").trim();
+    if (!ev) return;
+    const k = ev.toLowerCase();
+    if (!groups[k]) groups[k] = { name: ev, spots: [] };
+    groups[k].spots.push(s);
+  });
+  return Object.values(groups).map(g => {
+    const ts = g.spots.map(s => new Date(s.ts).getTime());
+    const rw = { legendary: 3, rare: 2, classic: 1, everyday: 0 };
+    const best = [...g.spots].sort((a, b) => (rw[b.rarity] || 0) - (rw[a.rarity] || 0)).slice(0, 4);
+    return {
+      name: g.name,
+      from: new Date(Math.min.apply(null, ts)),
+      to: new Date(Math.max.apply(null, ts)),
+      count: g.spots.length,
+      fresh: g.spots.filter(s => s.cxNew).length,
+      legend: g.spots.filter(s => s.rarity === "legendary").length,
+      best
+    };
+  }).sort((a, b) => b.to - a.to);
+}
+function fmtRange(a, b){
+  const o = { month: "short", day: "numeric" };
+  const s = a.toLocaleDateString(undefined, o), t = b.toLocaleDateString(undefined, o);
+  return s === t ? s + ", " + b.getFullYear() : s + " – " + t + ", " + b.getFullYear();
+}
+function renderExpeditions(){
+  const ex = expeditions();
+  $("expList").innerHTML = ex.length ? ex.map((e, i) => `
+    <div class="expcard">
+      <div class="exphead">
+        <div>
+          <div class="qn">${esc(e.name)}</div>
+          <div class="qd">${fmtRange(e.from, e.to)} · ${e.count} cars · ${e.fresh} new · ${e.legend} legendary</div>
+        </div>
+        <button class="btn hot" data-exp="${i}" style="flex:0 0 auto;padding:9px 13px;font-size:10px">RECAP</button>
+      </div>
+      <div class="expthumbs">${e.best.map(s => `<div style="background-image:url('${s.img}')"></div>`).join("")}</div>
+    </div>`).join("") : '<p class="pfnote">Set an event before a show and every capture files into an expedition — recap card included.</p>';
+  document.querySelectorAll("[data-exp]").forEach(b => b.addEventListener("click", () => shareExpedition(expeditions()[+b.dataset.exp])));
+}
+async function shareExpedition(e){
+  if (!e) return;
+  try{
+    const imgs = await Promise.all(e.best.map(s => loadImg(s.img)));
+    const W = 1080, H = 1350, c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    x.fillStyle = "#0A0B0E"; x.fillRect(0, 0, W, H);
+    const gw = W / 2, gh = 380;
+    imgs.forEach((im, i) => {
+      const gx = (i % 2) * gw, gy = Math.floor(i / 2) * gh;
+      const sc = Math.max(gw / im.width, gh / im.height);
+      const dw = im.width * sc, dh = im.height * sc;
+      x.save(); x.beginPath(); x.rect(gx, gy, gw, gh); x.clip();
+      x.drawImage(im, gx + (gw - dw) / 2, gy + (gh - dh) / 2, dw, dh); x.restore();
+    });
+    const g = x.createLinearGradient(0, 600, 0, 760);
+    g.addColorStop(0, "rgba(10,11,14,0)"); g.addColorStop(1, "rgba(10,11,14,1)");
+    x.fillStyle = g; x.fillRect(0, 600, W, 160);
+    x.fillStyle = "#FF8A1E"; x.fillRect(0, 760, W, 8);
+    x.textBaseline = "top";
+    x.fillStyle = "#FF8A1E"; x.font = "800 28px 'Archivo', sans-serif";
+    x.fillText("EXPEDITION", 64, 806);
+    x.fillStyle = "#F2F3F6"; x.font = "900 64px 'Archivo', sans-serif";
+    wrapText(x, e.name.toUpperCase(), 64, 848, W - 128, 72);
+    x.fillStyle = "#98A0AC"; x.font = "600 28px 'JetBrains Mono', monospace";
+    x.fillText(fmtRange(e.from, e.to), 64, 1016);
+    x.fillStyle = "#FFC24B"; x.font = "700 34px 'JetBrains Mono', monospace";
+    x.fillText(e.count + " CARS · " + e.fresh + " NEW · " + e.legend + " LEGENDARY", 64, 1072);
+    x.fillStyle = "#FF8A1E"; x.font = "800 27px 'Archivo', sans-serif";
+    x.fillText("TYRE HUNT", 64, H - 86);
+    x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
+    x.fillText("SPOT & COLLECT", 276, H - 82);
+    if (state.profile && state.profile.handle){
+      x.fillStyle = "#F2F3F6"; x.font = "700 26px 'JetBrains Mono', monospace";
+      x.textAlign = "right";
+      x.fillText("@" + state.profile.handle, W - 64, H - 86);
+      x.textAlign = "left";
+    }
+    deliverCard(c, "tyrehunt-expedition-" + e.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".jpg", "Expedition: " + e.name + " · " + e.count + " cars · TYRE HUNT");
+  }catch(err){ toast("Couldn't build the recap"); }
+}
+
+/* ================= HUNTING GROUNDS ================= */
+const GROUNDS = [
+  { name:"Monterey Car Week", type:"EVENT", loc:"Monterey, USA", lat:36.5686, lng:-121.9497, hunt:"Pre-war royalty to hypercar debuts — the deepest week on earth" },
+  { name:"Goodwood Festival of Speed", type:"EVENT", loc:"Chichester, UK", lat:50.8578, lng:-0.7530, hunt:"Race legends running the hill, paddocks wide open" },
+  { name:"Petersen Automotive Museum", type:"MUSEUM", loc:"Los Angeles, USA", lat:34.0625, lng:-118.3614, hunt:"The Vault — guaranteed legendaries under one roof" },
+  { name:"Nürburgring Nordschleife", type:"TRACK", loc:"Nürburg, Germany", lat:50.3356, lng:6.9475, hunt:"Camouflaged prototypes and track builds in the car park" },
+  { name:"Le Mans Classic", type:"EVENT", loc:"Le Mans, France", lat:47.95, lng:0.2244, hunt:"Endurance icons of every era, driven hard" },
+  { name:"Porsche Museum", type:"MUSEUM", loc:"Stuttgart, Germany", lat:48.834, lng:9.152, hunt:"959s, 917s, and the air-cooled canon" },
+  { name:"Mercedes-Benz Museum", type:"MUSEUM", loc:"Stuttgart, Germany", lat:48.788, lng:9.234, hunt:"300SL Gullwings and 130 years of Silver Arrows" },
+  { name:"Museo Ferrari", type:"MUSEUM", loc:"Maranello, Italy", lat:44.5296, lng:10.8644, hunt:"250s to Enzos — and test mules on the road outside" },
+  { name:"Museo Lamborghini", type:"MUSEUM", loc:"Sant'Agata, Italy", lat:44.6591, lng:11.127, hunt:"Miura, Countach, and whatever screams past the gate" },
+  { name:"Knightsbridge", type:"STREET", loc:"London, UK", lat:51.5017, lng:-0.1607, hunt:"Summer supercar season — chrome wraps and one-offs" },
+  { name:"Casino Square", type:"STREET", loc:"Monaco", lat:43.7397, lng:7.4276, hunt:"Highest hypercar density per square meter anywhere" },
+  { name:"Tatsumi PA", type:"STREET", loc:"Tokyo, Japan", lat:35.6469, lng:139.8107, hunt:"Midnight JDM heroes in their natural habitat" },
+  { name:"Daikanyama T-Site", type:"STREET", loc:"Tokyo, Japan", lat:35.6497, lng:139.6993, hunt:"Sunday morning classics over coffee" },
+  { name:"Amelia Island", type:"EVENT", loc:"Florida, USA", lat:30.669, lng:-81.462, hunt:"Concours metal without the Monterey crowds" },
+  { name:"Scottsdale Auction Week", type:"EVENT", loc:"Arizona, USA", lat:33.4942, lng:-111.9261, hunt:"A thousand collector cars crossing the block" },
+  { name:"Rodeo Drive", type:"STREET", loc:"Beverly Hills, USA", lat:34.0696, lng:-118.403, hunt:"Daily-driven exotics, valet rows full of unicorns" }
+];
+const GROUND_CHIP = { EVENT:"classic", MUSEUM:"rare", STREET:"legendary", TRACK:"everyday" };
+let groundsGeo = null, groundsTried = false;
+function renderGrounds(){
+  const here = groundsGeo || state.spots.find(s => s.lat != null) || null;
+  const rows = GROUNDS.map(g => ({ ...g, km: here ? haversine(here.lat, here.lng, g.lat, g.lng) : null }))
+    .sort((a, b) => ((a.km == null ? 1e9 : a.km) - (b.km == null ? 1e9 : b.km)));
+  $("groundList").innerHTML = rows.map(g => `
+    <div class="place">
+      <div class="prow">
+        <div class="qn">${g.name}</div>
+        <span class="chip ${GROUND_CHIP[g.type] || "everyday"}" style="flex:0 0 auto">${g.type}</span>
+      </div>
+      <div class="qd">${g.loc}${g.km != null ? ' · <span style="font-family:var(--mono)">' + Math.round(g.km).toLocaleString() + " km</span>" : ""}</div>
+      <div class="phunt">THE HUNT — ${g.hunt}</div>
+    </div>`).join("");
+  if (!groundsGeo && !groundsTried){
+    groundsTried = true;
+    getGeo().then(x => {
+      if (x){ groundsGeo = x; if ($("view-map").classList.contains("on")) renderGrounds(); }
+    });
+  }
+}
+
+/* ================= OFFLINE QUEUE ================= */
+let draining = false;
+function renderQueuePill(busyDrain){
+  const p = $("queuePill");
+  if (!p) return;
+  const n = (state.queue || []).length;
+  p.style.display = n ? "block" : "none";
+  p.textContent = busyDrain ? "VERIFYING · " + n + " LEFT" : "● " + n + " QUEUED — TAP TO VERIFY";
+}
+async function queueCapture(canvas, source){
+  if (!Array.isArray(state.queue)) state.queue = [];
+  if (state.queue.length >= 10){ toast("Queue full — get a signal to verify"); return; }
+  const geo = await getGeo();
+  const s = Math.min(1, 1000 / Math.max(canvas.width, canvas.height));
+  const t = document.createElement("canvas");
+  t.width = Math.round(canvas.width * s); t.height = Math.round(canvas.height * s);
+  t.getContext("2d").drawImage(canvas, 0, 0, t.width, t.height);
+  state.queue.push({
+    id: Date.now(), ts: new Date().toISOString(),
+    img: t.toDataURL("image/jpeg", .72),
+    source: source || "camera", geo,
+    event: state.activeEvent || ""
+  });
+  await Store.save();
+  renderQueuePill();
+}
+async function processQueue(){
+  if (draining || !state.queue || !state.queue.length) return;
+  draining = true;
+  renderQueuePill(true);
+  let ok = 0;
+  while (state.queue.length){
+    const item = state.queue[0];
+    try{
+      const img = await loadImg(item.img);
+      const c = document.createElement("canvas");
+      c.width = img.width; c.height = img.height;
+      c.getContext("2d").drawImage(img, 0, 0);
+      const b64 = c.toDataURL("image/jpeg", .82).split(",")[1];
+      const res = await verifyWithClaude(b64);
+      await processResult(res, c, item.source, { ts: item.ts, geo: item.geo, event: item.event, queued: true, silent: true });
+      state.queue.shift();
+      ok++;
+      await Store.save();
+      renderQueuePill(true);
+    }catch(e){ break; }
+  }
+  draining = false;
+  renderQueuePill();
+  if (ok) toast(ok + " queued capture" + (ok > 1 ? "s" : "") + " verified");
+}
+$("queuePill").addEventListener("click", processQueue);
+window.addEventListener("online", processQueue);
+
 /* ================= BOOT ================= */
 (async function boot(){
   const saved = await Store.load();
@@ -1124,8 +2150,11 @@ function wrapText(x, text, lx, ly, maxW, lh){
   ensureDay();
   renderHUD();
   renderEventPill();
+  renderQueuePill();
   await Store.save();
+  initSupabase();
   startCam();
+  if (navigator.onLine) processQueue();
 })();
 </script>
 </body>
