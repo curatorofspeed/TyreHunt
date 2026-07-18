@@ -1,0 +1,3125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>TYRE HUNT — Spot & Collect</title>
+<meta name="theme-color" content="#0A0B0E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TYRE HUNT">
+<link rel="manifest" href='data:application/manifest+json,{"name":"TYRE HUNT","short_name":"TYRE HUNT","start_url":".","display":"standalone","background_color":"%230A0B0E","theme_color":"%230A0B0E","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 rx=%27112%27 fill=%27%230A0B0E%27/%3E%3Ccircle cx=%27256%27 cy=%27236%27 r=%27138%27 fill=%27none%27 stroke=%27%23FF8A1E%27 stroke-width=%2732%27/%3E%3Ctext x=%27256%27 y=%27296%27 font-family=%27Arial Black,Arial%27 font-size=%27164%27 font-weight=%27900%27 fill=%27%23FFC24B%27 text-anchor=%27middle%27%3ET%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any"}]}'>
+<!-- self-hosted: add a real sw.js + PNG icons for offline shell; single-file mode installs without offline cache -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+:root{
+  --carbon:#0A0B0E;
+  --panel:#13151B;
+  --glass:rgba(16,18,24,.86);
+  --line:rgba(255,255,255,.08);
+  --ink:#F2F3F6;
+  --muted:#98A0AC;
+  --ember:#FF8A1E;
+  --ember-deep:#E06A00;
+  --gold:#FFC24B;
+  --pulse:#3D7BFF;
+  --pulse-hi:#6FA5FF;
+  --ok:#3ECF8E;
+  --bad:#FF5D5D;
+  --r-everyday:#8B93A1;
+  --r-classic:#FF8A1E;
+  --r-rare:#5E97FF;
+  --r-legend:#FFC24B;
+  --disp:'Archivo',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:#000;color:var(--ink);font-family:var(--disp);overflow:hidden}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);outline-offset:2px;border-radius:8px}
+
+#app{position:relative;height:100dvh;max-width:480px;margin:0 auto;background:var(--carbon);overflow:hidden;display:flex;flex-direction:column}
+
+/* ---------- camera layers ---------- */
+#camwrap{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 0%,#171A21 0%,#0A0B0E 70%)}
+#cam,#freeze{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#freeze{display:none;background:#000;background-size:cover;background-position:center}
+#camwrap::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,8,.78) 0%,rgba(5,6,8,0) 22%,rgba(5,6,8,0) 55%,rgba(5,6,8,.88) 86%);pointer-events:none}
+#nocam{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:0 40px}
+#nocam .big{font-weight:800;letter-spacing:.14em;color:var(--ink);font-size:13px;text-transform:uppercase}
+#nocam p{font-size:12.5px;line-height:1.5}
+
+/* ---------- HUD ---------- */
+#hud{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 6px}
+.streak{position:relative;width:52px;height:52px;flex:0 0 auto}
+.streak svg{transform:rotate(-90deg)}
+.streak .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 15px var(--mono);color:var(--ink)}
+.wordmark{text-align:center;flex:1;min-width:0}
+.wordmark h1{font-size:clamp(19px,6vw,24px);font-weight:900;letter-spacing:.16em;background:linear-gradient(180deg,#FFFFFF 20%,var(--gold) 65%,var(--ember) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+.wordmark .sub{font-size:9px;font-weight:600;letter-spacing:.46em;color:var(--ember);text-transform:uppercase;margin-top:2px}
+.wordmark .sub::before,.wordmark .sub::after{content:"—";color:rgba(255,138,30,.4);margin:0 6px;letter-spacing:0}
+.balance{display:flex;align-items:center;gap:7px;background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:6px 11px 6px 6px;flex:0 0 auto}
+.coin{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#FFE2A6,var(--gold) 42%,var(--ember-deep) 100%);border:1.5px solid rgba(255,214,138,.8);display:flex;align-items:center;justify-content:center;font:900 13px var(--disp);color:#3A2000;box-shadow:0 0 10px rgba(255,160,50,.45)}
+.coin.sm{width:20px;height:20px;font-size:10px}
+.balance .amt{font:700 14px var(--mono)}
+.balance .lbl{font-size:8.5px;letter-spacing:.18em;color:var(--muted);display:block;line-height:1}
+.balance.pop{animation:pop .5s ease}
+@keyframes pop{40%{transform:scale(1.12)}}
+
+/* ---------- challenge bar ---------- */
+#challenge{position:relative;z-index:5;margin:6px 14px 0;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:12px}
+#challenge .t{font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+#challenge .bar{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
+#challenge .bar i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--pulse),var(--pulse-hi));box-shadow:0 0 8px rgba(90,150,255,.7);transition:width .5s ease}
+#challenge .n{font:700 12.5px var(--mono);white-space:nowrap}
+
+/* ---------- detection chip ---------- */
+#detect{position:relative;z-index:5;margin:16px auto 0;width:max-content;max-width:calc(100% - 40px);background:var(--glass);border:1px solid rgba(110,160,255,.35);border-radius:16px;padding:11px 16px;display:none;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+#detect.on{display:flex}
+#detect .ai{width:34px;height:34px;border-radius:9px;flex:0 0 auto;border:1.5px solid var(--pulse-hi);color:var(--pulse-hi);display:flex;align-items:center;justify-content:center;font:700 11px var(--disp);box-shadow:0 0 12px rgba(80,140,255,.35) inset}
+#detect .dt{font-weight:700;font-size:14.5px}
+#detect .dc{font-size:12.5px;color:var(--muted)}
+#detect .dc b{color:var(--pulse-hi);font-family:var(--mono)}
+#detect .lock{display:none;font-size:11px;color:var(--muted);margin-top:3px;align-items:center;gap:5px}
+#detect .lock.on{display:flex}
+#detect.err{border-color:rgba(255,93,93,.4)}
+#detect.err .ai{border-color:var(--bad);color:var(--bad)}
+.spin{width:14px;height:14px;border:2px solid rgba(110,160,255,.3);border-top-color:var(--pulse-hi);border-radius:50%;animation:sp .8s linear infinite;display:inline-block;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---------- brackets ---------- */
+#frame{position:absolute;z-index:4;left:8%;right:8%;top:31%;bottom:36%;pointer-events:none;opacity:.5;transition:opacity .3s}
+#frame.hot{opacity:1}
+#frame span{position:absolute;width:34px;height:34px;border:2.5px solid var(--pulse-hi);filter:drop-shadow(0 0 6px rgba(90,150,255,.8))}
+#frame .tl{left:0;top:0;border-right:0;border-bottom:0;border-radius:8px 0 0 0}
+#frame .tr{right:0;top:0;border-left:0;border-bottom:0;border-radius:0 8px 0 0}
+#frame .bl{left:0;bottom:0;border-right:0;border-top:0;border-radius:0 0 0 8px}
+#frame .br{right:0;bottom:0;border-left:0;border-top:0;border-radius:0 0 8px 0}
+#frame.hot span{animation:brkt 1.6s ease infinite}
+@keyframes brkt{50%{filter:drop-shadow(0 0 14px rgba(120,170,255,1))}}
+@media (prefers-reduced-motion:reduce){#frame.hot span,.balance.pop,.spin{animation:none}}
+
+/* ---------- bottom stack (hunt) ---------- */
+#huntfoot{position:relative;z-index:5;margin-top:auto;padding:0 14px calc(env(safe-area-inset-bottom,0px) + 8px)}
+#quest{display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid rgba(255,138,30,.5);border-radius:18px;padding:11px 14px;box-shadow:0 0 22px rgba(255,138,30,.14)}
+#quest .thumb{width:52px;height:52px;border-radius:12px;flex:0 0 auto;background:linear-gradient(145deg,#2A241B,#171310);border:1px solid rgba(255,194,75,.35);display:flex;align-items:center;justify-content:center;color:var(--gold)}
+#quest .qt{font-weight:700;font-size:14.5px}
+#quest .qd{font-size:12px;color:var(--muted);margin-top:1px}
+#quest .pay{margin-left:auto;text-align:center;flex:0 0 auto}
+#quest .pay .v{font:800 19px var(--mono);color:var(--ember)}
+#quest .pay .u{font-size:8.5px;letter-spacing:.2em;color:var(--muted)}
+#verifynote{display:flex;flex-direction:column;align-items:center;gap:3px;background:rgba(12,14,19,.72);border:1px solid var(--line);border-radius:14px;padding:9px 14px;margin-top:8px;text-align:center}
+#verifynote .h{display:flex;align-items:center;gap:7px;color:var(--pulse-hi);font-weight:700;font-size:12.5px;letter-spacing:.06em}
+#verifynote p{font-size:11.5px;color:var(--muted)}
+#controls{display:flex;align-items:center;justify-content:space-between;padding:12px 24px 6px}
+.ctl{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--ink);width:66px}
+.ctl .ic{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.ctl .cl{font-size:9.5px;font-weight:700;letter-spacing:.14em}
+.ctl .cs{font-size:8px;color:var(--muted);letter-spacing:.1em;margin-top:-3px}
+.ctl.active .ic{border-color:var(--gold);color:var(--gold);box-shadow:0 0 10px rgba(255,194,75,.3)}
+#shutter{width:82px;height:82px;border-radius:50%;border:3.5px solid var(--pulse-hi);padding:6px;box-shadow:0 0 24px rgba(80,140,255,.5)}
+#shutter i{display:block;width:100%;height:100%;border-radius:50%;background:#fff;transition:transform .12s}
+#shutter:active i{transform:scale(.86)}
+#shutter[disabled]{opacity:.5}
+
+/* ---------- tab bar ---------- */
+#tabs{position:relative;z-index:8;display:flex;background:rgba(10,11,14,.94);border-top:1px solid var(--line);padding:6px 4px calc(env(safe-area-inset-bottom,0px) + 6px)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;color:var(--muted)}
+.tab svg{width:22px;height:22px}
+.tab .tl{font-size:9.5px;font-weight:700;letter-spacing:.14em}
+.tab.on{color:var(--gold)}
+.tab.cam{margin-top:-22px}
+.tab.cam .ring{width:52px;height:52px;border-radius:50%;background:var(--carbon);border:2.5px solid var(--ember);display:flex;align-items:center;justify-content:center;color:var(--ember);box-shadow:0 0 16px rgba(255,138,30,.4)}
+.tab.cam.on .ring{background:linear-gradient(145deg,var(--ember),var(--ember-deep));color:#1B0E00}
+
+/* ---------- sheet views ---------- */
+.view{position:absolute;inset:0;z-index:6;display:none;flex-direction:column;background:var(--carbon)}
+.view.on{display:flex}
+.vhead{padding:calc(env(safe-area-inset-top,0px) + 18px) 18px 12px;border-bottom:1px solid var(--line)}
+.vhead .eyebrow{font-size:9.5px;font-weight:700;letter-spacing:.34em;color:var(--ember);text-transform:uppercase}
+.vhead h2{font-size:24px;font-weight:900;letter-spacing:.04em;margin-top:3px}
+.vhead .meta{font-size:12px;color:var(--muted);margin-top:4px}
+.vbody{flex:1;overflow-y:auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+
+/* garage */
+#ggrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-align:left;display:flex;flex-direction:column}
+.gcard .ph{aspect-ratio:4/3;background:#000 center/cover no-repeat}
+.gcard .in{padding:10px 11px 11px}
+.gcard .mk{font-weight:800;font-size:13.5px;line-height:1.25}
+.gcard .yr{font:600 10.5px var(--mono);color:var(--muted);margin-top:2px}
+.gcard .row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.chip{font-size:8.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:3.5px 8px;border-radius:999px;border:1px solid}
+.chip.everyday{color:var(--r-everyday);border-color:rgba(139,147,161,.45)}
+.chip.classic{color:var(--r-classic);border-color:rgba(255,138,30,.5)}
+.chip.rare{color:var(--r-rare);border-color:rgba(94,151,255,.5)}
+.chip.legendary{color:var(--r-legend);border-color:rgba(255,194,75,.55);background:rgba(255,194,75,.08)}
+.gtyres{font:700 12px var(--mono);color:var(--gold)}
+.empty{border:1px dashed rgba(255,255,255,.15);border-radius:18px;padding:38px 24px;text-align:center;color:var(--muted)}
+.empty .e1{font-weight:800;letter-spacing:.1em;color:var(--ink);font-size:13px;text-transform:uppercase;margin-bottom:6px}
+.empty p{font-size:12.5px;line-height:1.55}
+.rowbtns{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px;font-weight:700;font-size:12px;letter-spacing:.08em;text-align:center}
+.btn.hot{background:linear-gradient(145deg,var(--ember),var(--ember-deep));border-color:transparent;color:#1B0E00}
+
+/* map */
+#mapc{width:100%;aspect-ratio:1/1.15;background:var(--panel);border:1px solid var(--line);border-radius:18px;display:block}
+#mapinfo{margin-top:12px}
+.legend{display:flex;gap:14px;margin-top:12px;justify-content:center}
+.legend span{font-size:10px;letter-spacing:.1em;color:var(--muted);display:flex;align-items:center;gap:5px;text-transform:uppercase;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* quests */
+.qcard{display:flex;align-items:center;gap:13px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:11px}
+.qcard.done{border-color:rgba(62,207,142,.4)}
+.qic{width:42px;height:42px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);color:var(--muted)}
+.qcard.done .qic{color:var(--ok);border-color:rgba(62,207,142,.4)}
+.qn{font-weight:700;font-size:14px}
+.qd{font-size:11.5px;color:var(--muted);margin-top:2px}
+.qbar{height:5px;border-radius:3px;background:rgba(255,255,255,.09);margin-top:8px;overflow:hidden;width:150px}
+.qbar i{display:block;height:100%;background:linear-gradient(90deg,var(--pulse),var(--pulse-hi));border-radius:3px}
+.qpay{margin-left:auto;text-align:right;flex:0 0 auto}
+.qpay .v{font:800 16px var(--mono);color:var(--ember)}
+.qcard.done .qpay .v{color:var(--ok)}
+.qpay .u{font-size:8px;letter-spacing:.2em;color:var(--muted)}
+.sechead{font-size:10px;font-weight:800;letter-spacing:.3em;color:var(--muted);text-transform:uppercase;margin:20px 2px 10px}
+
+/* rewards */
+#balhero{background:linear-gradient(160deg,#1C1610,#12100B 60%);border:1px solid rgba(255,194,75,.3);border-radius:20px;padding:22px;text-align:center;position:relative;overflow:hidden}
+#balhero::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,160,50,.16),transparent 70%);top:-90px;right:-70px}
+#balhero .bh{font:900 42px var(--mono);color:var(--gold);letter-spacing:-.02em}
+#balhero .bl{font-size:10px;letter-spacing:.34em;color:var(--muted);text-transform:uppercase;margin-top:2px}
+#balhero .note{font-size:11px;color:var(--muted);margin-top:12px;position:relative}
+.rcard{display:flex;align-items:center;gap:13px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:11px}
+.rn{font-weight:700;font-size:14px}
+.rd{font-size:11.5px;color:var(--muted);margin-top:2px}
+.rbtn{margin-left:auto;flex:0 0 auto;background:rgba(255,138,30,.12);border:1px solid rgba(255,138,30,.5);color:var(--ember);border-radius:11px;padding:9px 13px;font:700 12px var(--mono)}
+.rbtn[disabled]{opacity:.4}
+.redemption{font:600 11.5px var(--mono);color:var(--muted);padding:9px 2px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+.redemption b{color:var(--gold)}
+
+/* verdict sheet */
+#verdict{position:absolute;inset:0;z-index:20;display:none;align-items:flex-end;background:rgba(4,5,7,.55);backdrop-filter:blur(3px)}
+#verdict.on{display:flex}
+#vcard{width:100%;background:#101218;border-top:1px solid var(--line);border-radius:24px 24px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 20px);animation:up .35s ease}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+@media (prefers-reduced-motion:reduce){#vcard{animation:none}}
+#vcard .grab{width:42px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 16px}
+#vcard .vph{width:100%;aspect-ratio:16/9;border-radius:14px;background:#000 center/cover no-repeat;border:1px solid var(--line)}
+#vcard .vmk{font-size:21px;font-weight:900;margin-top:14px;letter-spacing:.01em}
+#vcard .vyr{font:600 12px var(--mono);color:var(--muted);margin-top:3px}
+#vcard .vrow{display:flex;align-items:center;gap:9px;margin-top:11px;flex-wrap:wrap}
+#vcard .conf{font:600 11px var(--mono);color:var(--pulse-hi)}
+#vcard .blurb{font-size:13px;color:var(--muted);line-height:1.55;margin-top:11px}
+#vcard .payline{display:flex;align-items:center;gap:10px;margin-top:16px;background:rgba(255,138,30,.08);border:1px solid rgba(255,138,30,.35);border-radius:14px;padding:12px 14px}
+#vcard .payline .pv{font:800 24px var(--mono);color:var(--ember)}
+#vcard .payline .pl{font-size:9px;letter-spacing:.22em;color:var(--muted)}
+#vcard .miss{margin-top:16px;background:rgba(255,93,93,.07);border:1px solid rgba(255,93,93,.3);border-radius:14px;padding:12px 14px;font-size:13px;color:var(--muted);line-height:1.5}
+#vcard .vbtns{display:flex;gap:10px;margin-top:16px}
+
+/* event pill */
+#eventPill{position:relative;z-index:5;margin:8px auto 0;display:block;font:700 10px var(--mono);letter-spacing:.14em;color:var(--muted);border:1px dashed rgba(255,255,255,.22);border-radius:999px;padding:6px 13px;background:rgba(12,14,19,.6)}
+#eventPill.on{color:var(--ember);border:1px solid rgba(255,138,30,.55);box-shadow:0 0 10px rgba(255,138,30,.15)}
+
+/* dossier */
+#dossier{position:absolute;inset:0;z-index:22;display:none;flex-direction:column;background:var(--carbon)}
+#dossier.on{display:flex}
+#dHero{position:relative;aspect-ratio:16/10;background:#000 center/cover no-repeat;flex:0 0 auto;border-bottom:1px solid var(--line)}
+#dHero .back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-weight:800;font-size:11px;letter-spacing:.12em}
+#dHero .star{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+#dHero .star.on{color:var(--gold);border-color:rgba(255,194,75,.55)}
+#dBody{flex:1;overflow-y:auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 24px);-webkit-overflow-scrolling:touch}
+.dfield{margin-bottom:11px}
+.dfield label{display:block;font-size:9.5px;font-weight:800;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.dfield input,.dfield textarea{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--ink);font:500 14px var(--disp);padding:11px 12px;-webkit-appearance:none}
+.dfield textarea{min-height:86px;resize:vertical;line-height:1.5}
+.dfield input:focus,.dfield textarea:focus{outline:none;border-color:var(--pulse)}
+.dgrid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hv{display:inline-flex;align-items:center;gap:4px;font:800 9px var(--disp);letter-spacing:.14em;color:var(--ok);border:1px solid rgba(62,207,142,.4);border-radius:999px;padding:3px 8px}
+
+#vQuests .qhit{display:flex;justify-content:space-between;font:700 12px var(--mono);letter-spacing:.04em;color:var(--ok);border:1px solid rgba(62,207,142,.35);background:rgba(62,207,142,.07);border-radius:12px;padding:10px 13px;margin-top:10px}
+
+/* profile / crew */
+#profile{position:absolute;inset:0;z-index:24;display:none;flex-direction:column;background:var(--carbon)}
+#profile.on{display:flex}
+#tagCard{background:linear-gradient(160deg,#191512,#100E0B 60%);border:1px solid rgba(255,194,75,.3);border-radius:20px;padding:20px;text-align:center}
+#tagCard .th{font-size:26px;font-weight:900;letter-spacing:.02em}
+#tagCard .tc{font:700 15px var(--mono);color:var(--gold);letter-spacing:.12em;margin-top:6px}
+.qrwrap{background:#fff;border-radius:14px;padding:10px;width:max-content;margin:16px auto 4px}
+.pfnote{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:12px;text-align:center}
+.crewrow{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:9px}
+.crewrow .rk{font:800 12px var(--mono);color:var(--muted);width:18px}
+.crewrow .hd{font-weight:700;font-size:14px}
+.crewrow.me{border-color:rgba(255,138,30,.45)}
+.crewrow .ty{margin-left:auto;font:700 13px var(--mono);color:var(--gold)}
+.crewrow .rm{color:var(--muted);font-size:16px;padding:2px 6px}
+.streak{cursor:pointer}
+
+/* segmented control */
+.seg{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;width:max-content;margin-top:10px}
+.seg button{font:800 10px var(--disp);letter-spacing:.16em;color:var(--muted);padding:7px 14px;border-radius:999px}
+.seg button.on{background:rgba(255,138,30,.14);color:var(--ember)}
+
+/* codex */
+#cxHead{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+#cxHead .pct{font:800 24px var(--mono);color:var(--gold)}
+#cxHead .sub{font:700 10px var(--disp);color:var(--muted);letter-spacing:.16em}
+#cxGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.cxcard{background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden;text-align:left}
+.cxcard .cph{aspect-ratio:1/1;background:#000 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.12);font:900 30px var(--disp)}
+.cxcard.lk .cph{background:#0E1013}
+.cxcard .cin{padding:7px 8px 8px}
+.cxcard .cno{font:700 8.5px var(--mono);color:var(--muted);letter-spacing:.1em}
+.cxcard .cnm{font-weight:800;font-size:10.5px;line-height:1.25;margin-top:2px;min-height:26px}
+.cxcard.lk .cnm{color:var(--muted)}
+.cxcard .cpop{font:600 8.5px var(--mono);color:var(--gold);margin-top:3px}
+.cxcard.lk .cpop{color:rgba(152,160,172,.55)}
+
+/* sets & wanted */
+.qcard.want{border-color:rgba(255,194,75,.5);background:linear-gradient(160deg,#191512,#12100B)}
+.setchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.setchip{font:700 8px var(--disp);letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.setchip.got{color:var(--ok);border-color:rgba(62,207,142,.45)}
+
+/* power-ups */
+.pucard{display:flex;align-items:center;gap:13px;background:var(--panel);border:1px solid rgba(94,151,255,.35);border-radius:16px;padding:13px 14px;margin-bottom:11px}
+.puic{width:42px;height:42px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:1px solid rgba(94,151,255,.35);color:var(--pulse-hi)}
+
+/* codex-first chrome */
+.crest{width:26px;height:26px;border-radius:50%;background:#101218;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;color:var(--gold);box-shadow:0 0 10px rgba(255,194,75,.3);flex:0 0 auto}
+.crest.sm{width:20px;height:20px}
+#balhero .rname{font:900 34px var(--disp);letter-spacing:.08em;color:var(--gold);position:relative}
+#balhero .rstats{font:600 12px var(--mono);color:var(--muted);margin-top:10px;position:relative}
+#balhero .rnext{font-size:11px;color:var(--muted);margin-top:8px;position:relative}
+#badgeGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bdg{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;opacity:.5}
+.bdg.got{opacity:1;border-color:rgba(255,194,75,.45)}
+.bdg .bk{font:800 8px var(--disp);letter-spacing:.22em;color:var(--muted)}
+.bdg .bn{font-weight:800;font-size:12.5px;margin-top:4px;line-height:1.3}
+.bdg .bs{font:700 9px var(--mono);color:var(--muted);margin-top:6px;letter-spacing:.12em}
+.bdg.got .bs{color:var(--gold)}
+
+/* queue pill */
+#queuePill{position:relative;z-index:5;margin:6px auto 0;display:none;font:700 10px var(--mono);letter-spacing:.14em;color:var(--pulse-hi);border:1px solid rgba(110,160,255,.5);border-radius:999px;padding:6px 13px;background:rgba(12,14,19,.7)}
+
+/* expeditions */
+.expcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:11px}
+.exphead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.expthumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:11px}
+.expthumbs div{aspect-ratio:1/1;border-radius:9px;background:#000 center/cover no-repeat;border:1px solid var(--line)}
+
+/* hunting grounds */
+.place{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:11px}
+.place .prow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.place .phunt{font-size:11px;color:var(--ember);letter-spacing:.04em;margin-top:8px;font-weight:600}
+
+/* reveal juice */
+#vcard{perspective:1000px}
+#vcard.reveal .vph{animation:flipin .55s ease}
+@keyframes flipin{from{transform:rotateY(80deg) scale(.96);opacity:.2}}
+#vcard .vph{overflow:hidden;position:relative}
+#vcard .vph.holo::after{content:"";position:absolute;inset:-60%;background:linear-gradient(115deg,transparent 42%,rgba(255,224,160,.4) 50%,rgba(150,190,255,.28) 56%,transparent 66%);animation:holo 2s ease-in-out infinite}
+@keyframes holo{from{transform:translateX(-55%)}to{transform:translateX(55%)}}
+#flash{position:absolute;inset:0;z-index:40;pointer-events:none;background:radial-gradient(circle at 50% 42%,rgba(255,235,190,.95),rgba(255,180,60,.5) 40%,transparent 75%);opacity:0}
+#flash.on{animation:flashout .55s ease}
+@keyframes flashout{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+.chip.cond{color:var(--pulse-hi);border-color:rgba(110,160,255,.45)}
+.ptitle{font:800 11px var(--disp);letter-spacing:.22em;color:var(--gold);margin-top:6px;text-transform:uppercase}
+.bdg.eq{border-color:var(--pulse-hi);box-shadow:0 0 12px rgba(110,160,255,.22)}
+button.bdg[disabled]{cursor:default}
+@media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard .vph.holo::after,#flash.on{animation:none}}
+
+/* codex entry sheet */
+#cxSheet{position:absolute;inset:0;z-index:21;display:none;flex-direction:column;background:var(--carbon)}
+#cxSheet.on{display:flex}
+#ceHero{position:relative;aspect-ratio:16/10;background:#0E1013 center/cover no-repeat;flex:0 0 auto;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.1);font:900 64px var(--disp)}
+#ceHero .back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-weight:800;font-size:11px;letter-spacing:.12em}
+.lore{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-top:10px}
+.lore .lh{font:800 9px var(--disp);letter-spacing:.24em;color:var(--ember);margin-bottom:5px}
+.lore p{font-size:13px;line-height:1.55;color:var(--ink)}
+.sights{display:flex;gap:8px;overflow-x:auto;padding:2px 0;margin-top:10px;-webkit-overflow-scrolling:touch}
+.sights button{flex:0 0 auto;width:84px;height:84px;border-radius:11px;background:#000 center/cover no-repeat;border:1px solid var(--line)}
+.cxcard{cursor:pointer}
+
+/* install pill */
+#installPill{position:relative;z-index:5;margin:6px auto 0;display:none;font:700 10px var(--mono);letter-spacing:.14em;color:var(--gold);border:1px solid rgba(255,194,75,.5);border-radius:999px;padding:6px 13px;background:rgba(12,14,19,.7)}
+
+/* first-run intro */
+#intro{position:absolute;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:radial-gradient(120% 90% at 50% 0%,#171A21 0%,#0A0B0E 70%);padding:24px}
+#intro.on{display:flex}
+.introcard{max-width:380px;width:100%}
+.introcard .iw{font-size:34px;font-weight:900;letter-spacing:.16em;text-align:center;background:linear-gradient(180deg,#FFFFFF 20%,var(--gold) 65%,var(--ember) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.introcard .isub{font-size:10px;font-weight:600;letter-spacing:.46em;color:var(--ember);text-transform:uppercase;text-align:center;margin:4px 0 22px}
+.ibeat{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:11px}
+.ibeat b{font-size:14.5px;display:block;margin-bottom:4px}
+.ibeat p{font-size:12.5px;color:var(--muted);line-height:1.55}
+
+/* toast */
+#toast{position:absolute;left:50%;bottom:120px;transform:translate(-50%,20px);z-index:30;background:#171A22;border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;max-width:88%}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+input[type=file]{display:none}
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ HUNT (camera) ============ -->
+  <div id="camwrap">
+    <video id="cam" autoplay playsinline muted></video>
+    <div id="freeze"></div>
+    <div id="nocam">
+      <div class="big">Camera standing by</div>
+      <p>Live view isn't available here. Hit the shutter to open your camera or pick a shot from your gallery — the AI verify runs either way.</p>
+    </div>
+  </div>
+
+  <div id="frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>
+
+  <header id="hud">
+    <div class="streak" id="profileBtn" role="button" tabindex="0" title="Your hunter tag">
+      <svg width="52" height="52" viewBox="0 0 52 52">
+        <circle cx="26" cy="26" r="22" fill="rgba(10,11,14,.7)" stroke="rgba(255,255,255,.1)" stroke-width="4"/>
+        <circle id="streakArc" cx="26" cy="26" r="22" fill="none" stroke="url(#sg)" stroke-width="4" stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="138.2"/>
+        <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC24B"/><stop offset="1" stop-color="#FF8A1E"/></linearGradient></defs>
+      </svg>
+      <div class="num" id="streakNum">0</div>
+    </div>
+    <div class="wordmark">
+      <h1>TYRE HUNT</h1>
+      <div class="sub">Spot &amp; Collect</div>
+    </div>
+    <div class="balance" id="codexPill" role="button" tabindex="0" title="Open your codex">
+      <div class="crest"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+      <div><span class="amt" id="cxTop">0/60</span><span class="lbl" id="rankTop">ROOKIE</span></div>
+    </div>
+  </header>
+
+  <div id="challenge">
+    <span class="t">Nearby challenge</span>
+    <div class="bar"><i id="chBar"></i></div>
+    <span class="n"><span id="chN">0</span> / 3</span>
+  </div>
+
+  <button id="eventPill">SET EVENT</button>
+  <button id="queuePill">● 0 QUEUED</button>
+  <button id="installPill">⤓ INSTALL TYRE HUNT</button>
+
+  <div id="detect">
+    <div class="ai" id="detIcon"><svg width="15" height="17" viewBox="0 0 13 15" fill="none"><path d="M6.5 1l5 2v4c0 3.2-2.1 5.6-5 7-2.9-1.4-5-3.8-5-7V3l5-2z" stroke="currentColor" stroke-width="1.3"/><path d="M4.3 7.4l1.6 1.6 2.9-3" stroke="currentColor" stroke-width="1.3"/></svg></div>
+    <div>
+      <div class="dt" id="detTitle">Verifying…</div>
+      <div class="dc" id="detSub"><span class="spin"></span> Reading the shot</div>
+      <div class="lock" id="detLock">
+        <svg width="10" height="12" viewBox="0 0 10 12" fill="none"><rect x="1" y="5" width="8" height="6" rx="1.5" stroke="currentColor"/><path d="M3 5V3.5a2 2 0 1 1 4 0V5" stroke="currentColor"/></svg>
+        Plate blurred for privacy
+      </div>
+    </div>
+  </div>
+
+  <div id="huntfoot">
+    <div id="quest">
+      <div class="thumb">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 15l1.6-4.4A2 2 0 0 1 7.5 9h9a2 2 0 0 1 1.9 1.4L20 15"/><path d="M3 15h18v3.5a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1V18H6.5v.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V15z"/><circle cx="7" cy="16.6" r=".9" fill="currentColor"/><circle cx="17" cy="16.6" r=".9" fill="currentColor"/></svg>
+      </div>
+      <div>
+        <div class="qt" id="questTitle">Spot a classic car</div>
+        <div class="qd" id="questDesc">Snap a photo of any classic</div>
+      </div>
+      <div class="pay" id="questMark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="color:var(--ember)"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 1.5v4M22.5 12h-4M12 22.5v-4M1.5 12h4"/></svg></div>
+    </div>
+
+    <div id="verifynote">
+      <div class="h">
+        <svg width="13" height="15" viewBox="0 0 13 15" fill="none"><path d="M6.5 1l5 2v4c0 3.2-2.1 5.6-5 7-2.9-1.4-5-3.8-5-7V3l5-2z" stroke="currentColor" stroke-width="1.3"/><path d="M4.3 7.4l1.6 1.6 2.9-3" stroke="currentColor" stroke-width="1.3"/></svg>
+        VERIFIED ON CAPTURE
+      </div>
+      <p>Every shot is verified and filed to your codex on the spot — plates blur automatically.</p>
+    </div>
+
+    <div id="controls">
+      <button class="ctl" id="galleryBtn">
+        <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.7"/><path d="M4 18l5-5 3.5 3.5L16 13l4 4.5"/></svg></span>
+        <span class="cl">GALLERY</span>
+      </button>
+      <button id="shutter" aria-label="Capture"><i></i></button>
+      <button class="ctl" id="flashBtn">
+        <span class="ic"><svg width="18" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2L5 13.5h5.5L10 22l8.5-11.5H13L13 2z" stroke-linejoin="round"/></svg></span>
+        <span class="cl">FLASH</span>
+        <span class="cs" id="flashState">OFF</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ GARAGE ============ -->
+  <section class="view" id="view-garage">
+    <div class="vhead">
+      <div class="eyebrow">Collection</div>
+      <h2>Garage</h2>
+      <div class="meta" id="garageMeta">0 spots · 0 Tyres earned</div>
+      <div class="seg" id="gSeg">
+        <button data-seg="spots" class="on">SPOTS</button>
+        <button data-seg="codex">CODEX</button>
+      </div>
+    </div>
+    <div class="vbody">
+      <div id="segSpots">
+        <button class="btn hot" id="top8Btn" style="width:100%;margin-bottom:12px;display:none">SHARE MY TOP 8</button>
+        <div id="ggrid"></div>
+        <div class="rowbtns">
+          <button class="btn" id="exportBtn">EXPORT DATA</button>
+          <button class="btn" id="importBtn">IMPORT DATA</button>
+        </div>
+      </div>
+      <div id="segCodex" style="display:none">
+        <div id="cxHead">
+          <div class="pct" id="cxPct">0%</div>
+          <div class="sub" id="cxCount">0 / 60 SPOTTED</div>
+        </div>
+        <div id="cxGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MAP ============ -->
+  <section class="view" id="view-map">
+    <div class="vhead">
+      <div class="eyebrow">Territory</div>
+      <h2>Spot Map</h2>
+      <div class="meta" id="mapMeta">Location tags on your captures plot here</div>
+    </div>
+    <div class="vbody">
+      <canvas id="mapc"></canvas>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--r-everyday)"></i>Everyday</span>
+        <span><i class="dot" style="background:var(--r-classic)"></i>Classic</span>
+        <span><i class="dot" style="background:var(--r-rare)"></i>Rare</span>
+        <span><i class="dot" style="background:var(--r-legend)"></i>Legendary</span>
+      </div>
+      <div id="mapinfo"></div>
+      <div class="sechead">Expeditions</div>
+      <div id="expList"></div>
+      <div class="sechead">Hunting grounds</div>
+      <div id="groundList"></div>
+    </div>
+  </section>
+
+  <!-- ============ QUESTS ============ -->
+  <section class="view" id="view-quests">
+    <div class="vhead" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div>
+        <div class="eyebrow">Daily</div>
+        <h2>Quests</h2>
+        <div class="meta" id="questMeta">Resets at midnight local</div>
+      </div>
+      <button id="huntPlanBtn" style="background:linear-gradient(145deg,var(--ember),var(--ember-deep));color:#1B0E00;border-radius:999px;padding:10px 14px;font-weight:800;font-size:10px;letter-spacing:.12em;flex:0 0 auto">PLAN MY HUNT</button>
+    </div>
+    <div class="vbody" id="questList"></div>
+  </section>
+
+  <!-- ============ REWARDS ============ -->
+  <section class="view" id="view-rewards">
+    <div class="vhead">
+      <div class="eyebrow">Standing</div>
+      <h2>Hall</h2>
+      <div class="meta">What you've spotted speaks for itself</div>
+    </div>
+    <div class="vbody">
+      <div id="balhero">
+        <div class="rname" id="rankName">ROOKIE</div>
+        <div class="bl">Hunter rank</div>
+        <div class="rstats" id="rankStats">0 models · 0 rare · 0 legendary</div>
+        <div class="rnext" id="rankNext"></div>
+      </div>
+      <div class="sechead">Season</div>
+      <div id="seasonCard"></div>
+      <div class="sechead">Records</div>
+      <div id="recordList"></div>
+      <div class="sechead">Titles</div>
+      <div id="titleGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+      <div class="sechead">Badges</div>
+      <div id="badgeGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ TABS ============ -->
+  <nav id="tabs">
+    <button class="tab" data-view="garage">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 10l9-6 9 6v10a1 1 0 0 1-1 1h-3v-7H7v7H4a1 1 0 0 1-1-1V10z"/><path d="M7 17h10M7 19.5h10"/></svg>
+      <span class="tl">GARAGE</span>
+    </button>
+    <button class="tab" data-view="map">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-6.5-5.4-6.5-10A6.5 6.5 0 0 1 12 4.5 6.5 6.5 0 0 1 18.5 11c0 4.6-6.5 10-6.5 10z"/><circle cx="12" cy="11" r="2.3"/></svg>
+      <span class="tl">MAP</span>
+    </button>
+    <button class="tab cam on" data-view="hunt" aria-label="Hunt">
+      <span class="ring">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.4"/><path d="M12 3v5.2M21 12h-5.2M12 21v-5.2M3 12h5.2" opacity=".55"/></svg>
+      </span>
+    </button>
+    <button class="tab" data-view="quests">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8.5l1.3 1.3 2.4-2.6M8.5 14l1.3 1.3 2.4-2.6M15 9h1.5M15 14.5h1.5"/></svg>
+      <span class="tl">QUESTS</span>
+    </button>
+    <button class="tab" data-view="rewards">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H4.5v1.5A3.5 3.5 0 0 0 8 10M17 5h2.5v1.5A3.5 3.5 0 0 1 16 10"/><path d="M12 14v3M8.5 20h7M9.5 17h5"/></svg>
+      <span class="tl">HALL</span>
+    </button>
+  </nav>
+
+  <!-- ============ VERDICT ============ -->
+  <div id="verdict">
+    <div id="vcard">
+      <div class="grab"></div>
+      <div class="vph" id="vPhoto"></div>
+      <div class="vmk" id="vMake">—</div>
+      <div class="vyr" id="vYear"></div>
+      <div class="vrow">
+        <span class="chip" id="vChip">CLASSIC</span>
+        <span class="conf" id="vConf"></span>
+        <span id="vConds" style="display:contents"></span>
+      </div>
+      <p class="blurb" id="vBlurb"></p>
+      <p class="blurb" id="vShotNote" style="margin-top:5px;font-size:11.5px"></p>
+      <div class="payline" id="vPayline">
+        <div class="crest sm"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+        <div><div class="pv" id="vPay">—</div><div class="pl" id="vPayLbl">FILED TO CODEX</div></div>
+      </div>
+      <div id="vQuests"></div>
+      <div class="miss" id="vMiss" style="display:none"></div>
+      <div class="vbtns">
+        <button class="btn hot" id="vAgain">HUNT AGAIN</button>
+        <button class="btn" id="vShare">SHARE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CODEX ENTRY ============ -->
+  <section id="cxSheet">
+    <div id="ceHero"><span id="ceQ">?</span><button class="back" id="ceBack">‹ CODEX</button></div>
+    <div id="ceBody" class="vbody"></div>
+  </section>
+
+  <!-- ============ PROFILE / CREW ============ -->
+  <section id="profile">
+    <div class="vhead" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div>
+        <div class="eyebrow">Hunter</div>
+        <h2>Your Tag</h2>
+        <div class="meta" id="pfMeta">Claim a tag to hunt with a crew</div>
+      </div>
+      <button id="pfClose" style="background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-weight:800;font-size:11px;letter-spacing:.12em;flex:0 0 auto">CLOSE</button>
+    </div>
+    <div id="pfBody" class="vbody"></div>
+  </section>
+
+  <!-- ============ DOSSIER ============ -->
+  <section id="dossier">
+    <div id="dHero">
+      <button class="back" id="dBack">‹ GARAGE</button>
+      <button class="star" id="dStar" aria-label="Favorite"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.3L12 17.1l-5.7 3.1 1.2-6.3L2.8 9.5l6.4-.8L12 2.8z"/></svg></button>
+    </div>
+    <div id="dBody">
+      <div class="vrow" style="margin:0 0 6px"><span class="chip classic" id="dMetaChip">CLASSIC</span><span class="vyr" id="dMeta"></span></div>
+      <div class="dgrid2">
+        <div class="dfield"><label>Make</label><input id="dMake"></div>
+        <div class="dfield"><label>Model</label><input id="dModel"></div>
+      </div>
+      <div class="dgrid2">
+        <div class="dfield"><label>Year</label><input id="dYear" placeholder="1968"></div>
+        <div class="dfield"><label>Color / trim</label><input id="dColor" placeholder="Slate grey · Targa"></div>
+      </div>
+      <div class="dfield"><label>Event</label><input id="dEvent" placeholder="Cars &amp; Coffee Cle Elum"></div>
+      <div class="dgrid2">
+        <div class="dfield"><label>Where</label><input id="dPlace" placeholder="Show field, museum, street"></div>
+        <div class="dfield"><label>Owner met</label><input id="dOwner" placeholder="@handle"></div>
+      </div>
+      <div class="dfield"><label>The story</label><textarea id="dStory" placeholder="Owner bought it new. One repaint. Sounded incredible leaving."></textarea></div>
+      <div class="vbtns" style="margin-top:2px">
+        <button class="btn hot" id="dSave">SAVE DOSSIER</button>
+        <button class="btn" id="dShare">SHARE CARD</button>
+      </div>
+      <button class="btn" id="dDelete" style="width:100%;margin-top:10px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE SPOT</button>
+    </div>
+  </section>
+
+  <!-- ============ FIRST RUN ============ -->
+  <section id="intro">
+    <div class="introcard">
+      <h1 class="iw">TYRE HUNT</h1>
+      <div class="isub">Spot &amp; Collect</div>
+      <div class="ibeat"><b>Point. Shoot. Verified.</b><p>Aim at real metal and hit the shutter — the app identifies the car on the spot and files it.</p></div>
+      <div class="ibeat"><b>The codex is the score.</b><p>Every model you find fills a numbered field guide. Rank comes from what you've seen — nothing else.</p></div>
+      <div class="ibeat"><b>Live captures only.</b><p>Plates blur automatically. Old photos don't count. You have to be there.</p></div>
+      <button class="btn hot" id="introGo" style="width:100%;margin-top:16px;padding:15px;font-size:13px">START HUNTING</button>
+      <p class="pfnote">Camera and location power the hunt — nothing is shared unless you share it.</p>
+    </div>
+  </section>
+
+  <div id="flash"></div>
+  <div id="toast"></div>
+  <input type="file" id="fileCam" accept="image/*" capture="environment">
+  <input type="file" id="fileGal" accept="image/*">
+  <input type="file" id="fileImport" accept="application/json">
+  <canvas id="work" style="display:none"></canvas>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+/* ---- Supabase go-live: run tyre-hunt-schema.sql (ships alongside this file) in the
+   SQL editor, then fill supabaseUrl + supabaseAnon below. Accounts, global census,
+   world/regional firsts, event lobbies, duels, territory, and the crew feed all
+   activate. Server-side verification + owner claim land in the edge-function pass —
+   do NOT bridge Tyres/TYRE before that exists. ---- */
+const CONFIG = {
+  apiKey: "",            // self-hosted: paste an Anthropic API key. Inside claude.ai artifacts, leave blank.
+  model: "claude-sonnet-4-6",
+  supabaseUrl: "https://kokxlzygppakgcebkygc.supabase.co",
+  supabaseAnon: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtva3hsenlncHBha2djZWJreWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMTM5ODgsImV4cCI6MjA5OTg4OTk4OH0.c8N8aevxB-etS_b8HhG3M4BNlV3lM2gX3BO12vJRQCo",
+  launch: "2026-08-16", // Pebble Beach anchor — all seasons/WANTED rotate procedurally from here
+  strictCapture: true,   // live camera captures only; gallery/file imports save but don't count
+  thumbEdge: 640,        // stored thumbnail long edge
+  sendEdge: 1100         // long edge sent to the verifier
+};
+const PAYOUT = { everyday:10, classic:75, rare:150, legendary:400 };
+const KEY = "tyrehunt:v1";
+
+/* ================= STATE ================= */
+let state = {
+  tyres: 0, streak: 0, lastSpotDay: null,
+  day: null, daySpots: 0, dayBonus: false, dayQ: { ids: [], done: {} }, dayMakes: [],
+  profile: null, crew: [],
+  activeEvent: "", activeEventCode: "",
+  week: null, wantedIds: [], wantedDone: {}, setsDone: {}, badges: {},
+  boosts: { shield: 0, turboUntil: 0 },
+  lastPaidTs: 0, dayPaid: 0,
+  bestStreak: 0, cotdStamps: {}, title: "", aiHunt: null, lore: {},
+  sound: true, seenIntro: false,
+  spots: [], redemptions: [], queue: []
+};
+const $ = id => document.getElementById(id);
+const dayKey = (d=new Date()) => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+
+const Store = {
+  async load(){
+    try{ if (window.storage){ const r = await window.storage.get(KEY); if (r && r.value) return JSON.parse(r.value); return null; } }catch(e){}
+    try{ if (!window.storage && window.localStorage){ const v = localStorage.getItem(KEY); if (v) return JSON.parse(v); } }catch(e){}
+    return null;
+  },
+  async save(){
+    const v = JSON.stringify(state);
+    try{ if (window.storage){ await window.storage.set(KEY, v); return; } }catch(e){}
+    try{ if (window.localStorage) localStorage.setItem(KEY, v); }catch(e){}
+  }
+};
+
+function ensureDay(){
+  const t = dayKey();
+  if (state.day !== t){
+    state.day = t; state.daySpots = 0; state.dayBonus = false;
+    state.dayMakes = []; state.dayQ = { ids: [], done: {} };
+    state.dayPaid = 0;
+  }
+  if (!state.dayQ || !Array.isArray(state.dayQ.ids)) state.dayQ = { ids: [], done: {} };
+  if (!Array.isArray(state.dayMakes)) state.dayMakes = [];
+  if (!state.dayQ.ids.length) state.dayQ.ids = dailyQuests();
+  const wk = launchWeek();
+  if (state.week !== wk){ state.week = wk; state.wantedDone = {}; state.wantedIds = pickWanted(wk); }
+  if (!Array.isArray(state.wantedIds) || !state.wantedIds.length) state.wantedIds = pickWanted(wk);
+  if (!state.wantedDone) state.wantedDone = {};
+  if (!state.setsDone) state.setsDone = {};
+  if (!state.badges) state.badges = {};
+  if (!Array.isArray(state.queue)) state.queue = [];
+  if (!state.cotdStamps) state.cotdStamps = {};
+  if (typeof state.bestStreak !== "number") state.bestStreak = 0;
+  if (!state.lore) state.lore = {};
+  if (typeof state.sound !== "boolean") state.sound = true;
+  if (typeof state.activeEventCode !== "string") state.activeEventCode = "";
+  if (state.seenIntro === undefined) state.seenIntro = state.spots.length > 0;
+  if (!state.boosts) state.boosts = { shield: 0, turboUntil: 0 };
+  if (typeof state.dayPaid !== "number") state.dayPaid = 0;
+}
+
+/* ================= QUEST POOL ================= */
+const MAKESETS = {
+  jdm: ["toyota","nissan","honda","mazda","subaru","mitsubishi","lexus","acura","infiniti","datsun","suzuki","isuzu"],
+  italian: ["ferrari","lamborghini","maserati","alfa","fiat","lancia","pagani","abarth","de tomaso"],
+  british: ["aston","jaguar","land rover","range rover","bentley","rolls","lotus","mclaren","mini","mg ","triumph","morgan","tvr","austin","caterham"],
+  american: ["ford","chevrolet","chevy","dodge","plymouth","pontiac","buick","cadillac","oldsmobile","amc","shelby","chrysler","gmc","lincoln","mercury","jeep","ram"]
+};
+const inSet = (a, list) => list.some(m => a.make.includes(m));
+const QUEST_POOL = [
+  // marque hunts
+  { id:"ferrari",  cat:"M", name:"Prancing Horse", desc:"Capture any Ferrari", pay:200, match:a=>a.make.includes("ferrari") },
+  { id:"porsche",  cat:"M", name:"Stuttgart Crest", desc:"Capture any Porsche", pay:150, match:a=>a.make.includes("porsche") },
+  { id:"lambo",    cat:"M", name:"Raging Bull", desc:"Capture any Lamborghini", pay:200, match:a=>a.make.includes("lamborghini") },
+  { id:"bmw",      cat:"M", name:"The Roundel", desc:"Capture any BMW", pay:50, match:a=>a.make.includes("bmw") },
+  { id:"merc",     cat:"M", name:"Three-Pointed Star", desc:"Capture any Mercedes", pay:50, match:a=>a.make.includes("mercedes") },
+  { id:"jdm",      cat:"M", name:"Rising Sun", desc:"Capture any Japanese marque", pay:50, match:a=>inSet(a, MAKESETS.jdm) },
+  { id:"italian",  cat:"M", name:"The Italian Job", desc:"Capture any Italian marque", pay:100, match:a=>inSet(a, MAKESETS.italian) },
+  { id:"british",  cat:"M", name:"British Steel", desc:"Capture any British marque", pay:75, match:a=>inSet(a, MAKESETS.british) },
+  { id:"mustang",  cat:"M", name:"Pony Up", desc:"Capture a Ford Mustang", pay:75, match:a=>a.make.includes("ford") && a.model.includes("mustang") },
+  { id:"corvette", cat:"M", name:"America's Sports Car", desc:"Capture a Corvette", pay:75, match:a=>a.model.includes("corvette") },
+  // body & build
+  { id:"racecar",  cat:"B", name:"The Race Car", desc:"Livery, numbers, full race prep", pay:250, match:a=>a.tags.includes("race_car") },
+  { id:"droptop",  cat:"B", name:"Drop Top", desc:"Capture a convertible", pay:50, match:a=>a.tags.includes("convertible") },
+  { id:"longroof", cat:"B", name:"Longroof Society", desc:"Capture a wagon", pay:75, match:a=>a.tags.includes("wagon") },
+  { id:"pickup",   cat:"B", name:"Work Horse", desc:"Capture a pickup", pay:30, match:a=>a.tags.includes("pickup") },
+  { id:"moto",     cat:"B", name:"Two Wheels", desc:"Capture a motorcycle", pay:50, match:a=>a.tags.includes("motorcycle") },
+  { id:"wing",     cat:"B", name:"Cleared for Takeoff", desc:"Capture a big rear wing", pay:75, match:a=>a.tags.includes("big_wing") },
+  { id:"wide",     cat:"B", name:"Widebody", desc:"Flares and stance", pay:100, match:a=>a.tags.includes("widebody") },
+  { id:"mud",      cat:"B", name:"Mud Plugger", desc:"Lifted 4x4 or overland rig", pay:50, match:a=>a.tags.includes("lifted_4x4") },
+  // eras
+  { id:"prewar",   cat:"E", name:"Pre-War Iron", desc:"Capture anything pre-1946", pay:400, match:a=>a.decade==="pre-1946" },
+  { id:"fifties",  cat:"E", name:"Fins & Chrome", desc:"Capture a 1950s machine", pay:250, match:a=>a.decade==="1950s" },
+  { id:"muscle",   cat:"E", name:"Muscle Era", desc:"American muscle, '60s–'70s", pay:150, match:a=>a.tags.includes("american_muscle") || (inSet(a, MAKESETS.american) && (a.decade==="1960s" || a.decade==="1970s")) },
+  { id:"radwood",  cat:"E", name:"Radwood Hero", desc:"Capture an '80s or '90s hero", pay:100, match:a=>a.decade==="1980s" || a.decade==="1990s" },
+  { id:"aircool",  cat:"E", name:"Air-Cooled", desc:"No radiator, all character", pay:150, match:a=>a.tags.includes("air_cooled") },
+  { id:"y2k",      cat:"E", name:"New Millennium", desc:"Capture a 2000s car", pay:40, match:a=>a.decade==="2000s" },
+  // wildcards
+  { id:"rosso",    cat:"W", name:"Rosso Corsa", desc:"Capture a red car", pay:40, match:a=>a.color==="red" },
+  { id:"green",    cat:"W", name:"Racing Green", desc:"Capture a green car", pay:50, match:a=>a.color==="green" },
+  { id:"loud",     cat:"W", name:"Highlighter Pack", desc:"Yellow or orange paint", pay:50, match:a=>a.color==="yellow" || a.color==="orange" },
+  { id:"murdered", cat:"W", name:"Murdered Out", desc:"Capture a black car", pay:30, match:a=>a.color==="black" },
+  { id:"unicorn",  cat:"W", name:"The Unicorn", desc:"Land a legendary", pay:400, match:a=>a.rarity==="legendary" },
+  { id:"badges",   cat:"W", name:"Badge Collector", desc:"Three different makes today", pay:100, match:a=>a.dayMakesCount>=3, prog:()=>Math.min((state.dayMakes||[]).length,3)+" / 3" },
+  { id:"afterdark", cat:"W", name:"After Dark", desc:"Capture anything at night", match:a=>a.conds.includes("night") },
+  { id:"storm",    cat:"W", name:"Storm Chaser", desc:"A capture in rain or snow", match:a=>a.conds.includes("rain")||a.conds.includes("snow") }
+];
+const questById = id => QUEST_POOL.find(q => q.id === id);
+function dailyQuests(){
+  const s = state.day || dayKey();
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  const rnd = () => { h = (h * 1664525 + 1013904223) >>> 0; return h / 4294967296; };
+  return ["M","B","E","W"].map(c => {
+    const opts = QUEST_POOL.filter(q => q.cat === c);
+    return opts[Math.floor(rnd() * opts.length)].id;
+  });
+}
+function renderFeaturedQuest(){
+  const el = $("questTitle");
+  if (!el) return;
+  const cd = carOfTheDay();
+  if (cd && !(state.cotdStamps || {})["n" + cd.n]){
+    el.textContent = "Car of the Day · " + cd.name;
+    $("questDesc").textContent = "Land one today for a dated codex stamp";
+    return;
+  }
+  const next = ((state.dayQ && state.dayQ.ids) || []).map(questById).filter(Boolean).find(q => !state.dayQ.done[q.id]);
+  if (next){
+    el.textContent = next.name;
+    $("questDesc").textContent = next.desc;
+  } else {
+    el.textContent = "Hunts cleared";
+    $("questDesc").textContent = "Fresh targets drop at midnight";
+  }
+}
+
+/* ================= ANTI-CHEAT (client deterrence) ================= */
+function aHash(canvas){
+  const t = document.createElement("canvas");
+  t.width = 8; t.height = 8;
+  const cx = t.getContext("2d");
+  cx.drawImage(canvas, 0, 0, 8, 8);
+  const d = cx.getImageData(0, 0, 8, 8).data;
+  const g = [];
+  for (let i = 0; i < 64; i++){
+    const o = i * 4;
+    g.push(d[o] * .299 + d[o+1] * .587 + d[o+2] * .114);
+  }
+  const avg = g.reduce((a, b) => a + b, 0) / 64;
+  let hex = "";
+  for (let i = 0; i < 64; i += 4){
+    let n = 0;
+    for (let j = 0; j < 4; j++) n = (n << 1) | (g[i + j] > avg ? 1 : 0);
+    hex += n.toString(16);
+  }
+  return hex;
+}
+function hamming(a, b){
+  if (!a || !b || a.length !== b.length) return 64;
+  let d = 0;
+  for (let i = 0; i < a.length; i++){
+    let x = parseInt(a[i], 16) ^ parseInt(b[i], 16);
+    while (x){ d += x & 1; x >>= 1; }
+  }
+  return d;
+}
+function haversine(la1, lo1, la2, lo2){
+  const R = 6371, toR = x => x * Math.PI / 180;
+  const dLa = toR(la2 - la1), dLo = toR(lo2 - lo1);
+  const h = Math.sin(dLa/2) * Math.sin(dLa/2) + Math.cos(toR(la1)) * Math.cos(toR(la2)) * Math.sin(dLo/2) * Math.sin(dLo/2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/* ================= CODEX / SETS / WANTED ================= */
+function spotStr(s){ return ((s.make || "") + " " + (s.model || "")).toLowerCase(); }
+function hasTokens(str, m){
+  if (!m || !m.length) return false;
+  if (Array.isArray(m[0])) return m.some(g => g.every(t => str.includes(t)));
+  return m.every(t => str.includes(t));
+}
+function entryMatches(en, s){ return hasTokens(spotStr(s), en.m); }
+function matcherTest(mt, s){
+  if (mt.m && !hasTokens(spotStr(s), mt.m)) return false;
+  if (mt.tag && !(s.tags || []).includes(mt.tag)) return false;
+  if (mt.decades && !mt.decades.includes(s.decade)) return false;
+  return true;
+}
+const CODEX_BASE = [
+  { name:"Ferrari F40", tier:"legendary", m:["ferrari","f40"] },
+  { name:"Ferrari Enzo", tier:"legendary", m:["ferrari","enzo"] },
+  { name:"Ferrari 250", tier:"legendary", m:["ferrari","250"] },
+  { name:"Lamborghini Miura", tier:"legendary", m:["miura"] },
+  { name:"Lamborghini Countach", tier:"legendary", m:["countach"] },
+  { name:"McLaren F1", tier:"legendary", m:[["mclaren","f1"]] },
+  { name:"Porsche 959", tier:"legendary", m:["porsche","959"] },
+  { name:"Porsche Carrera GT", tier:"legendary", m:["carrera gt"] },
+  { name:"Mercedes 300SL", tier:"legendary", m:[["300sl"],["300 sl"]] },
+  { name:"Toyota 2000GT", tier:"legendary", m:[["2000gt"],["2000 gt"]] },
+  { name:"Ford GT40", tier:"legendary", m:[["gt40"],["gt 40"]] },
+  { name:"Shelby Cobra", tier:"legendary", m:["cobra"] },
+  { name:"Bugatti Veyron", tier:"legendary", m:["veyron"] },
+  { name:"Pagani", tier:"legendary", m:["pagani"] },
+  { name:"Koenigsegg", tier:"legendary", m:["koenigsegg"] },
+  { name:"Lancia Stratos", tier:"legendary", m:["stratos"] },
+  { name:"Ferrari Testarossa", tier:"rare", m:["testarossa"] },
+  { name:"Ferrari F355", tier:"rare", m:[["f355"],["ferrari","355"]] },
+  { name:"Porsche 911 GT3", tier:"rare", m:[["porsche","gt3"]] },
+  { name:"Porsche 930 Turbo", tier:"rare", m:[["930"],["porsche","turbo"]] },
+  { name:"Honda NSX", tier:"rare", m:[["nsx"]] },
+  { name:"Nissan Skyline GT-R", tier:"rare", m:[["skyline"],["gt-r"],["gtr"]] },
+  { name:"Toyota Supra", tier:"rare", m:["supra"] },
+  { name:"Mazda RX-7", tier:"rare", m:[["rx-7"],["rx7"]] },
+  { name:"Lancia Delta Integrale", tier:"rare", m:[["integrale"],["lancia","delta"]] },
+  { name:"Audi Quattro", tier:"rare", m:[["audi","quattro"]] },
+  { name:"BMW M3", tier:"rare", m:[["bmw","m3"]] },
+  { name:"Lotus Esprit", tier:"rare", m:["esprit"] },
+  { name:"DeLorean DMC-12", tier:"rare", m:["delorean"] },
+  { name:"Ford GT", tier:"rare", m:[["ford","gt"]] },
+  { name:"Dodge Viper", tier:"rare", m:["viper"] },
+  { name:"Lamborghini Huracán", tier:"rare", m:[["hurac"]] },
+  { name:"VW Beetle", tier:"classic", m:["beetle"] },
+  { name:"VW Bus", tier:"classic", m:[["type 2"],["kombi"],["vanagon"],["microbus"],["vw bus"],["volkswagen bus"]] },
+  { name:"Ford Mustang", tier:"classic", m:["mustang"] },
+  { name:"Chevrolet Camaro", tier:"classic", m:["camaro"] },
+  { name:"Chevrolet Corvette", tier:"classic", m:["corvette"] },
+  { name:"Dodge Charger", tier:"classic", m:["charger"] },
+  { name:"Classic Mini", tier:"classic", m:[["mini","cooper"],["austin","mini"],["morris","mini"]] },
+  { name:"Alfa Romeo", tier:"classic", m:["alfa"] },
+  { name:"MGB", tier:"classic", m:[["mgb"],["mg b"]] },
+  { name:"Triumph", tier:"classic", m:["triumph"] },
+  { name:"Datsun Z", tier:"classic", m:[["240z"],["260z"],["280z"],["fairlady"]] },
+  { name:"Mercedes SL", tier:"classic", m:[["mercedes","sl"]] },
+  { name:"BMW 2002", tier:"classic", m:[["bmw","2002"]] },
+  { name:"Citroën DS", tier:"classic", m:[["citro","ds"]] },
+  { name:"Karmann Ghia", tier:"classic", m:["karmann"] },
+  { name:"Ford Bronco", tier:"classic", m:["bronco"] },
+  { name:"Mazda Miata", tier:"everyday", m:[["miata"],["mx-5"],["mx5"]] },
+  { name:"VW Golf GTI", tier:"everyday", m:["gti"] },
+  { name:"Subaru WRX", tier:"everyday", m:[["wrx"],["sti"]] },
+  { name:"Civic Type R", tier:"everyday", m:[["type r"]] },
+  { name:"Jeep Wrangler", tier:"everyday", m:["wrangler"] },
+  { name:"Land Rover Defender", tier:"everyday", m:["defender"] },
+  { name:"Toyota Land Cruiser", tier:"everyday", m:["land cruiser"] },
+  { name:"Tesla Cybertruck", tier:"everyday", m:["cybertruck"] },
+  { name:"Tesla Model S", tier:"everyday", m:[["model s"]] },
+  { name:"Porsche Cayman / Boxster", tier:"everyday", m:[["cayman"],["boxster"]] },
+  { name:"Ford F-150", tier:"everyday", m:[["f-150"],["f150"]] },
+  { name:"Toyota Tacoma", tier:"everyday", m:["tacoma"] }
+];
+
+/* ================= SEASONS (procedural — infinite from CONFIG.launch) ================= */
+const LAUNCH = new Date(CONFIG.launch + "T00:00:00");
+const WEEK_MS = 6048e5, SEASON_WEEKS = 8, SEASON_MS = SEASON_WEEKS * WEEK_MS;
+// theme pool — each defines a codex volume + a goal predicate keyed to captures.
+// cycles loop forever; every Nth pass escalates the goal target (answer: escalate).
+const SEASON_THEMES = [
+  { key:"jdm", name:"JDM", tag:"RISING SUN", goal:"Japanese models", need:2, metric:jdmModels,
+    volume:[
+      { name:"Nissan Silvia", tier:"classic", m:[["silvia"],["180sx"],["240sx"]] },
+      { name:"Toyota AE86", tier:"classic", m:[["ae86"],["trueno"],["levin"],["corolla gt-s"]] },
+      { name:"Mitsubishi Lancer Evo", tier:"rare", m:[["evolution"],["lancer evo"],["evo "]] },
+      { name:"Toyota Celica GT-Four", tier:"rare", m:[["celica"]] },
+      { name:"Honda S2000", tier:"rare", m:[["s2000"]] },
+      { name:"Nissan 300ZX", tier:"classic", m:[["300zx"]] },
+      { name:"Toyota Chaser", tier:"classic", m:[["chaser"]] },
+      { name:"Mazda Cosmo", tier:"legendary", m:[["cosmo"]] },
+      { name:"Lexus LFA", tier:"legendary", m:[["lfa"]] },
+      { name:"Datsun 510", tier:"classic", m:[["datsun","510"]] } ] },
+  { key:"prewar", name:"Pre-War", tag:"BRASS & IRON", goal:"pre-1946 machines", need:2, metric:prewarModels,
+    volume:[
+      { name:"Bugatti Type 35", tier:"legendary", m:[["type 35"]] },
+      { name:"Bentley Blower", tier:"legendary", m:[["blower"]] },
+      { name:"Alfa Romeo 8C", tier:"legendary", m:[["alfa","8c"]] },
+      { name:"Duesenberg", tier:"legendary", m:[["duesenberg"]] },
+      { name:"Ford Model A", tier:"classic", m:[["model a"]] },
+      { name:"Ford Model T", tier:"classic", m:[["model t"]] },
+      { name:"Packard", tier:"classic", m:[["packard"]] },
+      { name:"Auburn Speedster", tier:"legendary", m:[["auburn"]] } ] },
+  { key:"exotic", name:"Exotica", tag:"HOLY BADGES", goal:"exotic models", need:3, metric:exoticModels,
+    volume:[
+      { name:"Ferrari 288 GTO", tier:"legendary", m:[["288"]] },
+      { name:"Lamborghini Diablo", tier:"rare", m:[["diablo"]] },
+      { name:"Jaguar XJ220", tier:"legendary", m:[["xj220"]] },
+      { name:"Maserati MC12", tier:"legendary", m:[["mc12"]] },
+      { name:"Ferrari 512 BB", tier:"rare", m:[["512","bb"],["berlinetta boxer"]] },
+      { name:"Lamborghini Espada", tier:"rare", m:[["espada"]] },
+      { name:"Aston Martin Vulcan", tier:"legendary", m:[["vulcan"]] },
+      { name:"Ferrari 456", tier:"classic", m:[["456"]] } ] },
+  { key:"muscle", name:"American Muscle", tag:"DETROIT IRON", goal:"muscle models", need:3, metric:muscleModels,
+    volume:[
+      { name:"Plymouth Barracuda", tier:"rare", m:[["barracuda"],["'cuda"],["cuda"]] },
+      { name:"Pontiac GTO", tier:"classic", m:[["gto"],["pontiac","judge"]] },
+      { name:"Buick Grand National", tier:"rare", m:[["grand national"],["gnx"]] },
+      { name:"Oldsmobile 442", tier:"classic", m:[["442"]] },
+      { name:"AMC Javelin", tier:"classic", m:[["javelin"],["amc","amx"]] },
+      { name:"Dodge Challenger", tier:"classic", m:[["challenger"]] },
+      { name:"Chevrolet Chevelle", tier:"classic", m:[["chevelle"]] },
+      { name:"Ford Torino", tier:"classic", m:[["torino"]] } ] },
+  { key:"euro", name:"Euro Classics", tag:"CONTINENTAL", goal:"European classics", need:3, metric:euroModels,
+    volume:[
+      { name:"Citroën SM", tier:"rare", m:[["citro","sm"]] },
+      { name:"Lancia Delta", tier:"rare", m:[["lancia","delta"]] },
+      { name:"BMW M1", tier:"legendary", m:[["bmw","m1"]] },
+      { name:"Mercedes 300SEL 6.3", tier:"classic", m:[["300sel"],["6.3"]] },
+      { name:"Alpine A110", tier:"rare", m:[["alpine","a110"]] },
+      { name:"Lotus Elan", tier:"classic", m:[["elan"]] },
+      { name:"Porsche 914", tier:"classic", m:[["914"]] },
+      { name:"Fiat Dino", tier:"classic", m:[["fiat","dino"]] } ] }
+];
+function seasonMeta(i){
+  const t = SEASON_THEMES[i % SEASON_THEMES.length];
+  const pass = Math.floor(i / SEASON_THEMES.length);      // 0 first loop, 1 next…
+  const year = LAUNCH.getFullYear() + Math.floor((i * SEASON_WEEKS) / 52);
+  return {
+    idx: i, theme: t,
+    name: t.name + (pass ? " " + (pass + 1) : "") + " Season",
+    tag: t.tag,
+    badge: t.name + " " + year,
+    need: t.need + pass,                                    // escalate each loop
+    volume: pass === 0 ? t.volume : []                      // new cars only on first pass
+  };
+}
+function seasonIndex(){
+  if (Date.now() < LAUNCH.getTime()) return -1;
+  return Math.floor((Date.now() - LAUNCH.getTime()) / SEASON_MS);
+}
+function seasonEnds(i){ return LAUNCH.getTime() + (i + 1) * SEASON_MS; }
+function seasonState(i){
+  const m = seasonMeta(i);
+  const have = m.theme.metric();
+  return { meta: m, have, done: have >= m.need,
+    prog: Math.min(have, m.need) + " / " + m.need,
+    pct: Math.min(have / m.need, 1),
+    goalDesc: "Log " + m.need + " " + m.theme.goal };
+}
+// codex grows with every season whose start has passed (first-pass volumes only)
+function unlockedVolumes(){
+  const out = [];
+  const last = seasonIndex();
+  for (let i = 0; i <= last; i++) out.push(...seasonMeta(i).volume);
+  return out;
+}
+const CODEX_SEED = CODEX_BASE.concat(unlockedVolumes()).map((e, i) => ({ ...e, n: i + 1 }));
+
+const RANKS = [
+  { name:"ROOKIE",  req:"", need: () => true },
+  { name:"SPOTTER", req:"5 models", need: s => s.models >= 5 },
+  { name:"HUNTER",  req:"15 models · 2 rare", need: s => s.models >= 15 && s.rare >= 2 },
+  { name:"CURATOR", req:"30 models · 8 rare · 1 legendary", need: s => s.models >= 30 && s.rare >= 8 && s.legend >= 1 },
+  { name:"LEGEND",  req:"45 models · 5 legendary", need: s => s.models >= 45 && s.legend >= 5 }
+];
+function hunterStats(){
+  const models = new Set(), rare = new Set(), legend = new Set();
+  state.spots.forEach(s => {
+    if (s.flagged) return;
+    const en = CODEX_SEED.find(e => entryMatches(e, s));
+    const key = en ? "n" + en.n : spotStr(s).trim();
+    models.add(key);
+    if (s.rarity === "rare" || s.rarity === "legendary") rare.add(key);
+    if (s.rarity === "legendary") legend.add(key);
+  });
+  return { models: models.size, rare: rare.size, legend: legend.size };
+}
+function currentRank(st){
+  let r = RANKS[0];
+  RANKS.forEach(x => { if (x.need(st)) r = x; });
+  return r;
+}
+
+const SETS = [
+  { id:"poster-wall", name:"Poster Wall", desc:"The '80s bedroom lineup", bonus:1000, needs:[
+    { label:"Countach", m:["countach"] }, { label:"Testarossa", m:["testarossa"] },
+    { label:"F40", m:["f40"] }, { label:"911 Turbo", m:[["930"],["porsche","turbo"]] } ] },
+  { id:"jdm-heroes", name:"JDM Heroes", desc:"The golden-era imports", bonus:600, needs:[
+    { label:"Supra", m:["supra"] }, { label:"GT-R", m:[["gt-r"],["gtr"],["skyline"]] },
+    { label:"NSX", m:[["nsx"]] }, { label:"RX-7", m:[["rx-7"],["rx7"]] },
+    { label:"Miata", m:[["miata"],["mx-5"],["mx5"]] } ] },
+  { id:"muscle-row", name:"Muscle Row", desc:"Detroit's finest hour", bonus:400, needs:[
+    { label:"Mustang", m:["mustang"] }, { label:"Camaro", m:["camaro"] },
+    { label:"Mopar", m:[["charger"],["challenger"],["cuda"]] }, { label:"Corvette", m:["corvette"] } ] },
+  { id:"air-cooled", name:"Air-Cooled Icons", desc:"No radiator, all character", bonus:500, needs:[
+    { label:"Air-cooled 911", m:["porsche","911"], decades:["1960s","1970s","1980s","1990s"] },
+    { label:"Beetle", m:["beetle"] },
+    { label:"Vintage Bus", m:[["type 2"],["kombi"],["vanagon"],["microbus"]] } ] },
+  { id:"track-rats", name:"Track Rats", desc:"Built, not bought", bonus:500, needs:[
+    { label:"Race car", tag:"race_car" }, { label:"Big wing", tag:"big_wing" }, { label:"Widebody", tag:"widebody" } ] },
+  { id:"open-air", name:"Open Air Club", desc:"Three distinct drop tops", bonus:300, needs:[
+    { label:"Drop top 1", tag:"convertible" }, { label:"Drop top 2", tag:"convertible" }, { label:"Drop top 3", tag:"convertible" } ] },
+  { id:"exotic-trinity", name:"Exotic Trinity", desc:"The holy badges", bonus:750, needs:[
+    { label:"Ferrari", m:["ferrari"] }, { label:"Lamborghini", m:["lamborghini"] }, { label:"McLaren", m:["mclaren"] } ] },
+  { id:"work-fleet", name:"Work Fleet", desc:"The ones that earn their keep", bonus:250, needs:[
+    { label:"Pickup", tag:"pickup" }, { label:"Van", tag:"van" }, { label:"4x4", tag:"lifted_4x4" } ] },
+  { id:"radwood-five", name:"Radwood Five", desc:"Three '80s, two '90s", bonus:400, needs:[
+    { label:"'80s 1", decades:["1980s"] }, { label:"'80s 2", decades:["1980s"] }, { label:"'80s 3", decades:["1980s"] },
+    { label:"'90s 1", decades:["1990s"] }, { label:"'90s 2", decades:["1990s"] } ] }
+];
+function setProgress(set){
+  const used = new Set();
+  return set.needs.map(mt => {
+    const s = state.spots.find(sp => !used.has(sp.id) && matcherTest(mt, sp));
+    if (s){ used.add(s.id); return true; }
+    return false;
+  });
+}
+function checkSets(){
+  const hits = [];
+  SETS.forEach(set => {
+    if (state.setsDone[set.id]) return;
+    if (setProgress(set).every(Boolean)){
+      state.setsDone[set.id] = true;
+      hits.push({ label: "SET", name: set.name });
+    }
+  });
+  return hits;
+}
+
+const WANTED_POOL = [
+  { id:"countach", name:"Lamborghini Countach", pay:1500, m:["countach"] },
+  { id:"f40", name:"Ferrari F40", pay:1500, m:["f40"] },
+  { id:"mcf1", name:"McLaren F1", pay:3000, m:[["mclaren","f1"]] },
+  { id:"2000gt", name:"Toyota 2000GT", pay:2500, m:[["2000gt"],["2000 gt"]] },
+  { id:"miura", name:"Lamborghini Miura", pay:2000, m:["miura"] },
+  { id:"300sl", name:"Mercedes 300SL", pay:2000, m:[["300sl"],["300 sl"]] },
+  { id:"gt3rs", name:"Porsche 911 GT3 RS", pay:800, m:["gt3 rs"] },
+  { id:"testa", name:"Ferrari Testarossa", pay:1000, m:["testarossa"] },
+  { id:"etype", name:"Jaguar E-Type", pay:900, m:[["e-type"],["etype"],["xke"]] },
+  { id:"integrale", name:"Lancia Delta Integrale", pay:900, m:[["integrale"]] },
+  { id:"r34", name:"Skyline GT-R R34", pay:900, m:[["r34"]] },
+  { id:"daytona", name:"Ferrari Daytona", pay:1200, m:[["ferrari","daytona"],["365 gtb"]] }
+];
+const wantedById = id => WANTED_POOL.find(w => w.id === id);
+function launchWeek(){ return Math.floor((Date.now() - LAUNCH.getTime()) / WEEK_MS); }
+function pickWanted(wk){
+  // deterministic rotating window over the pool — same for everyone, never dry
+  const w = (typeof wk === "number" ? wk : launchWeek());
+  const n = WANTED_POOL.length, base = ((w % n) + n) % n;
+  const step = 5; // co-prime-ish stride so the trio varies week to week
+  return [0, 1, 2].map(k => WANTED_POOL[(base + k * step) % n].id);
+}
+
+/* ================= TITLES / RECORDS / COTD / MASTERY ================= */
+function codexAgg(){
+  const caught = {};
+  state.spots.forEach(s => {
+    if (s.flagged) return;
+    const en = CODEX_SEED.find(e => entryMatches(e, s));
+    const key = en ? "n" + en.n : "x:" + spotStr(s).trim();
+    const sc = s.shot ? s.shot.score : -1;
+    if (!caught[key]){
+      caught[key] = { count: 0, img: s.img, bestScore: sc, bestId: s.id, name: en ? en.name : (s.make + " " + s.model).trim(), tier: en ? en.tier : s.rarity, tags: new Set(), colors: new Set() };
+    } else if (sc > caught[key].bestScore){
+      caught[key].img = s.img;
+      caught[key].bestScore = sc;
+      caught[key].bestId = s.id;
+    }
+    caught[key].count++;
+    (s.tags || []).forEach(t => caught[key].tags.add(t));
+    if (s.color) caught[key].colors.add(String(s.color).toLowerCase());
+  });
+  return caught;
+}
+function masteryOf(c){ return (c.count >= 5 || c.colors.size >= 3) ? "MASTERED" : (c.count >= 3 ? "TRACKED" : "SPOTTED"); }
+function masteredCount(){ return Object.values(codexAgg()).filter(c => masteryOf(c) === "MASTERED").length; }
+function cellCount(){
+  const c = {};
+  state.spots.forEach(s => { if (s.lat == null) return; c[Math.floor(s.lat / 0.01) + "_" + Math.floor(s.lng / 0.01)] = 1; });
+  return Object.keys(c).length;
+}
+function jdmModels(){
+  const set = new Set();
+  state.spots.forEach(s => {
+    if (s.flagged) return;
+    if (MAKESETS.jdm.some(m => spotStr(s).includes(m))){
+      const en = CODEX_SEED.find(e => entryMatches(e, s));
+      set.add(en ? "n" + en.n : spotStr(s).trim());
+    }
+  });
+  return set.size;
+}
+function prewarModels(){
+  const set = new Set();
+  state.spots.forEach(s => {
+    if (s.flagged || s.decade !== "pre-1946") return;
+    const en = CODEX_SEED.find(e => entryMatches(e, s));
+    set.add(en ? "n" + en.n : spotStr(s).trim());
+  });
+  return set.size;
+}
+function modelsWhere(pred){
+  const set = new Set();
+  state.spots.forEach(s => {
+    if (s.flagged || !pred(s)) return;
+    const en = CODEX_SEED.find(e => entryMatches(e, s));
+    set.add(en ? "n" + en.n : spotStr(s).trim());
+  });
+  return set.size;
+}
+function exoticModels(){ return modelsWhere(s => s.cls === "exotic" || s.rarity === "legendary" || s.rarity === "rare"); }
+function muscleModels(){ return modelsWhere(s => (s.tags || []).includes("american_muscle") || (inSet({ make: spotStr(s), model: "" }, MAKESETS.american) && (s.decade === "1960s" || s.decade === "1970s"))); }
+function euroModels(){ return modelsWhere(s => { const a = { make: spotStr(s), model: "" }; return (inSet(a, MAKESETS.italian) || inSet(a, MAKESETS.british) || spotStr(s).includes("mercedes") || spotStr(s).includes("bmw") || spotStr(s).includes("audi") || spotStr(s).includes("porsche") || spotStr(s).includes("citro") || spotStr(s).includes("volkswagen")) && ["1950s","1960s","1970s","1980s"].includes(s.decade); }); }
+function recordsData(){
+  const byDay = {}, byDayNew = {};
+  state.spots.forEach(s => {
+    if (s.flagged) return;
+    const d = (s.ts || "").slice(0, 10);
+    byDay[d] = (byDay[d] || 0) + 1;
+    if (s.cxNew) byDayNew[d] = (byDayNew[d] || 0) + 1;
+  });
+  const st = hunterStats();
+  const legendSpot = state.spots.filter(s => !s.flagged && s.rarity === "legendary").sort((a, b) => new Date(a.ts) - new Date(b.ts))[0];
+  const rareSpot = legendSpot || state.spots.filter(s => !s.flagged && s.rarity === "rare")[0];
+  const ex = expeditions().sort((a, b) => b.count - a.count)[0];
+  let bs = null;
+  state.spots.forEach(s => { if (!s.flagged && s.shot && (!bs || s.shot.score > bs.score)) bs = { score: s.shot.score, name: (s.make + " " + s.model).trim() }; });
+  return {
+    bestDay: Math.max(0, ...Object.values(byDay)),
+    bestDayNew: Math.max(0, ...Object.values(byDayNew)),
+    bestStreak: Math.max(state.bestStreak || 0, state.streak || 0),
+    rarest: rareSpot ? (rareSpot.make + " " + rareSpot.model).trim() : "—",
+    bigExp: ex ? ex.name + " · " + ex.count : "—",
+    bestShot: bs ? bs.score + " · " + bs.name : "—",
+    legends: st.legend
+  };
+}
+function carOfTheDay(){
+  const s = state.day || dayKey();
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) >>> 0;
+  return CODEX_SEED[h % CODEX_SEED.length];
+}
+const TITLES = [
+  { id:"rookie-no-more", title:"Rookie No More", req:"5 codex models", test:st => st.models >= 5 },
+  { id:"legend-hunter", title:"Legend Hunter", req:"3 legendary models", test:st => st.legend >= 3 },
+  { id:"curator-of-speed", title:"Curator of Speed", req:"Reach Curator rank", test:st => { const r = currentRank(st).name; return r === "CURATOR" || r === "LEGEND"; } },
+  { id:"night-stalker", title:"Night Stalker", req:"5 night captures of rare+ metal", test:() => state.spots.filter(s => !s.flagged && (s.conds || []).includes("night") && (s.rarity === "rare" || s.rarity === "legendary")).length >= 5 },
+  { id:"storm-chaser", title:"Storm Chaser", req:"3 rain or snow captures", test:() => state.spots.filter(s => !s.flagged && ((s.conds || []).includes("rain") || (s.conds || []).includes("snow"))).length >= 3 },
+  { id:"air-cooled-apostle", title:"Air-Cooled Apostle", req:"Complete Air-Cooled Icons", test:() => !!state.setsDone["air-cooled"] },
+  { id:"poster-child", title:"Poster Child", req:"Complete Poster Wall", test:() => !!state.setsDone["poster-wall"] },
+  { id:"streak-freak", title:"Streak Freak", req:"14-day streak", test:() => (state.bestStreak || state.streak || 0) >= 14 },
+  { id:"master-class", title:"Master Class", req:"Master 3 codex entries", test:() => masteredCount() >= 3 },
+  { id:"globetrotter", title:"Globetrotter", req:"Claim 10 map cells", test:() => cellCount() >= 10 }
+];
+function titlesUnlocked(){
+  const st = hunterStats();
+  return TITLES.filter(t => { try{ return t.test(st); }catch(e){ return false; } }).map(t => t.id);
+}
+function titleNameOf(id){ const t = TITLES.find(x => x.id === id); return t ? t.title : ""; }
+
+async function planHunt(force){
+  ensureDay();
+  if (!force && state.aiHunt && state.aiHunt.day === state.day) return;
+  toast("Planning your hunt…");
+  try{
+    const agg = codexAgg();
+    const missing = CODEX_SEED.filter(e => !agg["n" + e.n]).sort(() => Math.random() - .5).slice(0, 8).map(e => e.name);
+    const here = groundsGeo || state.spots.find(s => s.lat != null) || null;
+    const openQ = state.dayQ.ids.map(questById).filter(q => q && !state.dayQ.done[q.id]).map(q => q.name + " (" + q.desc + ")");
+    const prompt = 'You are the hunt master for TYRE HUNT, a car-spotting game. Build today\'s custom hunt plan for one player. Respond ONLY with minified JSON, no markdown fences: {"title":string,"brief":string,"targets":[{"name":string,"why":string}]}. Rules: 4-5 targets, realistically spottable in a normal day (one easy, mostly medium, one stretch), enthusiast voice, each why under 12 words, no emoji, title under 5 words. Context — local time: ' + new Date().toString() + '; approx location: ' + (here ? here.lat + "," + here.lng : "unknown") + '; active event: ' + (state.activeEvent || "none") + '; codex gaps worth weighing: ' + (missing.join(", ") || "none") + '; open daily hunts: ' + (openQ.join("; ") || "none") + '.';
+    const headers = { "Content-Type": "application/json" };
+    if (CONFIG.apiKey){
+      headers["x-api-key"] = CONFIG.apiKey;
+      headers["anthropic-version"] = "2023-06-01";
+      headers["anthropic-dangerous-direct-browser-access"] = "true";
+    }
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers,
+      body: JSON.stringify({ model: CONFIG.model, max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+    });
+    if (!r.ok) throw new Error("api " + r.status);
+    const data = await r.json();
+    const text = (data.content || []).map(b => b.type === "text" ? b.text : "").join("").replace(/```json|```/g, "").trim();
+    const plan = JSON.parse(text);
+    state.aiHunt = { day: state.day, plan };
+    await Store.save();
+    renderQuests();
+    toast("Hunt planned · " + (plan.title || ""));
+  }catch(e){ toast("Couldn't plan the hunt — try again"); }
+}
+$("huntPlanBtn").addEventListener("click", () => planHunt(true));
+
+/* ================= SOUND / INSTALL ================= */
+let AC = null;
+function ac(){
+  if (!state.sound) return null;
+  try{
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+    return AC;
+  }catch(e){ return null; }
+}
+function tone(f, off, dur, type, gain){
+  const a = ac(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type || "sine";
+  o.frequency.value = f;
+  const t0 = a.currentTime + (off || 0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(gain || .16, t0 + .012);
+  g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  o.connect(g).connect(a.destination);
+  o.start(t0);
+  o.stop(t0 + dur + .05);
+}
+function sfx(kind){
+  if (!state.sound) return;
+  if (kind === "shutter"){ tone(1200, 0, .05, "square", .07); tone(320, .02, .06, "square", .05); }
+  else if (kind === "everyday"){ tone(660, 0, .15); }
+  else if (kind === "classic"){ tone(587, 0, .1); tone(880, .09, .18); }
+  else if (kind === "rare"){ tone(523, 0, .09); tone(659, .09, .09); tone(784, .18, .22); }
+  else if (kind === "legendary"){ [523, 659, 784, 1046].forEach((f, i) => tone(f, i * .09, .13)); tone(1568, .4, .5, "triangle", .06); }
+  else if (kind === "extra"){ tone(1318, 0, .08, "triangle", .1); }
+  else if (kind === "miss"){ tone(170, 0, .22, "square", .1); }
+  else if (kind === "flag"){ tone(220, 0, .16, "square", .1); tone(160, .14, .2, "square", .08); }
+}
+
+let deferredPrompt = null;
+function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function isStandalone(){ return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; }
+function renderInstallPill(){
+  const p = $("installPill");
+  if (!p) return;
+  p.style.display = (!isStandalone() && (deferredPrompt || isIOS())) ? "block" : "none";
+}
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  renderInstallPill();
+});
+window.addEventListener("appinstalled", () => { deferredPrompt = null; renderInstallPill(); toast("Installed — hunt from your home screen"); });
+$("installPill").addEventListener("click", async () => {
+  if (deferredPrompt){
+    deferredPrompt.prompt();
+    try{ await deferredPrompt.userChoice; }catch(e){}
+    deferredPrompt = null;
+    renderInstallPill();
+  } else if (isIOS()){
+    toast("Share → Add to Home Screen to install");
+  }
+});
+$("introGo").addEventListener("click", async () => {
+  state.seenIntro = true;
+  await Store.save();
+  $("intro").classList.remove("on");
+  startCam();
+});
+
+/* ================= UI helpers ================= */
+let toastT;
+function toast(msg){
+  const el = $("toast"); el.textContent = msg; el.classList.add("on");
+  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove("on"), 2600);
+}
+function fmt(n){ return n.toLocaleString("en-US"); }
+
+function renderHUD(){
+  ensureDay();
+  const st = hunterStats();
+  $("cxTop").textContent = st.models + "/" + CODEX_SEED.length;
+  $("rankTop").textContent = currentRank(st).name;
+  $("streakNum").textContent = state.streak;
+  const C = 138.2, p = Math.min(state.streak/30, 1);
+  $("streakArc").style.strokeDashoffset = C * (1 - p);
+  const n = Math.min(state.daySpots, 3);
+  $("chN").textContent = n;
+  $("chBar").style.width = (n/3*100) + "%";
+  renderFeaturedQuest();
+}
+function bumpBalance(){
+  const b = $("codexPill"); b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+}
+
+/* ================= TABS ================= */
+const views = ["garage","map","quests","rewards"];
+function show(view){
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.view === view));
+  views.forEach(v => $("view-"+v).classList.toggle("on", v === view));
+  if (view === "garage") renderGarage();
+  if (view === "map"){ renderMap(); renderExpeditions(); renderGrounds(); }
+  if (view === "quests") renderQuests();
+  if (view === "rewards") renderRewards();
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => show(t.dataset.view)));
+
+/* ================= CAMERA ================= */
+let stream = null, track = null, torch = false, torchOK = false;
+async function startCam(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width:{ideal:1920} }, audio:false });
+    $("cam").srcObject = stream;
+    $("nocam").style.display = "none";
+    track = stream.getVideoTracks()[0];
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    torchOK = !!caps.torch;
+    if (!torchOK) $("flashBtn").style.opacity = .45;
+  }catch(e){
+    $("nocam").style.display = "flex";
+    $("flashBtn").style.opacity = .45;
+  }
+}
+$("flashBtn").addEventListener("click", async () => {
+  if (!torchOK || !track){ toast("Flash isn't available on this camera"); return; }
+  torch = !torch;
+  try{ await track.applyConstraints({ advanced:[{ torch }] }); }catch(e){ torch = false; }
+  $("flashState").textContent = torch ? "ON" : "OFF";
+  $("flashBtn").classList.toggle("active", torch);
+});
+
+/* ================= CAPTURE PIPELINE ================= */
+let busy = false, lastQuestHits = [], lastVerdictSpot = null, lastRankUp = "";
+$("shutter").addEventListener("click", () => {
+  if (busy) return;
+  if (stream){ captureFromVideo(); }
+  else { $("fileCam").click(); }
+});
+$("galleryBtn").addEventListener("click", () => { if (!busy) $("fileGal").click(); });
+$("fileCam").addEventListener("change", e => handleFile(e.target.files[0], e.target, "capture"));
+$("fileGal").addEventListener("change", e => handleFile(e.target.files[0], e.target, "import"));
+
+function captureFromVideo(){
+  const v = $("cam");
+  if (!v.videoWidth){ toast("Camera is still warming up"); return; }
+  const c = $("work"), s = Math.min(1, CONFIG.sendEdge / Math.max(v.videoWidth, v.videoHeight));
+  c.width = Math.round(v.videoWidth * s); c.height = Math.round(v.videoHeight * s);
+  c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+  runVerify(c, "camera");
+}
+function handleFile(file, input, src){
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(img.src);
+    const c = $("work"), s = Math.min(1, CONFIG.sendEdge / Math.max(img.width, img.height));
+    c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    runVerify(c, src);
+  };
+  img.onerror = () => toast("Couldn't read that image");
+  img.src = URL.createObjectURL(file);
+  input.value = "";
+}
+
+const PROMPT = `You are the vision verifier for TYRE HUNT, a car-spotting game. Analyze the attached photo taken by a player on the street.
+Respond with ONLY minified JSON, no markdown fences, exactly this shape:
+{"is_vehicle":boolean,"make":string,"model":string,"year_range":string,"classification":"classic"|"exotic"|"sports"|"everyday"|"not_a_vehicle","rarity":"everyday"|"classic"|"rare"|"legendary","confidence":number,"authenticity":"live"|"suspect","decade":string,"color":string,"tags":string[],"conditions":string[],"shot":{"score":number,"note":string},"plate_box":{"x":number,"y":number,"w":number,"h":number}|null,"blurb":string}
+Rules:
+- is_vehicle: true only if a real car, truck, or motorcycle is the clear subject (not a toy, poster, or screen).
+- classification: "classic" for collector-era cars (broadly pre-1995 or recognized modern classics), "exotic" for supercars/hypercars, "sports" for performance cars, "everyday" for common vehicles, "not_a_vehicle" otherwise.
+- rarity: "legendary" only for icons and hypercars (e.g. F40-tier, 250 GTO-tier, McLaren F1-tier, limited homologation specials). "rare" for exotics and limited performance models. "classic" for collector classics. "everyday" for everything else.
+- confidence: 0-100 certainty of the make/model identification.
+- authenticity: "suspect" if the image appears to be a photo of a screen or print (moiré, pixel grid, bezels, UI elements), a scale model or toy, a professional press/studio/catalog photo, watermarked, or otherwise unlikely to be a photo the player took themselves in the wild; else "live".
+- decade: the model's era, exactly one of "pre-1946","1950s","1960s","1970s","1980s","1990s","2000s","2010s","2020s".
+- color: primary body color as one lowercase word (e.g. "red","black","silver","grey","white","blue","green","yellow","orange","brown").
+- tags: every tag that clearly applies, chosen ONLY from ["race_car","convertible","wagon","pickup","suv","van","motorcycle","big_wing","widebody","lifted_4x4","air_cooled","american_muscle","lowrider","electric"]. race_car means livery, race numbers, or full race prep. Empty array if none apply.
+- conditions: shooting conditions that clearly apply, chosen ONLY from ["night","rain","snow","fog","golden_hour","motion"]. Empty array if unsure.
+- shot: grade the photograph itself as a car photo. score 0-100 for composition, light, angle, and sharpness — 50 is an average phone snap, 80+ is genuinely good. note: one specific tip or piece of praise for the photographer, under 12 words.
+- plate_box: if a license plate is visible, its bounding box as PERCENTAGES of image width/height ({"x":left,"y":top,"w":width,"h":height}), else null.
+- blurb: one enthusiast-voice sentence about this spot, max 18 words, no emoji.
+- If unsure of exact model, give your best guess and lower confidence. Make and model must never be empty when is_vehicle is true.`;
+
+const SHIELD = '<svg width="15" height="17" viewBox="0 0 13 15" fill="none"><path d="M6.5 1l5 2v4c0 3.2-2.1 5.6-5 7-2.9-1.4-5-3.8-5-7V3l5-2z" stroke="currentColor" stroke-width="1.3"/><path d="M4.3 7.4l1.6 1.6 2.9-3" stroke="currentColor" stroke-width="1.3"/></svg>';
+function detectUI(mode, data){
+  const d = $("detect"), t = $("detTitle"), s = $("detSub"), lock = $("detLock"), icon = $("detIcon");
+  d.classList.remove("err");
+  lock.classList.remove("on");
+  if (mode === "off"){ d.classList.remove("on"); $("frame").classList.remove("hot"); return; }
+  d.classList.add("on");
+  if (mode === "busy"){
+    $("frame").classList.add("hot");
+    icon.innerHTML = SHIELD;
+    t.textContent = "Verifying…";
+    s.innerHTML = '<span class="spin"></span> Reading the shot';
+  }
+  if (mode === "hit"){
+    icon.innerHTML = SHIELD;
+    t.textContent = data.title;
+    s.innerHTML = 'Confidence: <b>' + data.conf + '%</b>';
+    if (data.plate) lock.classList.add("on");
+  }
+  if (mode === "err"){
+    d.classList.add("err");
+    $("frame").classList.remove("hot");
+    icon.textContent = "!";
+    t.textContent = data.title;
+    s.textContent = data.sub;
+  }
+}
+
+async function runVerify(canvas, source){
+  busy = true; $("shutter").disabled = true;
+  sfx("shutter");
+  const fz = $("freeze");
+  fz.style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
+  fz.style.display = "block";
+  detectUI("busy");
+  try{
+    const b64 = canvas.toDataURL("image/jpeg", .82).split(",")[1];
+    const res = await verifyWithClaude(b64);
+    await processResult(res, canvas, source || "camera");
+  }catch(e){
+    await queueCapture(canvas, source);
+    detectUI("err", { title:"Queued — no connection", sub:"It'll verify automatically when you're back online" });
+  }finally{
+    busy = false; $("shutter").disabled = false;
+    setTimeout(()=>{ fz.style.display = "none"; }, 400);
+  }
+}
+
+async function verifyWithClaude(b64){
+  // Signed-in + Supabase configured → server-side verify (key stays secret, real dedupe).
+  if (sb && sbSession){
+    const r = await fetch(CONFIG.supabaseUrl + "/functions/v1/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + sbSession.access_token,
+        "apikey": CONFIG.supabaseAnon
+      },
+      body: JSON.stringify({ image_b64: b64, media_type: "image/jpeg" })
+    });
+    if (!r.ok) throw new Error("verify " + r.status);
+    const out = await r.json();
+    if (!out || !out.verdict) throw new Error("verify empty");
+    // hand the server's authoritative decision back to the pipeline
+    out.verdict.__server = { phash: out.phash, flags: out.flags || [], counts: !!out.counts };
+    return out.verdict;
+  }
+  // Fallback: direct Anthropic call (artifact preview injects the key; self-host sets CONFIG.apiKey).
+  const headers = { "Content-Type":"application/json" };
+  if (CONFIG.apiKey){
+    headers["x-api-key"] = CONFIG.apiKey;
+    headers["anthropic-version"] = "2023-06-01";
+    headers["anthropic-dangerous-direct-browser-access"] = "true";
+  }
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", headers,
+    body: JSON.stringify({
+      model: CONFIG.model, max_tokens: 1000,
+      messages: [{ role:"user", content: [
+        { type:"image", source:{ type:"base64", media_type:"image/jpeg", data:b64 } },
+        { type:"text", text: PROMPT }
+      ]}]
+    })
+  });
+  if (!r.ok) throw new Error("api " + r.status);
+  const data = await r.json();
+  const text = (data.content || []).map(b => b.type === "text" ? b.text : "").join("").trim();
+  const clean = text.replace(/```json|```/g, "").trim();
+  return JSON.parse(clean);
+}
+
+function pixelatePlate(canvas, box){
+  try{
+    const ctx = canvas.getContext("2d");
+    const pad = .18;
+    let x = (box.x - box.w*pad)/100 * canvas.width;
+    let y = (box.y - box.h*pad)/100 * canvas.height;
+    let w = (box.w * (1+pad*2))/100 * canvas.width;
+    let h = (box.h * (1+pad*2))/100 * canvas.height;
+    x = Math.max(0, x); y = Math.max(0, y);
+    w = Math.min(canvas.width - x, w); h = Math.min(canvas.height - y, h);
+    if (w < 4 || h < 4) return false;
+    const px = document.createElement("canvas");
+    px.width = Math.max(2, Math.round(w * .05));
+    px.height = Math.max(2, Math.round(h * .05));
+    px.getContext("2d").drawImage(canvas, x, y, w, h, 0, 0, px.width, px.height);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(px, 0, 0, px.width, px.height, x, y, w, h);
+    ctx.imageSmoothingEnabled = true;
+    return true;
+  }catch(e){ return false; }
+}
+
+function makeThumb(canvas){
+  const s = Math.min(1, CONFIG.thumbEdge / Math.max(canvas.width, canvas.height));
+  const t = document.createElement("canvas");
+  t.width = Math.round(canvas.width * s); t.height = Math.round(canvas.height * s);
+  t.getContext("2d").drawImage(canvas, 0, 0, t.width, t.height);
+  return t.toDataURL("image/jpeg", .72);
+}
+
+function getGeo(){
+  return new Promise(res => {
+    if (!navigator.geolocation) return res(null);
+    navigator.geolocation.getCurrentPosition(
+      p => res({ lat:+p.coords.latitude.toFixed(5), lng:+p.coords.longitude.toFixed(5) }),
+      () => res(null), { timeout: 4500, maximumAge: 120000 }
+    );
+  });
+}
+
+async function processResult(res, canvas, source, ctx){
+  ensureDay();
+  const silent = !!(ctx && ctx.silent);
+  if (!res || !res.is_vehicle || res.classification === "not_a_vehicle"){
+    if (silent){ toast("No car found in a queued shot"); return; }
+    detectUI("err", { title:"No car detected", sub:"Keep hunting — frame the whole car" });
+    openVerdict(null, canvas, res);
+    return;
+  }
+  const rarity = PAYOUT[res.rarity] ? res.rarity : "everyday";
+  const geo = (ctx && "geo" in ctx) ? ctx.geo : await getGeo();
+  const srv = res.__server || null;
+  const phash = srv && srv.phash ? srv.phash : aHash(canvas);
+
+  // deterrence — server-authoritative when signed in, client-side otherwise
+  const flags = [];
+  if (srv){
+    // server already checked cross-user dedupe, self-dedupe, rate limits, authenticity
+    (srv.flags || []).forEach(f => flags.push(f));
+  } else {
+    const dup = state.spots.find(sp => sp.phash && hamming(sp.phash, phash) <= 5);
+    if (dup) flags.push("duplicate of an earlier capture");
+    if (res.authenticity === "suspect") flags.push("didn't pass the authenticity check");
+    if (!(ctx && ctx.queued) && state.lastPaidTs && Date.now() - state.lastPaidTs < 20000) flags.push("captures too fast");
+    if ((state.dayPaid || 0) >= 40) flags.push("daily cap reached");
+  }
+  if (CONFIG.strictCapture && source !== "camera") flags.push("imported photos don't count in strict mode");
+  // geo-jump is client-only (server has no prior-location context yet)
+  if (geo){
+    const prev = state.spots.find(sp => sp.lat != null && sp.lng != null);
+    if (prev){
+      const hrs = Math.max((Date.now() - new Date(prev.ts).getTime()) / 36e5, 1/60);
+      const km = haversine(prev.lat, prev.lng, geo.lat, geo.lng);
+      if (!(ctx && ctx.queued) && km > 100 && km / hrs > 900) flags.push("location jump");
+    }
+  }
+  const counts = flags.length === 0;
+  const plateBlurred = res.plate_box ? pixelatePlate(canvas, res.plate_box) : false;
+
+  if (!silent) detectUI("hit", {
+    title: (rarity === "everyday" ? "Car detected" : rarity.charAt(0).toUpperCase()+rarity.slice(1) + " car detected"),
+    conf: Math.round(res.confidence ?? 0),
+    plate: plateBlurred
+  });
+
+  // codex placement
+  const pseudo = { make: res.make || "", model: res.model || "" };
+  const en = CODEX_SEED.find(e => entryMatches(e, pseudo));
+  const keyStr = spotStr(pseudo).trim();
+  const priorSpots = state.spots.filter(sp => !sp.flagged && (en ? entryMatches(en, sp) : spotStr(sp).trim() === keyStr));
+  const prior = priorSpots.length;
+  const prevBestShot = Math.max(-1, ...priorSpots.map(sp => sp.shot ? sp.shot.score : -1));
+  const rankBefore = currentRank(hunterStats()).name;
+  const recBefore = recordsData();
+  const titlesBefore = titlesUnlocked();
+
+  lastQuestHits = [];
+  lastRankUp = "";
+  if (counts){
+    // streak
+    const today = dayKey();
+    if (state.lastSpotDay !== today){
+      const y = dayKey(new Date(Date.now() - 864e5));
+      if (state.lastSpotDay === y) state.streak = state.streak + 1;
+      else if (state.streak > 0 && (state.boosts.shield || 0) > 0){
+        state.boosts.shield--;
+        state.streak = state.streak + 1;
+        toast("Streak Shield burned — streak saved");
+      }
+      else state.streak = 1;
+      state.lastSpotDay = today;
+      if (state.streak > 0 && state.streak % 7 === 0){
+        state.boosts.shield = (state.boosts.shield || 0) + 1;
+        toast("7-day milestone — Streak Shield earned");
+      }
+      if (state.streak > (state.bestStreak || 0)){
+        state.bestStreak = state.streak;
+        if (state.streak >= 3) lastQuestHits.push({ label: "RECORD", name: "LONGEST STREAK · " + state.streak + " DAYS" });
+      }
+    }
+    // daily progress + hunts
+    state.daySpots++;
+    state.dayPaid = (state.dayPaid || 0) + 1;
+    state.lastPaidTs = Date.now();
+    const makeLc = (res.make || "").toLowerCase();
+    if (makeLc && !state.dayMakes.includes(makeLc)) state.dayMakes.push(makeLc);
+    const attrs = {
+      make: makeLc,
+      model: (res.model || "").toLowerCase(),
+      rarity,
+      tags: Array.isArray(res.tags) ? res.tags : [],
+      decade: res.decade || "",
+      color: (res.color || "").toLowerCase(),
+      conds: Array.isArray(res.conditions) ? res.conditions : [],
+      dayMakesCount: state.dayMakes.length
+    };
+    state.dayQ.ids.forEach(id => {
+      if (state.dayQ.done[id]) return;
+      const q = questById(id);
+      if (q && q.match(attrs)){
+        state.dayQ.done[id] = true;
+        lastQuestHits.push({ label: "QUEST", name: q.name });
+      }
+    });
+    const sstr = attrs.make + " " + attrs.model;
+    (state.wantedIds || []).forEach(id => {
+      if (state.wantedDone[id]) return;
+      const wnt = wantedById(id);
+      if (wnt && hasTokens(sstr, wnt.m)){
+        state.wantedDone[id] = true;
+        state.badges["w:" + id] = true;
+        lastQuestHits.push({ label: "WANTED", name: wnt.name });
+      }
+    });
+    if (state.daySpots >= 3 && !state.dayBonus){
+      state.dayBonus = true;
+      toast("Daily challenge complete");
+    }
+  }
+
+  const spot = {
+    id: Date.now(), ts: (ctx && ctx.ts) || new Date().toISOString(),
+    seq: state.spots.length + 1,
+    img: makeThumb(canvas),
+    make: res.make || "Unknown", model: res.model || "", year: res.year_range || "",
+    cls: res.classification, rarity, confidence: Math.round(res.confidence ?? 0),
+    nth: prior + 1, cxNew: counts && prior === 0, cxNo: en ? en.n : null,
+    cxKey: en ? "n" + en.n : "x:" + keyStr,
+    cxName: en ? en.name : ((res.make || "") + " " + (res.model || "")).trim(),
+    blurb: res.blurb || "", plate: plateBlurred,
+    phash, source: source || "camera", flagged: flags.join("; "),
+    lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,
+    event: (ctx && ctx.event !== undefined) ? (ctx.event || "") : (state.activeEvent || ""),
+    eventCode: (ctx && ctx.eventCode !== undefined) ? (ctx.eventCode || "") : (state.activeEventCode || ""),
+    place: "", story: "", color: (res.color || ""), owner: "",
+    fav: false, hv: false, tags: Array.isArray(res.tags) ? res.tags : [], decade: res.decade || "",
+    conds: Array.isArray(res.conditions) ? res.conditions : [],
+    shot: (res.shot && typeof res.shot.score === "number") ? { score: Math.round(res.shot.score), note: res.shot.note || "" } : null,
+    ai: { make: res.make || "", model: res.model || "", year: res.year_range || "" }
+  };
+  state.spots.unshift(spot);
+  if (counts){
+    checkSets().forEach(h => lastQuestHits.push(h));
+    if (spot.shot && prior > 0 && spot.shot.score > prevBestShot){
+      lastQuestHits.push({ label: "RECORD", name: "NEW BEST SHOT · " + spot.shot.score });
+    }
+    const cd = carOfTheDay();
+    if (en && cd && en.n === cd.n && !state.cotdStamps["n" + en.n]){
+      state.cotdStamps["n" + en.n] = state.day;
+      lastQuestHits.push({ label: "CAR OF THE DAY", name: en.name });
+      toast("Car of the Day stamped · " + en.name);
+    }
+    const recAfter = recordsData();
+    if (recAfter.bestDay > recBefore.bestDay && recAfter.bestDay >= 3){
+      lastQuestHits.push({ label: "RECORD", name: "MOST CARS IN A DAY · " + recAfter.bestDay });
+    }
+    const si = seasonIndex();
+    if (si >= 0 && !state.badges["season:" + si]){
+      const ss = seasonState(si);
+      if (ss.done){
+        state.badges["season:" + si] = true;
+        lastQuestHits.push({ label: "SEASON", name: ss.meta.badge });
+        toast("Season badge · " + ss.meta.badge);
+      }
+    }
+    titlesUnlocked().filter(id => !titlesBefore.includes(id)).forEach(id => {
+      const t = TITLES.find(x => x.id === id);
+      if (t){ lastQuestHits.push({ label: "TITLE", name: t.title }); toast("Title unlocked · " + t.title); }
+    });
+    const rn = currentRank(hunterStats()).name;
+    if (rn !== rankBefore){ lastRankUp = rn; toast("Rank up · " + rn); }
+  }
+  await Store.save();
+  syncCapture(spot);
+  renderHUD();
+  if (spot.cxNew) bumpBalance();
+  syncProfile();
+  if (silent){
+    toast((spot.make + " " + spot.model).trim() + (spot.flagged ? " · saved, not counted" : (spot.cxNew ? " · NEW TO CODEX" : " · logged")));
+  } else {
+    openVerdict(spot, canvas, res);
+  }
+}
+
+/* ================= VERDICT ================= */
+function openVerdict(spot, canvas, raw){
+  const v = $("verdict");
+  lastVerdictSpot = spot || null;
+  $("vPhoto").style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
+  if (spot){
+    $("vMake").textContent = (spot.make + " " + spot.model).trim();
+    $("vYear").textContent = spot.year;
+    $("vChip").className = "chip " + spot.rarity;
+    $("vChip").textContent = spot.rarity.toUpperCase();
+    $("vConf").textContent = (spot.flagged ? "CHECKED" : "VERIFIED") + " · " + spot.confidence + "%";
+    $("vConds").innerHTML = (spot.conds || []).map(c => '<span class="chip cond">' + c.replace(/_/g, " ").toUpperCase() + '</span>').join("");
+    if (spot.shot){
+      const sc = spot.shot.score;
+      $("vShotNote").style.color = sc >= 80 ? "var(--gold)" : sc >= 60 ? "var(--pulse-hi)" : "var(--muted)";
+      $("vShotNote").textContent = "SHOT " + sc + (spot.shot.note ? " — " + spot.shot.note : "");
+    } else {
+      $("vShotNote").textContent = "";
+    }
+    $("vBlurb").textContent = spot.blurb;
+    if (spot.flagged){
+      $("vPayline").style.display = "none";
+      $("vQuests").innerHTML = "";
+      const fm = $("vMiss");
+      fm.style.display = "block";
+      fm.textContent = "Saved to your garage, but it won't count toward your codex — " + spot.flagged + ".";
+    } else {
+      $("vPayline").style.display = "flex";
+      if (spot.cxNew){
+        $("vPay").textContent = spot.cxNo ? "No. " + String(spot.cxNo).padStart(3, "0") : "NEW ENTRY";
+        $("vPayLbl").textContent = "NEW TO YOUR CODEX";
+      } else {
+        $("vPay").textContent = "×" + (spot.nth || 1);
+        $("vPayLbl").textContent = "SIGHTING LOGGED · CODEX UPDATED";
+      }
+      const rows = (lastRankUp ? ['<div class="qhit" style="color:var(--gold);border-color:rgba(255,194,75,.45);background:rgba(255,194,75,.08)"><span>RANK UP · ' + lastRankUp + '</span><span>★</span></div>'] : [])
+        .concat(lastQuestHits.map(q => '<div class="qhit"><span>' + q.label + ' · ' + q.name.toUpperCase() + '</span><span>✓</span></div>'));
+      $("vQuests").innerHTML = rows.join("");
+      $("vMiss").style.display = "none";
+    }
+    $("vChip").style.display = "";
+  } else {
+    $("vMake").textContent = "No car detected";
+    $("vYear").textContent = "";
+    $("vChip").style.display = "none";
+    $("vConf").textContent = raw && typeof raw.confidence === "number" ? "CHECKED" : "";
+    $("vConds").innerHTML = "";
+    $("vShotNote").textContent = "";
+    $("vBlurb").textContent = (raw && raw.blurb) ? raw.blurb : "The verifier couldn't find a vehicle as the clear subject.";
+    $("vPayline").style.display = "none";
+    $("vQuests").innerHTML = "";
+    const m = $("vMiss"); m.style.display = "block";
+    m.textContent = "No Tyres this time. Get the whole car in frame, in decent light, and fire again.";
+  }
+  const vc = $("vcard"), ph = $("vPhoto");
+  vc.classList.remove("reveal");
+  ph.classList.remove("holo");
+  if (spot && !spot.flagged){
+    void vc.offsetWidth;
+    vc.classList.add("reveal");
+    sfx(spot.rarity);
+    if (lastRankUp || lastQuestHits.length) setTimeout(() => sfx("extra"), 320);
+    if (spot.rarity === "legendary"){
+      ph.classList.add("holo");
+      const f = $("flash");
+      f.classList.remove("on"); void f.offsetWidth; f.classList.add("on");
+    }
+    try{
+      if (navigator.vibrate && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+        navigator.vibrate(spot.rarity === "legendary" ? [40, 60, 40, 60, 120] : spot.rarity === "rare" ? [30, 40, 60] : 20);
+      }
+    }catch(e){}
+  } else if (spot && spot.flagged){
+    sfx("flag");
+  } else {
+    sfx("miss");
+  }
+  v.classList.add("on");
+}
+function countUp(el, target){
+  const dur = 700, t0 = performance.now();
+  function step(t){
+    const p = Math.min(1, (t - t0)/dur);
+    el.textContent = "+" + Math.round(target * (p*(2-p)));
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+$("vAgain").addEventListener("click", () => { $("verdict").classList.remove("on"); detectUI("off"); });
+$("vShare").addEventListener("click", () => { if (lastVerdictSpot) shareCard(lastVerdictSpot); else toast("Nothing to share on a miss"); });
+$("verdict").addEventListener("click", e => { if (e.target === $("verdict")) { $("verdict").classList.remove("on"); detectUI("off"); } });
+
+/* ================= GARAGE ================= */
+function renderGarage(){
+  const g = $("ggrid");
+  const st = hunterStats();
+  $("garageMeta").textContent = state.spots.length + " spot" + (state.spots.length===1?"":"s") + " · " + st.models + " models · " + st.legend + " legendary";
+  $("top8Btn").style.display = state.spots.some(s => s.fav) ? "" : "none";
+  if (!state.spots.length){
+    g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="e1">Empty garage</div><p>Every verified capture parks here with its make, rarity, and payout. Hit the shutter.</p></div>';
+    return;
+  }
+  g.innerHTML = state.spots.map(s => `
+    <button class="gcard" data-id="${s.id}">
+      <div class="ph" style="background-image:url('${s.img}')"></div>
+      <div class="in">
+        <div class="mk">${s.fav ? '<span style="color:var(--gold)">★</span> ' : ""}${esc(s.make)} ${esc(s.model)}</div>
+        <div class="yr">${esc(s.year)}${s.year ? " · " : ""}${s.event ? esc(s.event) : new Date(s.ts).toLocaleDateString()}</div>
+        <div class="row">
+          <span class="chip ${s.rarity}">${s.rarity.toUpperCase()}</span>
+          <span class="gtyres">#${s.seq || "—"}</span>
+        </div>
+      </div>
+    </button>`).join("");
+}
+function esc(x){ return String(x ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+$("gSeg").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  document.querySelectorAll("#gSeg button").forEach(x => x.classList.toggle("on", x === b));
+  const codex = b.dataset.seg === "codex";
+  $("segSpots").style.display = codex ? "none" : "";
+  $("segCodex").style.display = codex ? "" : "none";
+  if (codex) renderCodex();
+});
+$("codexPill").addEventListener("click", () => {
+  show("garage");
+  const cb = document.querySelector('#gSeg [data-seg="codex"]');
+  if (cb) cb.click();
+});
+$("codexPill").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); $("codexPill").click(); } });
+
+/* ================= CODEX ENTRY SHEET / LORE / TOP 8 ================= */
+let ceKey = null;
+$("cxGrid").addEventListener("click", e => {
+  const b = e.target.closest(".cxcard");
+  if (b && b.dataset.key) openEntry(b.dataset.key);
+});
+$("ceBack").addEventListener("click", () => $("cxSheet").classList.remove("on"));
+function entryInfo(key){
+  const agg = codexAgg();
+  const c = agg[key] || null;
+  let name, tier, n = null;
+  if (key.startsWith("n")){
+    const en = CODEX_SEED.find(e => "n" + e.n === key);
+    if (!en) return null;
+    name = en.name; tier = en.tier; n = en.n;
+  } else {
+    name = c ? c.name : key.slice(2);
+    tier = c ? c.tier : "everyday";
+  }
+  const spots = state.spots.filter(sp => {
+    if (sp.flagged) return false;
+    const en2 = CODEX_SEED.find(e => entryMatches(e, sp));
+    return (en2 ? "n" + en2.n : "x:" + spotStr(sp).trim()) === key;
+  });
+  return { c, name, tier, n, spots };
+}
+function openEntry(key){
+  ceKey = key;
+  $("cxSheet").classList.add("on");
+  renderEntry();
+}
+function renderEntry(){
+  const info = entryInfo(ceKey);
+  if (!info) return;
+  const hero = $("ceHero");
+  if (info.c){
+    hero.style.backgroundImage = "url(" + info.c.img + ")";
+    $("ceQ").style.display = "none";
+  } else {
+    hero.style.backgroundImage = "none";
+    $("ceQ").style.display = "";
+  }
+  const no = info.n ? "No. " + String(info.n).padStart(3, "0") : "FIELD ENTRY";
+  const stamp = info.n && (state.cotdStamps || {})["n" + info.n];
+  const lore = state.lore[ceKey];
+  const loreHtml = lore ? `
+    <div class="lore"><div class="lh">WHY IT MATTERS</div><p>${esc(lore.matters || "")}</p></div>
+    <div class="lore"><div class="lh">THE NUMBERS</div><p>${esc(lore.numbers || "")}</p></div>
+    <div class="lore"><div class="lh">SPOTTER'S NOTE</div><p>${esc(lore.note || "")}</p></div>`
+    : '<div class="lore"><div class="lh">FIELD GUIDE</div><p><span class="spin"></span>&nbsp; Writing the entry…</p></div>';
+  $("ceBody").innerHTML = `
+    <div class="vrow" style="margin:0 0 6px">
+      <span class="chip ${info.tier}">${info.tier.toUpperCase()}</span>
+      <span class="vyr">${no}${stamp ? " · ★ COTD " + stamp : ""}</span>
+    </div>
+    <div class="vmk" style="margin-top:2px">${esc(info.name)}</div>
+    ${info.c
+      ? `<div class="vyr" style="margin-top:5px">×${info.c.count} · ${masteryOf(info.c)}${info.c.bestScore >= 0 ? " · BEST SHOT " + info.c.bestScore : ""}</div>`
+      : `<div class="vyr" style="margin-top:5px">UNSPOTTED — the note below is your intel</div>`}
+    <div id="ceGlobal"></div>
+    ${loreHtml}
+    ${info.spots.length ? `<div class="sechead">Your sightings</div>
+      <div class="sights">${info.spots.map(sp => `<button data-sight="${sp.id}" style="background-image:url('${sp.img}')"></button>`).join("")}</div>` : ""}
+    ${info.c ? `<div class="vbtns" style="margin-top:14px"><button class="btn hot" id="ceShare">SHARE BEST SHOT</button></div>` : ""}`;
+  if (!lore) loreFor(ceKey, info.name, info.tier, info.spots[0] ? info.spots[0].year : "").then(l => {
+    if (l && ceKey && state.lore[ceKey] && $("cxSheet").classList.contains("on")) renderEntry();
+  });
+  fillGlobal();
+}
+$("ceBody").addEventListener("click", e => {
+  const t = e.target.closest("[data-sight]");
+  if (t){
+    $("cxSheet").classList.remove("on");
+    openDossier(+t.dataset.sight);
+    return;
+  }
+  if (e.target.closest("#ceShare")){
+    const info = entryInfo(ceKey);
+    if (info && info.c){
+      const best = info.spots.find(sp => sp.id === info.c.bestId) || info.spots[0];
+      if (best) shareCard(best);
+    }
+  }
+});
+async function loreFor(key, name, tier, yearHint){
+  if (state.lore[key]) return state.lore[key];
+  try{
+    const prompt = 'Field-guide entry for the ' + name + (yearHint ? ' (' + yearHint + ')' : '') + ', a ' + tier + '-tier car in a car-spotting game codex. Respond ONLY with minified JSON, no markdown fences: {"matters":string,"numbers":string,"note":string}. matters: why this car matters, 2 sentences. numbers: production run, era, and one key spec in a single line. note: how a spotter recognizes one in the wild, 1 sentence. Enthusiast voice, no emoji, under 90 words total.';
+    const headers = { "Content-Type": "application/json" };
+    if (CONFIG.apiKey){
+      headers["x-api-key"] = CONFIG.apiKey;
+      headers["anthropic-version"] = "2023-06-01";
+      headers["anthropic-dangerous-direct-browser-access"] = "true";
+    }
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers,
+      body: JSON.stringify({ model: CONFIG.model, max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+    });
+    if (!r.ok) throw new Error("api " + r.status);
+    const data = await r.json();
+    const text = (data.content || []).map(b => b.type === "text" ? b.text : "").join("").replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(text);
+    state.lore[key] = parsed;
+    await Store.save();
+    return parsed;
+  }catch(e){ return null; }
+}
+
+async function shareTop8(){
+  const favs = state.spots.filter(s => s.fav).slice(0, 8);
+  if (!favs.length){ toast("Star some spots in their dossiers first"); return; }
+  try{
+    const imgs = await Promise.all(favs.map(s => loadImg(s.img)));
+    const W = 1080, H = 1350, c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    x.fillStyle = "#0A0B0E"; x.fillRect(0, 0, W, H);
+    x.textBaseline = "top";
+    x.fillStyle = "#FF8A1E"; x.font = "800 26px 'Archivo', sans-serif";
+    x.fillText("THE COLLECTION", 64, 40);
+    x.fillStyle = "#F2F3F6"; x.font = "900 76px 'Archivo', sans-serif";
+    x.fillText("TOP 8", 64, 74);
+    const RC = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+    const gw = W / 2, gh = 250, gy0 = 176;
+    favs.forEach((s, i) => {
+      const im = imgs[i];
+      const gx = (i % 2) * gw, gy = gy0 + Math.floor(i / 2) * gh;
+      const sc = Math.max(gw / im.width, gh / im.height);
+      const dw = im.width * sc, dh = im.height * sc;
+      x.save(); x.beginPath(); x.rect(gx, gy, gw, gh); x.clip();
+      x.drawImage(im, gx + (gw - dw) / 2, gy + (gh - dh) / 2, dw, dh);
+      const g = x.createLinearGradient(0, gy + gh - 70, 0, gy + gh);
+      g.addColorStop(0, "rgba(10,11,14,0)"); g.addColorStop(1, "rgba(10,11,14,.9)");
+      x.fillStyle = g; x.fillRect(gx, gy + gh - 70, gw, 70);
+      x.fillStyle = "#F2F3F6"; x.font = "700 21px 'Archivo', sans-serif";
+      x.fillText((s.make + " " + s.model).trim().slice(0, 30), gx + 16, gy + gh - 36);
+      x.restore();
+      x.fillStyle = RC[s.rarity] || RC.everyday;
+      x.fillRect(gx, gy, gw, 4);
+    });
+    x.fillStyle = "#FF8A1E"; x.font = "800 27px 'Archivo', sans-serif";
+    x.fillText("TYRE HUNT", 64, H - 86);
+    x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
+    x.fillText("SPOT & COLLECT", 276, H - 82);
+    if (state.profile && state.profile.handle){
+      if (state.title){
+        x.fillStyle = "#FFC24B"; x.font = "800 22px 'Archivo', sans-serif";
+        x.textAlign = "right";
+        x.fillText(titleNameOf(state.title).toUpperCase(), W - 64, H - 122);
+        x.textAlign = "left";
+      }
+      x.fillStyle = "#F2F3F6"; x.font = "700 26px 'JetBrains Mono', monospace";
+      x.textAlign = "right";
+      x.fillText("@" + state.profile.handle, W - 64, H - 86);
+      x.textAlign = "left";
+    }
+    deliverCard(c, "tyrehunt-top8.jpg", "My Top 8 · TYRE HUNT");
+  }catch(e){ toast("Couldn't build the Top 8 card"); }
+}
+$("top8Btn").addEventListener("click", shareTop8);
+function cxCard(n, name, tier, c, key){
+  const no = "No. " + String(n).padStart(3, "0");
+  if (!c) return `<button class="cxcard lk" data-key="${key}"><div class="cph">?</div><div class="cin"><div class="cno">${no}</div><div class="cnm">${esc(name)}</div><div class="cpop">UNSPOTTED</div></div></button>`;
+  const m = masteryOf(c);
+  const mCol = m === "MASTERED" ? "var(--gold)" : (m === "TRACKED" ? "var(--pulse-hi)" : "var(--muted)");
+  const stamp = (state.cotdStamps || {})["n" + n] ? " · ★" : "";
+  return `<button class="cxcard" data-key="${key}"><div class="cph" style="background-image:url('${c.img}')"></div><div class="cin"><div class="cno">${no} · ${tier.toUpperCase()}</div><div class="cnm">${esc(name)}</div><div class="cpop" style="color:${mCol}">×${c.count} · ${m}${stamp}</div></div></button>`;
+}
+function renderCodex(){
+  const caught = codexAgg();
+  const got = CODEX_SEED.filter(en => caught["n" + en.n]).length;
+  $("cxPct").textContent = Math.round(got / CODEX_SEED.length * 100) + "%";
+  $("cxCount").textContent = got + " / " + CODEX_SEED.length + " SPOTTED";
+  const seedCards = CODEX_SEED.map(en => {
+    const c = caught["n" + en.n];
+    return cxCard(en.n, en.name, en.tier, c || null, "n" + en.n);
+  });
+  const extras = Object.keys(caught).filter(k => k.startsWith("x:")).map((k, i) => cxCard(CODEX_SEED.length + i + 1, caught[k].name, caught[k].tier, caught[k], k));
+  $("cxGrid").innerHTML = seedCards.join("") + extras.join("");
+}
+
+$("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "tyre-hunt-" + dayKey() + ".json";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+});
+$("importBtn").addEventListener("click", () => $("fileImport").click());
+$("fileImport").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = async () => {
+    try{
+      const inc = JSON.parse(rd.result);
+      if (!inc || !Array.isArray(inc.spots)) throw 0;
+      state = Object.assign(state, inc);
+      await Store.save(); renderHUD(); renderGarage();
+      toast("Data imported");
+    }catch(_){ toast("That file isn't a Tyre Hunt export"); }
+  };
+  rd.readAsText(f);
+  e.target.value = "";
+});
+
+/* ================= MAP ================= */
+let mapPts = [];
+function renderMap(){
+  const c = $("mapc"), ctx = c.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth || c.parentElement.clientWidth;
+  const h = Math.round(w * 1.15);
+  c.width = w * dpr; c.height = h * dpr; ctx.scale(dpr, dpr);
+  ctx.clearRect(0,0,w,h);
+  // grid
+  ctx.strokeStyle = "rgba(255,255,255,.05)"; ctx.lineWidth = 1;
+  for (let i=1;i<8;i++){ ctx.beginPath(); ctx.moveTo(w/8*i,0); ctx.lineTo(w/8*i,h); ctx.stroke(); }
+  for (let i=1;i<9;i++){ ctx.beginPath(); ctx.moveTo(0,h/9*i); ctx.lineTo(w,h/9*i); ctx.stroke(); }
+
+  const pts = state.spots.filter(s => s.lat != null && s.lng != null);
+  mapPts = [];
+  if (!pts.length){
+    $("mapMeta").textContent = "No located spots yet";
+    ctx.fillStyle = "rgba(152,160,172,.9)";
+    ctx.font = "600 12px 'JetBrains Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("ALLOW LOCATION WHEN CAPTURING", w/2, h/2 - 8);
+    ctx.fillText("AND YOUR TERRITORY DRAWS ITSELF", w/2, h/2 + 12);
+    $("mapinfo").innerHTML = "";
+    return;
+  }
+  $("mapMeta").textContent = pts.length + " located spot" + (pts.length===1?"":"s");
+  let minLa=Infinity,maxLa=-Infinity,minLo=Infinity,maxLo=-Infinity;
+  pts.forEach(p=>{ minLa=Math.min(minLa,p.lat); maxLa=Math.max(maxLa,p.lat); minLo=Math.min(minLo,p.lng); maxLo=Math.max(maxLo,p.lng); });
+  const spanLa = Math.max(maxLa-minLa, .004), spanLo = Math.max(maxLo-minLo, .004);
+  const pad = 40;
+  const X = lng => pad + (lng - minLo)/spanLo * (w - pad*2);
+  const Y = lat => h - pad - (lat - minLa)/spanLa * (h - pad*2);
+  const cells = {};
+  pts.forEach(p => { const k = Math.floor(p.lat/0.01) + "_" + Math.floor(p.lng/0.01); cells[k] = (cells[k]||0) + 1; });
+  Object.keys(cells).forEach(k => {
+    const parts = k.split("_").map(Number), ca = parts[0], co = parts[1];
+    const x1 = X(co*0.01), x2 = X((co+1)*0.01);
+    const y1 = Y((ca+1)*0.01), y2 = Y(ca*0.01);
+    ctx.fillStyle = "rgba(255,138,30," + Math.min(.09 + cells[k]*.05, .32) + ")";
+    ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+  });
+  const nc = Object.keys(cells).length;
+  $("mapMeta").textContent = pts.length + " located spot" + (pts.length===1?"":"s") + " · " + nc + " cell" + (nc===1?"":"s") + " claimed";
+  const col = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+  pts.forEach(p=>{
+    const x = pad + (p.lng - minLo)/spanLo * (w - pad*2);
+    const y = h - pad - (p.lat - minLa)/spanLa * (h - pad*2);
+    ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2);
+    ctx.fillStyle = col[p.rarity] || col.everyday;
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 12;
+    ctx.fill(); ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI*2); ctx.fillStyle = "#0A0B0E"; ctx.fill();
+    mapPts.push({ x, y, p });
+  });
+  overlayTerritory(ctx, X, Y, minLa, maxLa, minLo, maxLo);
+}
+$("mapc").addEventListener("click", e => {
+  const r = $("mapc").getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  let best = null, bd = 26;
+  mapPts.forEach(m => { const d = Math.hypot(m.x-x, m.y-y); if (d < bd){ bd = d; best = m.p; } });
+  if (!best){
+    const cell = othersCells.find(c => x >= c.x1 && x <= c.x2 && y >= c.y1 && y <= c.y2);
+    if (cell){
+      $("mapinfo").innerHTML = `
+        <div class="qcard" style="margin-top:14px">
+          <div class="qic" style="color:var(--pulse-hi);border-color:rgba(110,160,255,.4)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>
+          </div>
+          <div>
+            <div class="qn">${cell.r.handle ? "@" + esc(cell.r.handle) : "A rival hunter"} holds this block</div>
+            <div class="qd">${cell.r.cnt} spot${cell.r.cnt === 1 ? "" : "s"} here · out-spot them to take it</div>
+          </div>
+        </div>`;
+      return;
+    }
+  }
+  $("mapinfo").innerHTML = best ? `
+    <div class="qcard" style="margin-top:14px">
+      <div class="qic" style="background:url('${best.img}') center/cover;border:0;width:48px;height:48px;border-radius:10px"></div>
+      <div>
+        <div class="qn">${esc(best.make)} ${esc(best.model)}</div>
+        <div class="qd">${new Date(best.ts).toLocaleString()} · ${best.lat}, ${best.lng}</div>
+      </div>
+      <div class="qpay"><div class="v">#${best.seq || "—"}</div><div class="u">SPOT</div></div>
+    </div>` : "";
+});
+window.addEventListener("resize", () => { if ($("view-map").classList.contains("on")) renderMap(); });
+
+/* ================= QUESTS ================= */
+function renderQuests(){
+  ensureDay();
+  const check = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 12.5l4.6 4.6L19.5 6.7"/></svg>';
+  const target = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg>';
+  const qcards = state.dayQ.ids.map(questById).filter(Boolean).map(q => {
+    const done = !!state.dayQ.done[q.id];
+    return `
+      <div class="qcard ${done ? "done" : ""}">
+        <div class="qic">${done ? check : target}</div>
+        <div>
+          <div class="qn">${q.name}</div>
+          <div class="qd">${done ? "Complete" : q.desc}</div>
+        </div>
+        <div class="qpay"><div class="v">${done ? "DONE" : "OPEN"}</div><div class="u">${done ? "" : (q.prog ? q.prog() : "")}</div></div>
+      </div>`;
+  }).join("");
+  const wcards = (state.wantedIds || []).map(wantedById).filter(Boolean).map(w => {
+    const done = !!state.wantedDone[w.id];
+    return `
+      <div class="qcard want ${done ? "done" : ""}">
+        <div class="qic">${done ? check : target}</div>
+        <div>
+          <div class="qn">${w.name}</div>
+          <div class="qd">${done ? "Captured" : "Verified capture, anywhere it hides"}</div>
+        </div>
+        <div class="qpay"><div class="v">${done ? "CAPTURED" : "AT LARGE"}</div><div class="u">${done ? "" : "BADGE"}</div></div>
+      </div>`;
+  }).join("");
+  const scards = SETS.map(set => {
+    const prog = setProgress(set);
+    const got = prog.filter(Boolean).length;
+    const done = !!state.setsDone[set.id];
+    return `
+      <div class="qcard ${done ? "done" : ""}" style="align-items:flex-start">
+        <div class="qic">${done ? check : target}</div>
+        <div style="flex:1">
+          <div class="qn">${set.name}</div>
+          <div class="qd">${done ? "Complete" : set.desc}</div>
+          <div class="setchips">${set.needs.map((mt, i) => `<span class="setchip ${prog[i] ? "got" : ""}">${mt.label}</span>`).join("")}</div>
+        </div>
+        <div class="qpay"><div class="v">${done ? "EARNED" : got + " / " + set.needs.length}</div><div class="u">${done ? "" : "BADGE"}</div></div>
+      </div>`;
+  }).join("");
+  const n = Math.min(state.daySpots, 3);
+  let aiCard = "";
+  if (state.aiHunt && state.aiHunt.day === state.day && state.aiHunt.plan){
+    const pl = state.aiHunt.plan;
+    aiCard = '<div class="sechead" style="margin-top:2px">Your hunt — ' + esc(pl.title || "") + '</div>' +
+      `<div class="qcard" style="align-items:flex-start">
+        <div class="qic" style="color:var(--ember);border-color:rgba(255,138,30,.4)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l2.2 6.8H21l-5.6 4 2.2 6.7L12 15.4l-5.6 4.1 2.2-6.7L3 8.8h6.8L12 2z"/></svg></div>
+        <div style="flex:1">
+          <div class="qd" style="margin-bottom:9px">${esc(pl.brief || "")}</div>
+          ${(pl.targets || []).map(t => `<div style="margin-bottom:8px"><div class="qn" style="font-size:12.5px">${esc(t.name || "")}</div><div class="qd">${esc(t.why || "")}</div></div>`).join("")}
+        </div>
+      </div>`;
+  }
+  const cd = carOfTheDay();
+  const stamped = cd && !!(state.cotdStamps || {})["n" + cd.n];
+  const cotdCard = cd ? `<div class="sechead"${aiCard ? "" : ' style="margin-top:2px"'}>Car of the day</div>
+    <div class="qcard want ${stamped ? "done" : ""}">
+      <div class="qic">${stamped ? check : target}</div>
+      <div>
+        <div class="qn">${cd.name}</div>
+        <div class="qd">${stamped ? "Stamped today" : "Capture one today for a dated codex stamp"}</div>
+      </div>
+      <div class="qpay"><div class="v">${stamped ? "STAMPED" : "TODAY"}</div><div class="u"></div></div>
+    </div>` : "";
+  $("questList").innerHTML =
+    '<div id="lobbyBox"></div>' +
+    aiCard + cotdCard +
+    '<div class="sechead">Today\'s hunts</div>' + qcards +
+    '<div class="sechead">Wanted this week</div>' + wcards +
+    `<div class="sechead">Challenge</div>
+     <div class="qcard ${state.dayBonus ? "done" : ""}">
+       <div class="qic">${state.dayBonus ? check : target}</div>
+       <div>
+         <div class="qn">Nearby challenge</div>
+         <div class="qd">${state.dayBonus ? "Complete" : "Spot 3 cars today"}</div>
+         ${!state.dayBonus ? `<div class="qbar"><i style="width:${n/3*100}%"></i></div>` : ""}
+       </div>
+       <div class="qpay"><div class="v">${state.dayBonus ? "DONE" : "OPEN"}</div><div class="u">${state.dayBonus ? "" : n + " / 3"}</div></div>
+     </div>` +
+    '<div class="sechead">Sets</div>' + scards +
+    `<div class="sechead">Streak</div>
+     <div class="qcard">
+       <div class="qic" style="color:var(--ember);border-color:rgba(255,138,30,.4)">
+         <svg width="18" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2.5c1 3-3.5 5-3.5 9a5.5 5.5 0 0 0 11 0c0-2.5-1.2-4.2-2.5-5.5.2 1.7-.6 2.7-1.5 3-.2-3-1.5-5.3-3.5-6.5z"/></svg>
+       </div>
+       <div>
+         <div class="qn">${state.streak}-day streak</div>
+         <div class="qd">Spot at least one car a day to keep it alive</div>
+       </div>
+     </div>`;
+  fillLobby();
+}
+
+/* ================= HALL ================= */
+function renderRewards(){
+  const st = hunterStats();
+  const r = currentRank(st);
+  $("rankName").textContent = r.name;
+  $("rankStats").textContent = st.models + " models · " + st.rare + " rare · " + st.legend + " legendary";
+  const nxt = RANKS[RANKS.indexOf(r) + 1];
+  $("rankNext").textContent = nxt ? "Next — " + nxt.name + ": " + nxt.req : "Top of the mountain.";
+  const si = seasonIndex();
+  if (si >= 0){
+    const ss = seasonState(si);
+    const sn = ss.meta;
+    const daysLeft = Math.max(0, Math.ceil((seasonEnds(si) - Date.now()) / 864e5));
+    const got = !!state.badges["season:" + si];
+    $("seasonCard").innerHTML = `
+      <div class="qcard want ${got ? "done" : ""}" style="align-items:flex-start">
+        <div style="flex:1">
+          <div class="qn">${sn.name} <span class="qd" style="display:inline">· ${sn.tag}</span></div>
+          <div class="qd">${ss.goalDesc} · ${daysLeft} day${daysLeft === 1 ? "" : "s"} left</div>
+          <div class="qbar" style="margin-top:9px;width:100%"><i style="width:${Math.round(ss.pct * 100)}%"></i></div>
+        </div>
+        <div class="qpay"><div class="v">${got ? "EARNED" : ss.prog}</div><div class="u">${got ? "" : "BADGE"}</div></div>
+      </div>`;
+  } else {
+    const d = Math.max(0, Math.ceil((LAUNCH.getTime() - Date.now()) / 864e5));
+    $("seasonCard").innerHTML = '<p class="pfnote">Season one drops at launch' + (d ? " — " + d + " day" + (d === 1 ? "" : "s") + " out" : "") + '.</p>';
+  }
+  const rec = recordsData();
+  $("recordList").innerHTML = [
+    ["MOST CARS IN A DAY", rec.bestDay || "—"],
+    ["MOST NEW IN A DAY", rec.bestDayNew || "—"],
+    ["LONGEST STREAK", rec.bestStreak ? rec.bestStreak + " days" : "—"],
+    ["RAREST FIND", rec.rarest],
+    ["BEST SHOT", rec.bestShot],
+    ["BIGGEST EXPEDITION", rec.bigExp],
+    ["LEGENDARIES LOGGED", rec.legends || "—"]
+  ].map(x => `<div class="redemption"><span>${x[0]}</span><b>${esc(String(x[1]))}</b></div>`).join("")
+    + '<div class="redemption"><span>WORLD FIRSTS</span><b id="recWF">' + (sb && sbSession ? "…" : "—") + '</b></div>'
+    + '<div class="redemption"><span>REGIONAL FIRSTS</span><b id="recRF">' + (sb && sbSession ? "…" : "—") + '</b></div>';
+  fillFirsts();
+  const unlocked = titlesUnlocked();
+  $("titleGrid").innerHTML = TITLES.map(t => {
+    const got = unlocked.includes(t.id), eq = state.title === t.id;
+    return `<button class="bdg ${got ? "got" : ""} ${eq ? "eq" : ""}" data-title="${t.id}" ${got ? "" : "disabled"} style="text-align:left">
+      <div class="bk">TITLE</div>
+      <div class="bn">${t.title}</div>
+      <div class="bs">${eq ? "EQUIPPED" : (got ? "TAP TO EQUIP" : t.req.toUpperCase())}</div>
+    </button>`;
+  }).join("");
+  document.querySelectorAll("[data-title]").forEach(b => b.addEventListener("click", async () => {
+    state.title = state.title === b.dataset.title ? "" : b.dataset.title;
+    await Store.save();
+    renderRewards();
+    if ($("profile").classList.contains("on")) renderProfile();
+    syncProfile();
+  }));
+  const badges = [];
+  SETS.forEach(s => badges.push({ name: s.name, kind: "SET", got: !!state.setsDone[s.id] }));
+  WANTED_POOL.forEach(w => badges.push({ name: w.name, kind: "WANTED", got: !!(state.badges && state.badges["w:" + w.id]) }));
+  Object.keys(state.badges || {}).filter(k => k.startsWith("season:")).forEach(k => {
+    const i = +k.split(":")[1];
+    badges.push({ name: seasonMeta(i).badge, kind: "SEASON", got: true });
+  });
+  const cur = seasonIndex();
+  if (cur >= 0 && !state.badges["season:" + cur]) badges.push({ name: seasonMeta(cur).badge, kind: "SEASON", got: false });
+  $("badgeGrid").innerHTML = badges.map(b => `
+    <div class="bdg ${b.got ? "got" : ""}">
+      <div class="bk">${b.kind}</div>
+      <div class="bn">${b.name}</div>
+      <div class="bs">${b.got ? "EARNED" : "LOCKED"}</div>
+    </div>`).join("");
+}
+
+/* ================= DOSSIER / EVENT MODE ================= */
+$("eventPill").addEventListener("click", async () => {
+  const v = prompt("Event mode — name a new event to host, or enter a 4-character lobby code to join. Blank clears.", "");
+  if (v === null) return;
+  const input = v.trim();
+  if (!input){
+    state.activeEvent = "";
+    state.activeEventCode = "";
+    renderEventPill();
+    await Store.save();
+    return;
+  }
+  if (/^[A-Z0-9]{4}$/i.test(input)){
+    if (!sb || !sbSession){ toast("Lobby codes need an account — set the event by name instead"); return; }
+    try{
+      const { data } = await sb.from("events").select("code,name").eq("code", input.toUpperCase()).maybeSingle();
+      if (!data){ toast("No lobby with that code"); return; }
+      state.activeEvent = data.name;
+      state.activeEventCode = data.code;
+      toast("Joined lobby · " + data.name);
+    }catch(e){ toast("Couldn't join the lobby"); return; }
+  } else {
+    state.activeEvent = input;
+    state.activeEventCode = "";
+    if (sb && sbSession){
+      const code = Array.from({ length: 4 }, () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 31)]).join("");
+      try{
+        await sb.from("events").insert({ code, name: input, created_by: sbSession.user.id });
+        state.activeEventCode = code;
+        toast("Lobby live · code " + code + " — crew types it to join");
+      }catch(e){ toast("Event set locally — lobby didn't create"); }
+    }
+  }
+  renderEventPill();
+  await Store.save();
+});
+function renderEventPill(){
+  const p = $("eventPill");
+  p.textContent = state.activeEvent
+    ? "● " + state.activeEvent.toUpperCase() + (state.activeEventCode ? " · " + state.activeEventCode : "")
+    : "SET EVENT";
+  p.classList.toggle("on", !!state.activeEvent);
+}
+
+let dId = null, delArm = false;
+$("ggrid").addEventListener("click", e => {
+  const b = e.target.closest(".gcard");
+  if (b && b.dataset.id) openDossier(+b.dataset.id);
+});
+function openDossier(id){
+  const s = state.spots.find(x => x.id === id); if (!s) return;
+  dId = id; delArm = false; $("dDelete").textContent = "DELETE SPOT";
+  $("dHero").style.backgroundImage = "url(" + s.img + ")";
+  $("dStar").classList.toggle("on", !!s.fav);
+  $("dMake").value = s.make || ""; $("dModel").value = s.model || ""; $("dYear").value = s.year || "";
+  $("dEvent").value = s.event || ""; $("dPlace").value = s.place || "";
+  $("dStory").value = s.story || ""; $("dColor").value = s.color || ""; $("dOwner").value = s.owner || "";
+  $("dMetaChip").className = "chip " + s.rarity;
+  $("dMetaChip").textContent = s.rarity.toUpperCase();
+  $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + (s.shot ? " · SHOT " + s.shot.score : "") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
+  $("dossier").classList.add("on");
+}
+$("dBack").addEventListener("click", () => { $("dossier").classList.remove("on"); renderGarage(); });
+$("dStar").addEventListener("click", async () => {
+  const s = state.spots.find(x => x.id === dId); if (!s) return;
+  s.fav = !s.fav;
+  $("dStar").classList.toggle("on", s.fav);
+  await Store.save();
+});
+$("dSave").addEventListener("click", async () => {
+  const s = state.spots.find(x => x.id === dId); if (!s) return;
+  if (!s.ai) s.ai = { make: s.make, model: s.model, year: s.year };
+  s.make = $("dMake").value.trim() || s.make;
+  s.model = $("dModel").value.trim();
+  s.year = $("dYear").value.trim();
+  if (s.make !== s.ai.make || s.model !== s.ai.model || s.year !== s.ai.year) s.hv = true;
+  s.event = $("dEvent").value.trim();
+  s.place = $("dPlace").value.trim();
+  s.story = $("dStory").value.trim();
+  s.color = $("dColor").value.trim();
+  s.owner = $("dOwner").value.trim();
+  await Store.save();
+  toast("Dossier saved");
+  openDossier(dId);
+});
+$("dDelete").addEventListener("click", async () => {
+  if (!delArm){ delArm = true; $("dDelete").textContent = "TAP AGAIN TO DELETE"; return; }
+  state.spots = state.spots.filter(x => x.id !== dId);
+  await Store.save();
+  $("dossier").classList.remove("on");
+  renderGarage(); renderHUD();
+  toast("Spot deleted");
+});
+$("dShare").addEventListener("click", () => shareCard(state.spots.find(x => x.id === dId)));
+
+function shareCard(s){
+  if (!s) return;
+  const img = new Image();
+  img.onload = () => {
+    const W = 1080, H = 1350, c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    x.fillStyle = "#0A0B0E"; x.fillRect(0, 0, W, H);
+    const ph = 780, sc = Math.max(W / img.width, ph / img.height);
+    const dw = img.width * sc, dh = img.height * sc;
+    x.save(); x.beginPath(); x.rect(0, 0, W, ph); x.clip();
+    x.drawImage(img, (W - dw) / 2, (ph - dh) / 2, dw, dh); x.restore();
+    const g = x.createLinearGradient(0, ph - 240, 0, ph);
+    g.addColorStop(0, "rgba(10,11,14,0)"); g.addColorStop(1, "rgba(10,11,14,1)");
+    x.fillStyle = g; x.fillRect(0, ph - 240, W, 240);
+    const RC = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+    x.fillStyle = RC[s.rarity] || RC.everyday; x.fillRect(0, ph, W, 8);
+    x.textBaseline = "top";
+    x.fillStyle = RC[s.rarity] || RC.everyday;
+    x.font = "800 30px 'Archivo', sans-serif";
+    x.fillText(s.rarity.toUpperCase() + (s.event ? "  ·  " + s.event.toUpperCase() : ""), 64, ph + 48);
+    x.fillStyle = "#F2F3F6"; x.font = "900 74px 'Archivo', sans-serif";
+    wrapText(x, (s.make + " " + s.model).trim(), 64, ph + 100, W - 128, 82);
+    x.fillStyle = "#98A0AC"; x.font = "600 30px 'JetBrains Mono', monospace";
+    x.fillText((s.year ? s.year + "  ·  " : "") + new Date(s.ts).toLocaleDateString(), 64, ph + 286);
+    x.fillStyle = "#FFC24B"; x.font = "700 40px 'JetBrains Mono', monospace";
+    const cxe = CODEX_SEED.find(e => entryMatches(e, s));
+    x.fillText(cxe ? "CODEX No. " + String(cxe.n).padStart(3, "0") : "FIELD ENTRY", 64, ph + 344);
+    x.fillStyle = "#FF8A1E"; x.font = "800 27px 'Archivo', sans-serif";
+    x.fillText("TYRE HUNT", 64, H - 86);
+    x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
+    x.fillText("SPOT & COLLECT", 276, H - 82);
+    if (state.profile && state.profile.handle){
+      if (state.title){
+        x.fillStyle = "#FFC24B"; x.font = "800 22px 'Archivo', sans-serif";
+        x.textAlign = "right";
+        x.fillText(titleNameOf(state.title).toUpperCase(), W - 64, H - 122);
+        x.textAlign = "left";
+      }
+      x.fillStyle = "#F2F3F6"; x.font = "700 26px 'JetBrains Mono', monospace";
+      x.textAlign = "right";
+      x.fillText("@" + state.profile.handle, W - 64, H - 86);
+      x.textAlign = "left";
+    }
+    deliverCard(c, "tyrehunt-" + s.id + ".jpg", "Spotted: " + (s.make + " " + s.model).trim() + " · TYRE HUNT");
+  };
+  img.src = s.img;
+}
+function wrapText(x, text, lx, ly, maxW, lh){
+  const words = text.split(" ");
+  let line = "", y = ly;
+  words.forEach(w => {
+    const t = line ? line + " " + w : w;
+    if (x.measureText(t).width > maxW && line){ x.fillText(line, lx, y); line = w; y += lh; }
+    else line = t;
+  });
+  x.fillText(line, lx, y);
+}
+
+/* ================= PROFILE / CREW / ACCOUNTS ================= */
+function genCode(){ const r4 = () => Math.random().toString(36).slice(2, 6).toUpperCase(); return "TH-" + r4() + "-" + r4(); }
+function loadScript(src){ return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+function copyText(t){
+  try{ navigator.clipboard.writeText(t); toast("Copied"); }
+  catch(e){ toast(t); }
+}
+
+let sb = null, sbSession = null;
+async function initSupabase(){
+  if (!CONFIG.supabaseUrl || !CONFIG.supabaseAnon) return;
+  try{
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.3/supabase.min.js");
+    sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnon);
+    const { data } = await sb.auth.getSession();
+    sbSession = (data && data.session) || null;
+    sb.auth.onAuthStateChange((_e, s) => {
+      sbSession = s;
+      syncProfile();
+      if ($("profile").classList.contains("on")) renderProfile();
+    });
+  }catch(e){ sb = null; }
+}
+async function syncProfile(){
+  if (!sb || !sbSession || !state.profile) return;
+  try{
+    const st = hunterStats();
+    await sb.from("profiles").upsert({
+      id: sbSession.user.id,
+      handle: state.profile.handle,
+      code: state.profile.code,
+      models: st.models,
+      legends: st.legend,
+      title: state.title || null,
+      streak: state.streak,
+      spots: state.spots.length,
+      updated_at: new Date().toISOString()
+    });
+  }catch(e){}
+}
+async function syncCapture(s){
+  if (!sb || !sbSession) return;
+  try{
+    await sb.from("captures").insert({
+      user_id: sbSession.user.id,
+      make: s.make, model: s.model, year_range: s.year,
+      rarity: s.rarity, classification: s.cls, confidence: s.confidence,
+      decade: s.decade || "", tags: s.tags || [],
+      cx_key: s.cxKey || null, cx_name: s.cxName || null,
+      phash: s.phash || null, source: s.source || null, flagged: s.flagged || null,
+      event: s.event || "", event_code: s.eventCode || null, lat: s.lat, lng: s.lng, taken_at: s.ts
+    });
+  }catch(e){}
+}
+async function sbAddFriend(code){
+  if (!sb || !sbSession) return null;
+  try{
+    const { data } = await sb.from("profiles").select("id,handle,code,models").eq("code", code).maybeSingle();
+    if (!data) return null;
+    await sb.from("friends").upsert({ user_id: sbSession.user.id, friend_id: data.id });
+    return data;
+  }catch(e){ return null; }
+}
+async function refreshCrew(){
+  if (!sb || !sbSession || !state.crew.length) return;
+  try{
+    const { data } = await sb.from("profiles").select("id,handle,code,models").in("code", state.crew.map(c => c.code));
+    if (data){
+      data.forEach(d => {
+        const c = state.crew.find(x => x.code === d.code);
+        if (c){ c.models = d.models; c.handle = d.handle; c.id = d.id; }
+      });
+      await Store.save();
+    }
+  }catch(e){}
+}
+
+let qrLoaded = false;
+async function drawQR(){
+  const box = $("qrBox");
+  if (!box || !state.profile) return;
+  try{
+    if (!qrLoaded){ await loadScript("https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"); qrLoaded = true; }
+    box.innerHTML = "";
+    new QRCode(box, { text: "TYREHUNT|" + state.profile.code + "|" + state.profile.handle, width: 132, height: 132, colorDark: "#0A0B0E", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  }catch(e){ if (box.parentElement) box.parentElement.style.display = "none"; }
+}
+
+$("profileBtn").addEventListener("click", openProfile);
+$("profileBtn").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openProfile(); } });
+$("pfClose").addEventListener("click", () => $("profile").classList.remove("on"));
+function openProfile(){
+  $("profile").classList.add("on");
+  renderProfile();
+  if (sb && sbSession) refreshCrew().then(renderProfile);
+}
+function renderProfile(){
+  const p = state.profile, body = $("pfBody");
+  $("pfMeta").textContent = p ? "@" + p.handle + " · " + p.code : "Claim a tag to hunt with a crew";
+  if (!p){
+    body.innerHTML = `
+      <div class="dfield"><label>Handle</label><input id="pfHandle" placeholder="curatorofspeed" maxlength="20" autocapitalize="none"></div>
+      <button class="btn hot" style="width:100%" id="pfClaim">CLAIM TAG</button>
+      <p class="pfnote">Your tag rides on every share card, and your hunter code is how a crew finds you at a meet. Nothing else required.</p>`;
+    $("pfClaim").addEventListener("click", async () => {
+      const h = ($("pfHandle").value || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
+      if (h.length < 3){ toast("Handle needs 3+ characters"); return; }
+      state.profile = { handle: h, code: genCode() };
+      await Store.save();
+      syncProfile();
+      renderProfile();
+      toast("Tag claimed · @" + h);
+    });
+    return;
+  }
+  const myStats = hunterStats();
+  const rows = [{ handle: p.handle, models: myStats.models, me: true, code: p.code, id: sbSession ? sbSession.user.id : null }]
+    .concat(state.crew.map(c => ({ handle: c.handle, models: c.models, code: c.code, id: c.id })))
+    .sort((a, b) => ((b.models == null ? -1 : b.models) - (a.models == null ? -1 : a.models)));
+  const acct = sb
+    ? (sbSession
+        ? '<p class="pfnote">Signed in — your tag, codex count, and streak sync live.</p>'
+        : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
+           <button class="btn hot" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>
+           <p class="pfnote">One tap in your inbox signs you in. No password, ever.</p>`)
+    : '<p class="pfnote">Playing locally. Drop Supabase keys into CONFIG and this section becomes a one-tap magic-link sign-in with live crew totals.</p>';
+  body.innerHTML = `
+    <div id="tagCard">
+      <div class="th">@${esc(p.handle)}</div>
+      <div class="tc">${p.code}</div>
+      ${state.title ? '<div class="ptitle">' + esc(titleNameOf(state.title)) + '</div>' : ""}
+      <div class="qrwrap"><div id="qrBox"></div></div>
+      <p class="pfnote" style="margin-top:8px">Crew scans this or types your code</p>
+    </div>
+    <div class="vbtns" style="margin-top:12px">
+      <button class="btn hot" id="pfShareTag">SHARE TAG</button>
+      <button class="btn" id="pfCopy">COPY CODE</button>
+    </div>
+    <div class="sechead">Account</div>
+    ${acct}
+    <button class="btn" id="pfSound" style="width:100%;margin-top:10px">SOUND: ${state.sound ? "ON" : "OFF"}</button>
+    <div class="sechead">Add hunter</div>
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <div class="dfield" style="flex:1;margin:0"><input id="pfAdd" placeholder="TH-XXXX-XXXX" autocapitalize="characters"></div>
+      <button class="btn hot" id="pfAddBtn" style="flex:0 0 auto;padding:12px 18px">ADD</button>
+    </div>
+    <div class="sechead">Crew leaderboard</div>
+    ${rows.map((r, i) => `
+      <div class="crewrow ${r.me ? "me" : ""}">
+        <span class="rk">${i + 1}</span>
+        <span class="hd">${r.handle ? "@" + esc(r.handle) : esc(r.code)}</span>
+        <span class="ty">${r.models == null ? "—" : r.models + " cars"}</span>
+        ${r.me || !r.id || !sbSession ? "" : `<button data-duel="${r.id}" aria-label="Duel" style="color:var(--ember);font-size:15px;padding:2px 6px">⚔</button>`}
+        ${r.me ? "" : `<button class="rm" data-code="${esc(r.code)}" aria-label="Remove">✕</button>`}
+      </div>`).join("")}
+    ${state.crew.length ? "" : '<p class="pfnote">No crew yet. Trade codes at the next cars &amp; coffee.</p>'}
+    ${sb && sbSession ? `
+    <div class="sechead">Duels · 48h · most models wins</div>
+    <div id="duelList"><p class="pfnote">Loading…</p></div>
+    <div class="sechead">Crew feed</div>
+    <div id="crewFeed"><p class="pfnote">Loading…</p></div>` : ""}`;
+  drawQR();
+  $("pfShareTag").addEventListener("click", async () => {
+    const msg = "Add me on TYRE HUNT — hunter code " + p.code;
+    if (navigator.share){ try{ await navigator.share({ text: msg }); return; }catch(e){} }
+    copyText(msg);
+  });
+  $("pfCopy").addEventListener("click", () => copyText(p.code));
+  $("pfSound").addEventListener("click", async () => {
+    state.sound = !state.sound;
+    await Store.save();
+    renderProfile();
+    if (state.sound) sfx("classic");
+  });
+  $("pfAddBtn").addEventListener("click", addCrew);
+  const magic = $("pfMagic");
+  if (magic) magic.addEventListener("click", async () => {
+    const email = ($("pfEmail").value || "").trim();
+    if (!email.includes("@")){ toast("Enter an email"); return; }
+    try{
+      await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+      toast("Magic link sent — check your inbox");
+    }catch(e){ toast("Couldn't send the link"); }
+  });
+  body.querySelectorAll(".rm").forEach(b => b.addEventListener("click", async () => {
+    state.crew = state.crew.filter(c => c.code !== b.dataset.code);
+    await Store.save();
+    renderProfile();
+  }));
+  body.querySelectorAll("[data-duel]").forEach(b => b.addEventListener("click", () => createDuel(b.dataset.duel)));
+  if (sb && sbSession){ loadDuels(); fillFeed(); }
+}
+async function addCrew(){
+  const code = ($("pfAdd").value || "").toUpperCase().trim();
+  if (!/^TH-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)){ toast("Codes look like TH-XXXX-XXXX"); return; }
+  if (state.profile && code === state.profile.code){ toast("That's your own code"); return; }
+  if (state.crew.some(c => c.code === code)){ toast("Already in your crew"); return; }
+  let entry = { code, handle: null, models: null, id: null };
+  if (sb && sbSession){
+    const d = await sbAddFriend(code);
+    if (!d){ toast("No hunter found with that code"); return; }
+    entry = { code: d.code, handle: d.handle, models: d.models, id: d.id };
+  }
+  state.crew.push(entry);
+  await Store.save();
+  renderProfile();
+  toast("Crew +1");
+}
+
+/* ================= CARD DELIVERY ================= */
+function loadImg(src){ return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+function deliverCard(c, filename, text){
+  c.toBlob(async blob => {
+    if (!blob){ toast("Couldn't render the card"); return; }
+    const file = new File([blob], filename, { type: "image/jpeg" });
+    const payload = { files: [file], title: "TYRE HUNT", text };
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      try{ await navigator.share(payload); return; }
+      catch(e){ if (e && e.name === "AbortError") return; }
+    }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast("Card saved");
+  }, "image/jpeg", .9);
+}
+
+/* ================= EXPEDITIONS ================= */
+function expeditions(){
+  const groups = {};
+  state.spots.forEach(s => {
+    const ev = (s.event || "").trim();
+    if (!ev) return;
+    const k = ev.toLowerCase();
+    if (!groups[k]) groups[k] = { name: ev, spots: [] };
+    groups[k].spots.push(s);
+  });
+  return Object.values(groups).map(g => {
+    const ts = g.spots.map(s => new Date(s.ts).getTime());
+    const rw = { legendary: 3, rare: 2, classic: 1, everyday: 0 };
+    const best = [...g.spots].sort((a, b) => (rw[b.rarity] || 0) - (rw[a.rarity] || 0)).slice(0, 4);
+    return {
+      name: g.name,
+      from: new Date(Math.min.apply(null, ts)),
+      to: new Date(Math.max.apply(null, ts)),
+      count: g.spots.length,
+      fresh: g.spots.filter(s => s.cxNew).length,
+      legend: g.spots.filter(s => s.rarity === "legendary").length,
+      best
+    };
+  }).sort((a, b) => b.to - a.to);
+}
+function fmtRange(a, b){
+  const o = { month: "short", day: "numeric" };
+  const s = a.toLocaleDateString(undefined, o), t = b.toLocaleDateString(undefined, o);
+  return s === t ? s + ", " + b.getFullYear() : s + " – " + t + ", " + b.getFullYear();
+}
+function renderExpeditions(){
+  const ex = expeditions();
+  $("expList").innerHTML = ex.length ? ex.map((e, i) => `
+    <div class="expcard">
+      <div class="exphead">
+        <div>
+          <div class="qn">${esc(e.name)}</div>
+          <div class="qd">${fmtRange(e.from, e.to)} · ${e.count} cars · ${e.fresh} new · ${e.legend} legendary</div>
+        </div>
+        <button class="btn hot" data-exp="${i}" style="flex:0 0 auto;padding:9px 13px;font-size:10px">RECAP</button>
+      </div>
+      <div class="expthumbs">${e.best.map(s => `<div style="background-image:url('${s.img}')"></div>`).join("")}</div>
+    </div>`).join("") : '<p class="pfnote">Set an event before a show and every capture files into an expedition — recap card included.</p>';
+  document.querySelectorAll("[data-exp]").forEach(b => b.addEventListener("click", () => shareExpedition(expeditions()[+b.dataset.exp])));
+}
+async function shareExpedition(e){
+  if (!e) return;
+  try{
+    const imgs = await Promise.all(e.best.map(s => loadImg(s.img)));
+    const W = 1080, H = 1350, c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    x.fillStyle = "#0A0B0E"; x.fillRect(0, 0, W, H);
+    const gw = W / 2, gh = 380;
+    imgs.forEach((im, i) => {
+      const gx = (i % 2) * gw, gy = Math.floor(i / 2) * gh;
+      const sc = Math.max(gw / im.width, gh / im.height);
+      const dw = im.width * sc, dh = im.height * sc;
+      x.save(); x.beginPath(); x.rect(gx, gy, gw, gh); x.clip();
+      x.drawImage(im, gx + (gw - dw) / 2, gy + (gh - dh) / 2, dw, dh); x.restore();
+    });
+    const g = x.createLinearGradient(0, 600, 0, 760);
+    g.addColorStop(0, "rgba(10,11,14,0)"); g.addColorStop(1, "rgba(10,11,14,1)");
+    x.fillStyle = g; x.fillRect(0, 600, W, 160);
+    x.fillStyle = "#FF8A1E"; x.fillRect(0, 760, W, 8);
+    x.textBaseline = "top";
+    x.fillStyle = "#FF8A1E"; x.font = "800 28px 'Archivo', sans-serif";
+    x.fillText("EXPEDITION", 64, 806);
+    x.fillStyle = "#F2F3F6"; x.font = "900 64px 'Archivo', sans-serif";
+    wrapText(x, e.name.toUpperCase(), 64, 848, W - 128, 72);
+    x.fillStyle = "#98A0AC"; x.font = "600 28px 'JetBrains Mono', monospace";
+    x.fillText(fmtRange(e.from, e.to), 64, 1016);
+    x.fillStyle = "#FFC24B"; x.font = "700 34px 'JetBrains Mono', monospace";
+    x.fillText(e.count + " CARS · " + e.fresh + " NEW · " + e.legend + " LEGENDARY", 64, 1072);
+    x.fillStyle = "#FF8A1E"; x.font = "800 27px 'Archivo', sans-serif";
+    x.fillText("TYRE HUNT", 64, H - 86);
+    x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
+    x.fillText("SPOT & COLLECT", 276, H - 82);
+    if (state.profile && state.profile.handle){
+      if (state.title){
+        x.fillStyle = "#FFC24B"; x.font = "800 22px 'Archivo', sans-serif";
+        x.textAlign = "right";
+        x.fillText(titleNameOf(state.title).toUpperCase(), W - 64, H - 122);
+        x.textAlign = "left";
+      }
+      x.fillStyle = "#F2F3F6"; x.font = "700 26px 'JetBrains Mono', monospace";
+      x.textAlign = "right";
+      x.fillText("@" + state.profile.handle, W - 64, H - 86);
+      x.textAlign = "left";
+    }
+    deliverCard(c, "tyrehunt-expedition-" + e.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".jpg", "Expedition: " + e.name + " · " + e.count + " cars · TYRE HUNT");
+  }catch(err){ toast("Couldn't build the recap"); }
+}
+
+/* ================= HUNTING GROUNDS ================= */
+const GROUNDS = [
+  { name:"Monterey Car Week", type:"EVENT", loc:"Monterey, USA", lat:36.5686, lng:-121.9497, hunt:"Pre-war royalty to hypercar debuts — the deepest week on earth" },
+  { name:"Goodwood Festival of Speed", type:"EVENT", loc:"Chichester, UK", lat:50.8578, lng:-0.7530, hunt:"Race legends running the hill, paddocks wide open" },
+  { name:"Petersen Automotive Museum", type:"MUSEUM", loc:"Los Angeles, USA", lat:34.0625, lng:-118.3614, hunt:"The Vault — guaranteed legendaries under one roof" },
+  { name:"Nürburgring Nordschleife", type:"TRACK", loc:"Nürburg, Germany", lat:50.3356, lng:6.9475, hunt:"Camouflaged prototypes and track builds in the car park" },
+  { name:"Le Mans Classic", type:"EVENT", loc:"Le Mans, France", lat:47.95, lng:0.2244, hunt:"Endurance icons of every era, driven hard" },
+  { name:"Porsche Museum", type:"MUSEUM", loc:"Stuttgart, Germany", lat:48.834, lng:9.152, hunt:"959s, 917s, and the air-cooled canon" },
+  { name:"Mercedes-Benz Museum", type:"MUSEUM", loc:"Stuttgart, Germany", lat:48.788, lng:9.234, hunt:"300SL Gullwings and 130 years of Silver Arrows" },
+  { name:"Museo Ferrari", type:"MUSEUM", loc:"Maranello, Italy", lat:44.5296, lng:10.8644, hunt:"250s to Enzos — and test mules on the road outside" },
+  { name:"Museo Lamborghini", type:"MUSEUM", loc:"Sant'Agata, Italy", lat:44.6591, lng:11.127, hunt:"Miura, Countach, and whatever screams past the gate" },
+  { name:"Knightsbridge", type:"STREET", loc:"London, UK", lat:51.5017, lng:-0.1607, hunt:"Summer supercar season — chrome wraps and one-offs" },
+  { name:"Casino Square", type:"STREET", loc:"Monaco", lat:43.7397, lng:7.4276, hunt:"Highest hypercar density per square meter anywhere" },
+  { name:"Tatsumi PA", type:"STREET", loc:"Tokyo, Japan", lat:35.6469, lng:139.8107, hunt:"Midnight JDM heroes in their natural habitat" },
+  { name:"Daikanyama T-Site", type:"STREET", loc:"Tokyo, Japan", lat:35.6497, lng:139.6993, hunt:"Sunday morning classics over coffee" },
+  { name:"Amelia Island", type:"EVENT", loc:"Florida, USA", lat:30.669, lng:-81.462, hunt:"Concours metal without the Monterey crowds" },
+  { name:"Scottsdale Auction Week", type:"EVENT", loc:"Arizona, USA", lat:33.4942, lng:-111.9261, hunt:"A thousand collector cars crossing the block" },
+  { name:"Rodeo Drive", type:"STREET", loc:"Beverly Hills, USA", lat:34.0696, lng:-118.403, hunt:"Daily-driven exotics, valet rows full of unicorns" }
+];
+const GROUND_CHIP = { EVENT:"classic", MUSEUM:"rare", STREET:"legendary", TRACK:"everyday" };
+let groundsGeo = null, groundsTried = false;
+function renderGrounds(){
+  const here = groundsGeo || state.spots.find(s => s.lat != null) || null;
+  const rows = GROUNDS.map(g => ({ ...g, km: here ? haversine(here.lat, here.lng, g.lat, g.lng) : null }))
+    .sort((a, b) => ((a.km == null ? 1e9 : a.km) - (b.km == null ? 1e9 : b.km)));
+  $("groundList").innerHTML = rows.map(g => `
+    <div class="place">
+      <div class="prow">
+        <div class="qn">${g.name}</div>
+        <span class="chip ${GROUND_CHIP[g.type] || "everyday"}" style="flex:0 0 auto">${g.type}</span>
+      </div>
+      <div class="qd">${g.loc}${g.km != null ? ' · <span style="font-family:var(--mono)">' + Math.round(g.km).toLocaleString() + " km</span>" : ""}</div>
+      <div class="phunt">THE HUNT — ${g.hunt}</div>
+    </div>`).join("");
+  if (!groundsGeo && !groundsTried){
+    groundsTried = true;
+    getGeo().then(x => {
+      if (x){ groundsGeo = x; if ($("view-map").classList.contains("on")) renderGrounds(); }
+    });
+  }
+}
+
+/* ================= OFFLINE QUEUE ================= */
+let draining = false;
+function renderQueuePill(busyDrain){
+  const p = $("queuePill");
+  if (!p) return;
+  const n = (state.queue || []).length;
+  p.style.display = n ? "block" : "none";
+  p.textContent = busyDrain ? "VERIFYING · " + n + " LEFT" : "● " + n + " QUEUED — TAP TO VERIFY";
+}
+async function queueCapture(canvas, source){
+  if (!Array.isArray(state.queue)) state.queue = [];
+  if (state.queue.length >= 10){ toast("Queue full — get a signal to verify"); return; }
+  const geo = await getGeo();
+  const s = Math.min(1, 1000 / Math.max(canvas.width, canvas.height));
+  const t = document.createElement("canvas");
+  t.width = Math.round(canvas.width * s); t.height = Math.round(canvas.height * s);
+  t.getContext("2d").drawImage(canvas, 0, 0, t.width, t.height);
+  state.queue.push({
+    id: Date.now(), ts: new Date().toISOString(),
+    img: t.toDataURL("image/jpeg", .72),
+    source: source || "camera", geo,
+    event: state.activeEvent || "",
+    eventCode: state.activeEventCode || ""
+  });
+  await Store.save();
+  renderQueuePill();
+}
+async function processQueue(){
+  if (draining || !state.queue || !state.queue.length) return;
+  draining = true;
+  renderQueuePill(true);
+  let ok = 0;
+  while (state.queue.length){
+    const item = state.queue[0];
+    try{
+      const img = await loadImg(item.img);
+      const c = document.createElement("canvas");
+      c.width = img.width; c.height = img.height;
+      c.getContext("2d").drawImage(img, 0, 0);
+      const b64 = c.toDataURL("image/jpeg", .82).split(",")[1];
+      const res = await verifyWithClaude(b64);
+      await processResult(res, c, item.source, { ts: item.ts, geo: item.geo, event: item.event, eventCode: item.eventCode, queued: true, silent: true });
+      state.queue.shift();
+      ok++;
+      await Store.save();
+      renderQueuePill(true);
+    }catch(e){ break; }
+  }
+  draining = false;
+  renderQueuePill();
+  if (ok) toast(ok + " queued capture" + (ok > 1 ? "s" : "") + " verified");
+}
+$("queuePill").addEventListener("click", processQueue);
+window.addEventListener("online", processQueue);
+
+/* ================= MULTIPLAYER (dormant until CONFIG keys) ================= */
+function ago(ts){
+  const s = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (s < 3600) return Math.max(1, Math.round(s / 60)) + "m";
+  if (s < 86400) return Math.round(s / 3600) + "h";
+  return Math.round(s / 86400) + "d";
+}
+
+let lobbyCache = { code: null, ts: 0, html: "" };
+async function fillLobby(){
+  const box = $("lobbyBox");
+  if (!box) return;
+  if (!(state.activeEventCode && sb && sbSession)){ box.innerHTML = ""; return; }
+  const code = state.activeEventCode;
+  const head = '<div class="sechead" style="margin-top:2px">Live lobby · ' + esc(state.activeEvent || code) + ' · ' + code + '</div>';
+  if (lobbyCache.code === code && Date.now() - lobbyCache.ts < 30000){ box.innerHTML = lobbyCache.html; return; }
+  box.innerHTML = head + '<p class="pfnote">Loading the board…</p>';
+  try{
+    const { data: caps } = await sb.from("captures").select("user_id,cx_key").eq("event_code", code).is("flagged", null);
+    let html;
+    if (!caps || !caps.length){
+      html = head + '<p class="pfnote">Board is empty — first capture takes the lead.</p>';
+    } else {
+      const byUser = {};
+      caps.forEach(c => { if (!c.cx_key) return; (byUser[c.user_id] = byUser[c.user_id] || new Set()).add(c.cx_key); });
+      const ids = Object.keys(byUser);
+      const { data: profs } = await sb.from("profiles").select("id,handle").in("id", ids);
+      const rows = ids.map(id => {
+        const pp = (profs || []).find(x => x.id === id);
+        return { id, handle: pp ? pp.handle : "hunter", n: byUser[id].size };
+      }).sort((a, b) => b.n - a.n).slice(0, 8);
+      html = head + rows.map((r, i) => `
+        <div class="crewrow ${r.id === sbSession.user.id ? "me" : ""}">
+          <span class="rk">${i + 1}</span>
+          <span class="hd">@${esc(r.handle)}</span>
+          <span class="ty">${r.n} model${r.n === 1 ? "" : "s"}</span>
+        </div>`).join("");
+    }
+    lobbyCache = { code, ts: Date.now(), html };
+    box.innerHTML = html;
+  }catch(e){ box.innerHTML = ""; }
+}
+
+const cxGlobal = {};
+async function fillGlobal(){
+  const box = $("ceGlobal");
+  if (!box) return;
+  if (!(sb && sbSession && ceKey)){ box.innerHTML = ""; return; }
+  const k = ceKey;
+  if (cxGlobal[k] && Date.now() - cxGlobal[k].ts < 60000){ box.innerHTML = cxGlobal[k].html; return; }
+  box.innerHTML = '<div class="lore"><div class="lh">GLOBAL CENSUS</div><p><span class="spin"></span>&nbsp; Counting…</p></div>';
+  try{
+    const [cenRes, fstRes] = await Promise.all([
+      sb.from("model_census").select("sightings,hunters,first_seen").eq("cx_key", k).maybeSingle(),
+      sb.from("model_firsts").select("user_id,created_at").eq("cx_key", k).maybeSingle()
+    ]);
+    const cen = cenRes.data, fst = fstRes.data;
+    let firstBy = "";
+    if (fst){
+      const { data: pp } = await sb.from("profiles").select("handle").eq("id", fst.user_id).maybeSingle();
+      firstBy = pp ? "@" + pp.handle : "a hunter";
+    }
+    const html = cen
+      ? `<div class="lore"><div class="lh">GLOBAL CENSUS</div><p>${cen.sightings} sighting${cen.sightings === 1 ? "" : "s"} · ${cen.hunters} hunter${cen.hunters === 1 ? "" : "s"} worldwide${fst ? " · first spotted by " + esc(firstBy) + " · " + new Date(fst.created_at).toLocaleDateString() : ""}</p></div>`
+      : '<div class="lore"><div class="lh">GLOBAL CENSUS</div><p>No verified sightings worldwide yet. Be the first.</p></div>';
+    cxGlobal[k] = { ts: Date.now(), html };
+    if (ceKey === k) box.innerHTML = html;
+  }catch(e){ box.innerHTML = ""; }
+}
+
+async function fillFirsts(){
+  if (!sb || !sbSession) return;
+  try{
+    const me = sbSession.user.id;
+    const [wf, rf] = await Promise.all([
+      sb.from("model_firsts").select("cx_key", { count: "exact", head: true }).eq("user_id", me),
+      sb.from("regional_firsts").select("cx_key", { count: "exact", head: true }).eq("user_id", me)
+    ]);
+    const w = $("recWF"), r = $("recRF");
+    if (w) w.textContent = wf.count ?? 0;
+    if (r) r.textContent = rf.count ?? 0;
+  }catch(e){}
+}
+
+async function createDuel(oppId){
+  if (!sb || !sbSession){ toast("Duels need an account"); return; }
+  try{
+    const ends = new Date(Date.now() + 48 * 36e5).toISOString();
+    await sb.from("duels").insert({ challenger: sbSession.user.id, opponent: oppId, ends_at: ends });
+    toast("Duel is live — 48 hours, most models wins");
+    loadDuels();
+  }catch(e){ toast("Couldn't start the duel"); }
+}
+async function loadDuels(){
+  const box = $("duelList");
+  if (!box || !sb || !sbSession) return;
+  try{
+    const me = sbSession.user.id;
+    const { data: ds } = await sb.from("duels").select("id,challenger,opponent,starts_at,ends_at")
+      .or("challenger.eq." + me + ",opponent.eq." + me)
+      .order("created_at", { ascending: false }).limit(5);
+    if (!ds || !ds.length){ box.innerHTML = '<p class="pfnote">No duels yet. Hit ⚔ on a crew member.</p>'; return; }
+    const ids = [...new Set(ds.flatMap(d => [d.challenger, d.opponent]))];
+    const minStart = ds.reduce((a, d) => a < d.starts_at ? a : d.starts_at, ds[0].starts_at);
+    const [profsRes, capsRes] = await Promise.all([
+      sb.from("profiles").select("id,handle").in("id", ids),
+      sb.from("captures").select("user_id,cx_key,created_at").in("user_id", ids).gte("created_at", minStart).is("flagged", null)
+    ]);
+    const profs = profsRes.data || [], caps = capsRes.data || [];
+    const nameOf = id => { const pp = profs.find(x => x.id === id); return pp ? "@" + pp.handle : "hunter"; };
+    box.innerHTML = ds.map(d => {
+      const score = uid => new Set(caps.filter(c => c.user_id === uid && c.cx_key && c.created_at >= d.starts_at && c.created_at <= d.ends_at).map(c => c.cx_key)).size;
+      const a = score(d.challenger), b = score(d.opponent);
+      const over = Date.now() > new Date(d.ends_at).getTime();
+      const left = Math.max(0, Math.round((new Date(d.ends_at).getTime() - Date.now()) / 36e5));
+      const status = over ? (a === b ? "DRAW" : (a > b ? nameOf(d.challenger) : nameOf(d.opponent)) + " WINS") : left + "h LEFT";
+      return `<div class="crewrow"><span class="hd" style="font-size:12.5px">${nameOf(d.challenger)} ${a} — ${b} ${nameOf(d.opponent)}</span><span class="ty">${status}</span></div>`;
+    }).join("");
+  }catch(e){}
+}
+
+async function fillFeed(){
+  const box = $("crewFeed");
+  if (!box) return;
+  if (!(sb && sbSession)){ box.innerHTML = ""; return; }
+  const ids = state.crew.map(c => c.id).filter(Boolean);
+  if (!ids.length){ box.innerHTML = '<p class="pfnote">Crew spots land here once your crew is synced.</p>'; return; }
+  try{
+    const { data } = await sb.from("captures").select("user_id,cx_name,make,model,created_at")
+      .in("user_id", ids).is("flagged", null)
+      .order("created_at", { ascending: false }).limit(12);
+    if (!data || !data.length){ box.innerHTML = '<p class="pfnote">Quiet out there. For now.</p>'; return; }
+    box.innerHTML = data.map(c => {
+      const who = state.crew.find(x => x.id === c.user_id);
+      const nm = c.cx_name || ((c.make || "") + " " + (c.model || "")).trim();
+      return `<div class="redemption"><span>@${esc(who ? (who.handle || who.code) : "crew")} · ${esc(nm)}</span><b>${ago(c.created_at)}</b></div>`;
+    }).join("");
+  }catch(e){ box.innerHTML = ""; }
+}
+
+let othersCells = [];
+let terrCache = { key: "", ts: 0, rows: [] };
+async function overlayTerritory(ctx, X, Y, minLa, maxLa, minLo, maxLo){
+  othersCells = [];
+  if (!sb || !sbSession) return;
+  try{
+    const la1 = Math.floor(minLa / 0.01), la2 = Math.floor(maxLa / 0.01);
+    const lo1 = Math.floor(minLo / 0.01), lo2 = Math.floor(maxLo / 0.01);
+    const key = la1 + "_" + la2 + "_" + lo1 + "_" + lo2;
+    let rows = terrCache.rows;
+    if (terrCache.key !== key || Date.now() - terrCache.ts > 60000){
+      const { data } = await sb.from("cell_owners").select("cell_la,cell_lo,user_id,cnt")
+        .gte("cell_la", la1).lte("cell_la", la2)
+        .gte("cell_lo", lo1).lte("cell_lo", lo2).limit(400);
+      rows = data || [];
+      const ids = [...new Set(rows.map(r => r.user_id))].filter(id => id !== sbSession.user.id);
+      let profs = [];
+      if (ids.length){
+        const res = await sb.from("profiles").select("id,handle").in("id", ids);
+        profs = res.data || [];
+      }
+      rows.forEach(r => { const pp = profs.find(x => x.id === r.user_id); r.handle = pp ? pp.handle : null; });
+      terrCache = { key, ts: Date.now(), rows };
+    }
+    rows.forEach(r => {
+      if (r.user_id === sbSession.user.id) return;
+      const x1 = X(r.cell_lo * 0.01), x2 = X((r.cell_lo + 1) * 0.01);
+      const y1 = Y((r.cell_la + 1) * 0.01), y2 = Y(r.cell_la * 0.01);
+      ctx.fillStyle = "rgba(94,151,255," + Math.min(.08 + r.cnt * .04, .3) + ")";
+      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+      othersCells.push({ x1, y1, x2, y2, r });
+    });
+  }catch(e){}
+}
+
+/* ================= BOOT ================= */
+(async function boot(){
+  const saved = await Store.load();
+  if (saved) state = Object.assign(state, saved);
+  ensureDay();
+  renderHUD();
+  renderEventPill();
+  renderQueuePill();
+  renderInstallPill();
+  await Store.save();
+  initSupabase();
+  if (state.seenIntro){ startCam(); }
+  else { $("intro").classList.add("on"); }
+  if (navigator.onLine) processQueue();
+})();
+</script>
+</body>
+</html>
