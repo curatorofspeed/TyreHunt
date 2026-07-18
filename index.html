@@ -680,7 +680,7 @@ const CONFIG = {
   supabaseUrl: "https://kokxlzygppakgcebkygc.supabase.co",
   supabaseAnon: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtva3hsenlncHBha2djZWJreWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMTM5ODgsImV4cCI6MjA5OTg4OTk4OH0.c8N8aevxB-etS_b8HhG3M4BNlV3lM2gX3BO12vJRQCo",
   launch: "2026-08-16", // Pebble Beach anchor — all seasons/WANTED rotate procedurally from here
-  strictCapture: false,  // true = only live camera captures pay; gallery/file imports save at 0
+  strictCapture: true,   // live camera captures only; gallery/file imports save but don't count
   thumbEdge: 640,        // stored thumbnail long edge
   sendEdge: 1100         // long edge sent to the verifier
 };
@@ -1491,6 +1491,25 @@ async function runVerify(canvas, source){
 }
 
 async function verifyWithClaude(b64){
+  // Signed-in + Supabase configured → server-side verify (key stays secret, real dedupe).
+  if (sb && sbSession){
+    const r = await fetch(CONFIG.supabaseUrl + "/functions/v1/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + sbSession.access_token,
+        "apikey": CONFIG.supabaseAnon
+      },
+      body: JSON.stringify({ image_b64: b64, media_type: "image/jpeg" })
+    });
+    if (!r.ok) throw new Error("verify " + r.status);
+    const out = await r.json();
+    if (!out || !out.verdict) throw new Error("verify empty");
+    // hand the server's authoritative decision back to the pipeline
+    out.verdict.__server = { phash: out.phash, flags: out.flags || [], counts: !!out.counts };
+    return out.verdict;
+  }
+  // Fallback: direct Anthropic call (artifact preview injects the key; self-host sets CONFIG.apiKey).
   const headers = { "Content-Type":"application/json" };
   if (CONFIG.apiKey){
     headers["x-api-key"] = CONFIG.apiKey;
@@ -1565,16 +1584,23 @@ async function processResult(res, canvas, source, ctx){
   }
   const rarity = PAYOUT[res.rarity] ? res.rarity : "everyday";
   const geo = (ctx && "geo" in ctx) ? ctx.geo : await getGeo();
-  const phash = aHash(canvas);
+  const srv = res.__server || null;
+  const phash = srv && srv.phash ? srv.phash : aHash(canvas);
 
-  // deterrence checks — client-side, advisory until verification moves server-side
+  // deterrence — server-authoritative when signed in, client-side otherwise
   const flags = [];
-  const dup = state.spots.find(sp => sp.phash && hamming(sp.phash, phash) <= 5);
-  if (dup) flags.push("duplicate of an earlier capture");
-  if (res.authenticity === "suspect") flags.push("didn't pass the authenticity check");
+  if (srv){
+    // server already checked cross-user dedupe, self-dedupe, rate limits, authenticity
+    (srv.flags || []).forEach(f => flags.push(f));
+  } else {
+    const dup = state.spots.find(sp => sp.phash && hamming(sp.phash, phash) <= 5);
+    if (dup) flags.push("duplicate of an earlier capture");
+    if (res.authenticity === "suspect") flags.push("didn't pass the authenticity check");
+    if (!(ctx && ctx.queued) && state.lastPaidTs && Date.now() - state.lastPaidTs < 20000) flags.push("captures too fast");
+    if ((state.dayPaid || 0) >= 40) flags.push("daily cap reached");
+  }
   if (CONFIG.strictCapture && source !== "camera") flags.push("imported photos don't count in strict mode");
-  if (!(ctx && ctx.queued) && state.lastPaidTs && Date.now() - state.lastPaidTs < 20000) flags.push("captures too fast");
-  if ((state.dayPaid || 0) >= 40) flags.push("daily cap reached");
+  // geo-jump is client-only (server has no prior-location context yet)
   if (geo){
     const prev = state.spots.find(sp => sp.lat != null && sp.lng != null);
     if (prev){
@@ -2496,7 +2522,14 @@ let sb = null, sbSession = null;
 async function initSupabase(){
   if (!CONFIG.supabaseUrl || !CONFIG.supabaseAnon) return;
   try{
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.3/supabase.min.js");
+    if (!window.supabase || !window.supabase.createClient){
+      try{
+        await loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js");
+      }catch(_e){
+        await loadScript("https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.js");
+      }
+    }
+    if (!window.supabase || !window.supabase.createClient){ toast("Sign-in unavailable — library blocked"); return; }
     sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnon);
     const { data } = await sb.auth.getSession();
     sbSession = (data && data.session) || null;
@@ -2505,7 +2538,8 @@ async function initSupabase(){
       syncProfile();
       if ($("profile").classList.contains("on")) renderProfile();
     });
-  }catch(e){ sb = null; }
+    if ($("profile").classList.contains("on")) renderProfile();
+  }catch(e){ sb = null; toast("Sign-in unavailable — network blocked the library"); }
 }
 async function syncProfile(){
   if (!sb || !sbSession || !state.profile) return;
@@ -2566,7 +2600,7 @@ async function drawQR(){
   const box = $("qrBox");
   if (!box || !state.profile) return;
   try{
-    if (!qrLoaded){ await loadScript("https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"); qrLoaded = true; }
+    if (!qrLoaded){ await loadScript("https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"); qrLoaded = true; }
     box.innerHTML = "";
     new QRCode(box, { text: "TYREHUNT|" + state.profile.code + "|" + state.profile.handle, width: 132, height: 132, colorDark: "#0A0B0E", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
   }catch(e){ if (box.parentElement) box.parentElement.style.display = "none"; }
@@ -2609,7 +2643,9 @@ function renderProfile(){
         : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
            <button class="btn hot" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>
            <p class="pfnote">One tap in your inbox signs you in. No password, ever.</p>`)
-    : '<p class="pfnote">Playing locally. Drop Supabase keys into CONFIG and this section becomes a one-tap magic-link sign-in with live crew totals.</p>';
+    : (CONFIG.supabaseUrl && CONFIG.supabaseAnon
+        ? '<p class="pfnote">Connecting to the server… reopen this in a moment. If it persists, the sign-in library was blocked by your network.</p>'
+        : '<p class="pfnote">Playing locally. Drop Supabase keys into CONFIG and this section becomes a one-tap magic-link sign-in with live crew totals.</p>');
   body.innerHTML = `
     <div id="tagCard">
       <div class="th">@${esc(p.handle)}</div>
