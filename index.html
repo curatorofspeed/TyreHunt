@@ -140,7 +140,10 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 
 /* ---------- sheet views ---------- */
 .view{position:absolute;inset:0;z-index:6;display:none;flex-direction:column;background:var(--carbon)}
-.view.on{display:flex}
+.view.on{display:flex;animation:viewIn .15s ease}
+@keyframes viewIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes sheetIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .vhead{padding:calc(env(safe-area-inset-top,0px) + 18px) 18px 12px;border-bottom:1px solid var(--line)}
 .vhead .eyebrow{font-size:9.5px;font-weight:700;letter-spacing:.34em;color:var(--ember);text-transform:uppercase}
 .vhead h2{font-size:24px;font-weight:900;letter-spacing:.04em;margin-top:3px}
@@ -206,7 +209,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 
 /* verdict sheet */
 #verdict{position:absolute;inset:0;z-index:20;display:none;align-items:flex-end;background:rgba(4,5,7,.55);backdrop-filter:blur(3px)}
-#verdict.on{display:flex}
+#verdict.on{display:flex;animation:fadeIn .18s ease}
+#verdict.on #vcard{animation:sheetIn .24s cubic-bezier(.2,.8,.3,1)}
 #vcard{width:100%;background:#101218;border-top:1px solid var(--line);border-radius:var(--r-lg) 24px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 20px);animation:up .35s ease}
 @keyframes up{from{transform:translateY(40px);opacity:0}}
 @media (prefers-reduced-motion:reduce){#vcard{animation:none}}
@@ -231,7 +235,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 
 /* dossier */
 #dossier{position:absolute;inset:0;z-index:22;display:none;flex-direction:column;background:var(--carbon)}
-#dossier.on{display:flex}
+#dossier.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
 #dHero{position:relative;aspect-ratio:16/10;background:#000 center/cover no-repeat;flex:0 0 auto;border-bottom:1px solid var(--line)}
 #dHero .back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-weight:800;font-size:11px;letter-spacing:.12em}
 #dHero .star{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
@@ -249,7 +253,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 
 /* profile / crew */
 #profile{position:absolute;inset:0;z-index:24;display:none;flex-direction:column;background:var(--carbon)}
-#profile.on{display:flex}
+#profile.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
 #tagCard{background:linear-gradient(160deg,#191512,#100E0B 60%);border:1px solid rgba(255,194,75,.3);border-radius:var(--r-lg);padding:20px;text-align:center}
 #tagCard .th{font-size:26px;font-weight:900;letter-spacing:.02em}
 #tagCard .tc{font:700 15px var(--mono);color:var(--gold);letter-spacing:.12em;margin-top:6px}
@@ -335,11 +339,11 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .ptitle{font:800 11px var(--disp);letter-spacing:.22em;color:var(--gold);margin-top:6px;text-transform:uppercase}
 .bdg.eq{border-color:var(--pulse-hi);box-shadow:0 0 12px rgba(110,160,255,.22)}
 button.bdg[disabled]{cursor:default}
-@media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard .vph.holo::after,#flash.on{animation:none}}
+@media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard .vph.holo::after,#flash.on,.view.on,#verdict.on,#verdict.on #vcard,#dossier.on,#profile.on,#cxSheet.on,#scanline.on{animation:none}button{transition:none}}
 
 /* codex entry sheet */
 #cxSheet{position:absolute;inset:0;z-index:21;display:none;flex-direction:column;background:var(--carbon)}
-#cxSheet.on{display:flex}
+#cxSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
 #ceHero{position:relative;aspect-ratio:16/10;background:#0E1013 center/cover no-repeat;flex:0 0 auto;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.1);font:900 64px var(--disp)}
 #ceHero .back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-weight:800;font-size:11px;letter-spacing:.12em}
 .lore{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;margin-top:10px}
