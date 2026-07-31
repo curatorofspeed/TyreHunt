@@ -341,6 +341,37 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 button.bdg[disabled]{cursor:default}
 @media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard .vph.holo::after,#flash.on,.view.on,#verdict.on,#verdict.on #vcard,#dossier.on,#profile.on,#cxSheet.on,#scanline.on{animation:none}button{transition:none}}
 
+/* reel render progress */
+#reelProg{position:absolute;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(10,11,14,.88);backdrop-filter:blur(4px)}
+#reelProg.on{display:flex}
+#reelProg .box{width:min(320px,84%);text-align:center}
+#reelProg .rt{font:900 15px var(--disp);letter-spacing:.14em;margin-bottom:6px}
+#reelProg .rs{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+#reelProg .rbar{height:6px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
+#reelProg .rbar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--ember),var(--gold));transition:width .2s linear}
+
+/* angle documentation sheet */
+#angleSheet{position:absolute;inset:0;z-index:23;display:none;flex-direction:column;background:var(--carbon)}
+#angleSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
+#agBody{flex:1;overflow-y:auto;padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.aslot{position:relative;aspect-ratio:4/3;border-radius:var(--r-md);overflow:hidden;border:1.5px dashed rgba(255,255,255,.18);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted)}
+.aslot .al{font:800 9px var(--disp);letter-spacing:.22em}
+.aslot .plus{font-size:22px;line-height:1;color:var(--ember)}
+.aslot.filled{border-style:solid;border-color:var(--line);background-size:cover;background-position:center}
+.aslot.filled::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,11,14,0) 40%,rgba(10,11,14,.78) 100%)}
+.aslot .st{position:absolute;left:8px;bottom:7px;z-index:2;font:800 8.5px var(--disp);letter-spacing:.18em;display:flex;align-items:center;gap:5px}
+.aslot .st.ok{color:var(--ok, #3ECF8E)}
+.aslot .st.bad{color:var(--bad)}
+.aslot .st.dim{color:var(--muted)}
+.aslot .retake{position:absolute;top:6px;right:6px;z-index:2;font-size:12px;background:rgba(10,11,14,.7);border:1px solid var(--line);border-radius:999px;padding:4px 8px}
+.aslot .spin{position:absolute;z-index:2}
+.agnote{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:12px}
+.agprog{font:700 11px var(--mono);letter-spacing:.08em;color:var(--gold);margin-top:14px}
+.dangles{display:flex;gap:7px;margin:10px 0 2px;flex-wrap:wrap}
+.dangles .dth{width:56px;height:42px;border-radius:8px;background:#000 center/cover;border:1px solid var(--line);position:relative}
+.dangles .dth.ok{border-color:rgba(62,207,142,.6)}
+
 /* codex entry sheet */
 #cxSheet{position:absolute;inset:0;z-index:21;display:none;flex-direction:column;background:var(--carbon)}
 #cxSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
@@ -471,7 +502,10 @@ input[type=file]{display:none}
     </div>
     <div class="vbody">
       <div id="segSpots">
-        <button class="btn hot" id="top8Btn" style="width:100%;margin-bottom:12px;display:none">SHARE MY TOP 8</button>
+        <div style="display:flex;gap:9px;margin-bottom:12px">
+          <button class="btn hot" id="top8Btn" style="flex:1;display:none">SHARE MY TOP 8</button>
+          <button class="btn" id="reelBtn" style="flex:1;display:none;border-color:rgba(255,138,30,.45);color:var(--ember)">▶ COLLECTION REEL</button>
+        </div>
         <div id="ggrid"></div>
         <div class="rowbtns">
           <button class="btn" id="exportBtn">EXPORT DATA</button>
@@ -596,6 +630,7 @@ input[type=file]{display:none}
       <div class="miss" id="vMiss" style="display:none"></div>
       <div class="vbtns">
         <button class="btn hot" id="vAgain">HUNT AGAIN</button>
+        <button class="btn" id="vDoc" style="display:none">DOCUMENT</button>
         <button class="btn" id="vShare">SHARE</button>
       </div>
     </div>
@@ -642,13 +677,28 @@ input[type=file]{display:none}
         <div class="dfield"><label>Owner met</label><input id="dOwner" placeholder="@handle"></div>
       </div>
       <div class="dfield"><label>The story</label><textarea id="dStory" placeholder="Owner bought it new. One repaint. Sounded incredible leaving."></textarea></div>
+      <div id="dAngles"></div>
       <div class="vbtns" style="margin-top:2px">
         <button class="btn hot" id="dSave">SAVE DOSSIER</button>
+        <button class="btn" id="dDoc">DOCUMENT</button>
         <button class="btn" id="dShare">SHARE CARD</button>
       </div>
       <button class="btn" id="dDelete" style="width:100%;margin-top:10px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE SPOT</button>
     </div>
   </section>
+
+  <!-- ============ ANGLE DOCUMENTATION ============ -->
+  <section id="angleSheet">
+    <div id="agBody">
+      <button class="back" id="agBack" style="position:static;margin-bottom:14px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-weight:800;font-size:11px;letter-spacing:.12em">‹ BACK</button>
+      <div class="sechead" style="margin-top:0">Document the car</div>
+      <div class="vmk" id="agName" style="font-size:19px"></div>
+      <div class="agprog" id="agProg"></div>
+      <div class="agrid" id="agGrid"></div>
+      <p class="agnote">Each angle is graded by the verifier — interiors have to be interiors, badges get their text read, plates blur automatically. Three verified angles makes this a <b style="color:var(--gold)">FULL DOSSIER</b>.</p>
+    </div>
+  </section>
+  <input type="file" id="angleFile" accept="image/*" capture="environment" style="display:none">
 
   <!-- ============ FIRST RUN ============ -->
   <section id="intro">
@@ -662,6 +712,8 @@ input[type=file]{display:none}
       <p class="pfnote">Camera and location power the hunt — nothing is shared unless you share it.</p>
     </div>
   </section>
+
+  <div id="reelProg"><div class="box"><div class="rt">CUTTING YOUR REEL</div><div class="rs">Rendering in real time — keep the app open</div><div class="rbar"><i id="reelBar"></i></div></div></div>
 
   <div id="flash"></div>
   <div id="toast"></div>
@@ -684,6 +736,7 @@ const CONFIG = {
   supabaseUrl: "https://kokxlzygppakgcebkygc.supabase.co",
   supabaseAnon: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtva3hsenlncHBha2djZWJreWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMTM5ODgsImV4cCI6MjA5OTg4OTk4OH0.c8N8aevxB-etS_b8HhG3M4BNlV3lM2gX3BO12vJRQCo",
   launch: "2026-08-16", // Pebble Beach anchor — all seasons/WANTED rotate procedurally from here
+  localGate: true,       // on-device vehicle check before any paid verify call (free, fail-open)
   strictCapture: true,   // live camera captures only; gallery/file imports save but don't count
   thumbEdge: 640,        // stored thumbnail long edge
   sendEdge: 1100         // long edge sent to the verifier
@@ -1208,6 +1261,7 @@ function recordsData(){
     rarest: rareSpot ? (rareSpot.make + " " + rareSpot.model).trim() : "—",
     bigExp: ex ? ex.name + " · " + ex.count : "—",
     bestShot: bs ? bs.score + " · " + bs.name : "—",
+    dossiers: fullDossierCount(),
     legends: st.legend
   };
 }
@@ -1227,7 +1281,8 @@ const TITLES = [
   { id:"poster-child", title:"Poster Child", req:"Complete Poster Wall", test:() => !!state.setsDone["poster-wall"] },
   { id:"streak-freak", title:"Streak Freak", req:"14-day streak", test:() => (state.bestStreak || state.streak || 0) >= 14 },
   { id:"master-class", title:"Master Class", req:"Master 3 codex entries", test:() => masteredCount() >= 3 },
-  { id:"globetrotter", title:"Globetrotter", req:"Claim 10 map cells", test:() => cellCount() >= 10 }
+  { id:"globetrotter", title:"Globetrotter", req:"Claim 10 map cells", test:() => cellCount() >= 10 },
+  { id:"archivist", title:"The Archivist", req:"3 full dossiers", test:() => fullDossierCount() >= 3 }
 ];
 function titlesUnlocked(){
   const st = hunterStats();
@@ -1332,6 +1387,303 @@ $("introGo").addEventListener("click", async () => {
   $("intro").classList.remove("on");
   startCam();
 });
+
+/* ================= LOCAL VEHICLE GATE (on-device, free) =================
+   A small open-weights classifier runs IN THE BROWSER before any paid
+   verify call. Confident non-vehicle frames are rejected on the phone for
+   free; anything vehicle-ish (or uncertain) goes to the server as before.
+   Fail-open by design: any load/inference error silently skips the gate.
+   Model downloads once (~15-25MB) then lives in browser cache.          */
+let gatePipe = null, gateLoading = null, gateDead = false;
+const VEHICLE_WORDS = ["car","jeep","cab","convertible","limousine","limo","minivan","pickup","truck","van","ambulance","racer","wagon","motorcycle","motorbike","moped","scooter","go-kart","gokart","snowplow","tow truck","fire engine","police van","minibus","school bus","trolleybus","streetcar","tractor","half track","golf cart","golfcart","amphibian","grille","car wheel","car mirror","model t"];
+async function gateReady(){
+  if (gateDead) return null;
+  if (gatePipe) return gatePipe;
+  if (!gateLoading){
+    gateLoading = (async () => {
+      const T = await import("https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2");
+      T.env.allowLocalModels = false;
+      // swap to "Xenova/vit-base-patch16-224" for higher accuracy at ~4x the download
+      gatePipe = await T.pipeline("image-classification", "Xenova/mobilevit-small", { quantized: true });
+      return gatePipe;
+    })().catch(() => { gateDead = true; gateLoading = null; return null; });
+  }
+  return gateLoading;
+}
+// returns: true = vehicle, false = confidently NOT a vehicle, null = unsure/unavailable (server decides)
+async function localVehicleGate(src){
+  if (!CONFIG.localGate) return null;
+  try{
+    if (!gatePipe && !gateDead && !gateLoading) toast("Teaching your phone to spot — one-time download");
+    const pipe = await gateReady();
+    if (!pipe) return null;
+    let input;
+    if (typeof src === "string"){
+      input = src; // stored thumbs are already small
+    } else {
+      const s = document.createElement("canvas");
+      const r = Math.min(256 / src.width, 256 / src.height, 1);
+      s.width = Math.max(1, Math.round(src.width * r));
+      s.height = Math.max(1, Math.round(src.height * r));
+      s.getContext("2d").drawImage(src, 0, 0, s.width, s.height);
+      input = s.toDataURL("image/jpeg", .9);
+    }
+    const out = await pipe(input, { topk: 8 });
+    let veh = 0, top = 0;
+    (out || []).forEach(o => {
+      top = Math.max(top, o.score || 0);
+      const lb = String(o.label || "").toLowerCase();
+      if (VEHICLE_WORDS.some(w => lb.includes(w))) veh += o.score || 0;
+    });
+    if (veh >= 0.18) return true;                 // vehicle signal — proceed
+    if (top >= 0.5 && veh < 0.04) return false;   // confidently something else — reject free
+    return null;                                   // unsure — let the server judge
+  }catch(e){ return null; }
+}
+
+/* ================= ANGLE DOCUMENTATION (FULL DOSSIER) ================= */
+const ANGLES = [
+  { id:"interior", label:"INTERIOR" },
+  { id:"badge",    label:"BADGE" },
+  { id:"rear",     label:"REAR" },
+  { id:"engine",   label:"ENGINE" },
+  { id:"detail",   label:"DETAIL" }
+];
+const ANGLE_PROMPT_FOR = exp => `You are grading a documentation photo for TYRE HUNT, a car-spotting game. The player claims this photo shows the ${exp.toUpperCase()} of a car they are documenting in person.
+Respond with ONLY minified JSON, no markdown fences: {"matches":boolean,"angle":"interior"|"badge"|"rear"|"engine"|"detail"|"exterior"|"other","note":string,"badge_text":string,"plate_box":{"x":number,"y":number,"w":number,"h":number}|null,"authenticity":"live"|"suspect"}
+- matches: true if the photo plausibly shows the claimed angle of a real car. interior = seats, dash, cabin. badge = emblem, script, or model designation close-up. rear = the back of the car. engine = engine bay. detail = any close-up craft shot (wheel, trim, gauge, stitching).
+- note: one enthusiast remark or tip about what's in frame, under 12 words.
+- badge_text: if a badge, script, or designation is legible, the exact text, else "".
+- plate_box: license plate bounding box as PERCENTAGES of image width/height if visible, else null.
+- authenticity: "suspect" if this looks like a photo of a screen, print, or press photo; else "live".`;
+
+let agSpotId = null, agPending = null;
+
+function verifiedAngleCount(s){
+  return ANGLES.filter(a => s.angles && s.angles[a.id] && s.angles[a.id].ok === true).length;
+}
+function isFullDossier(s){ return verifiedAngleCount(s) >= 3; }
+function fullDossierCount(){ return state.spots.filter(s => !s.flagged && isFullDossier(s)).length; }
+
+function openAngles(spotId){
+  agSpotId = spotId;
+  $("angleSheet").classList.add("on");
+  renderAngles();
+}
+$("agBack").addEventListener("click", () => { $("angleSheet").classList.remove("on"); if ($("dossier").classList.contains("on")) renderDossierAngles(); });
+
+function renderAngles(){
+  const s = state.spots.find(x => x.id === agSpotId);
+  if (!s) return;
+  $("agName").textContent = ((s.make || "") + " " + (s.model || "")).trim();
+  const v = verifiedAngleCount(s);
+  $("agProg").textContent = isFullDossier(s) ? "FULL DOSSIER ✓ · " + v + "/5 VERIFIED" : v + "/5 VERIFIED · FULL DOSSIER AT 3";
+  $("agGrid").innerHTML = ANGLES.map(a => {
+    const g = s.angles && s.angles[a.id];
+    if (!g) return `<button class="aslot" data-angle="${a.id}"><span class="plus">+</span><span class="al">${a.label}</span></button>`;
+    if (g.pending) return `<button class="aslot filled" data-angle="${a.id}" style="background-image:url('${g.img}')"><span class="spin"></span></button>`;
+    const st = g.ok === true
+      ? `<span class="st ok">✓ ${a.label}${g.badge ? " · " + esc(g.badge) : ""}</span>`
+      : g.ok === false
+        ? `<span class="st bad">⚠ ${esc(g.note || "DIDN'T MATCH")}</span>`
+        : `<span class="st dim">${a.label} · UNGRADED</span>`;
+    return `<button class="aslot filled" data-angle="${a.id}" style="background-image:url('${g.img}')">${st}<span class="retake">↺</span></button>`;
+  }).join("");
+}
+$("agGrid").addEventListener("click", e => {
+  const b = e.target.closest(".aslot");
+  if (!b) return;
+  agPending = b.dataset.angle;
+  $("angleFile").click();
+});
+$("angleFile").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0];
+  $("angleFile").value = "";
+  if (!f || !agPending || agSpotId == null) return;
+  const s = state.spots.find(x => x.id === agSpotId);
+  if (!s) return;
+  const slot = agPending; agPending = null;
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(f); });
+  const c = document.createElement("canvas");
+  const r = Math.min(700 / img.width, 700 / img.height, 1);
+  c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  if (!s.angles) s.angles = {};
+  s.angles[slot] = { img: c.toDataURL("image/jpeg", .7), pending: true };
+  renderAngles();
+  const wasFull = isFullDossier(s);
+  try{
+    const out = await verifyAngle(c, slot);
+    if (out && out.plate_box){ pixelatePlate(c, out.plate_box); }
+    const thumb = document.createElement("canvas");
+    const tr = Math.min(480 / c.width, 480 / c.height, 1);
+    thumb.width = Math.round(c.width * tr); thumb.height = Math.round(c.height * tr);
+    thumb.getContext("2d").drawImage(c, 0, 0, thumb.width, thumb.height);
+    if (out && typeof out.matches === "boolean"){
+      const ok = out.matches && out.authenticity !== "suspect";
+      s.angles[slot] = { img: thumb.toDataURL("image/jpeg", .7), ok,
+        note: ok ? (out.note || "") : (out.authenticity === "suspect" ? "LOOKS LIKE A SCREEN" : (out.note || "not a " + slot)),
+        badge: slot === "badge" && out.badge_text ? String(out.badge_text).slice(0, 22) : "", ts: Date.now() };
+      sfx(ok ? "extra" : "flag");
+    } else {
+      s.angles[slot] = { img: thumb.toDataURL("image/jpeg", .7), ok: null, note: "", badge: "", ts: Date.now() };
+    }
+  }catch(e){
+    s.angles[slot] = { img: s.angles[slot].img, ok: null, note: "", badge: "", ts: Date.now() };
+  }
+  await Store.save();
+  renderAngles();
+  if (!wasFull && isFullDossier(s)){
+    sfx("classic");
+    toast("FULL DOSSIER · " + ((s.make || "") + " " + (s.model || "")).trim());
+  }
+});
+async function verifyAngle(canvas, expected){
+  const b64 = canvas.toDataURL("image/jpeg", .78).split(",")[1];
+  if (sb && sbSession){
+    const r = await fetch(CONFIG.supabaseUrl + "/functions/v1/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sbSession.access_token, "apikey": CONFIG.supabaseAnon },
+      body: JSON.stringify({ image_b64: b64, media_type: "image/jpeg", mode: "angle", expected })
+    });
+    if (!r.ok) throw new Error("angle " + r.status);
+    const out = await r.json();
+    // pre-update function returns the full-verdict shape; treat as ungraded attach
+    if (out && typeof out.matches === "boolean") return out;
+    if (out && out.verdict) return null;
+    return null;
+  }
+  if (CONFIG.apiKey){
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": CONFIG.apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      body: JSON.stringify({ model: CONFIG.model, max_tokens: 500, messages: [{ role: "user", content: [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: b64 } },
+        { type: "text", text: ANGLE_PROMPT_FOR(expected) } ] }] })
+    });
+    if (!r.ok) throw new Error("api " + r.status);
+    const data = await r.json();
+    const text = (data.content || []).map(b => b.type === "text" ? b.text : "").join("").replace(/```json|```/g, "").trim();
+    return JSON.parse(text);
+  }
+  return null;
+}
+function renderDossierAngles(){
+  const box = $("dAngles");
+  if (!box || dId == null) return;
+  const s = state.spots.find(x => x.id === dId);
+  if (!s){ box.innerHTML = ""; return; }
+  const shots = ANGLES.filter(a => s.angles && s.angles[a.id]).map(a => {
+    const g = s.angles[a.id];
+    return `<div class="dth ${g.ok === true ? "ok" : ""}" style="background-image:url('${g.img}')"></div>`;
+  });
+  box.innerHTML = shots.length ? `<div class="dangles">${shots.join("")}</div>` : "";
+}
+
+/* ================= REEL ENGINE (vertical video from captures) ================= */
+async function makeReel(spots, title, fname){
+  spots = (spots || []).filter(s => s && s.img);
+  if (spots.length < 2){ toast("Need at least 2 spots for a reel"); return; }
+  if (typeof MediaRecorder === "undefined" || !HTMLCanvasElement.prototype.captureStream){
+    toast("This browser can't record video"); return;
+  }
+  const prog = $("reelProg"), bar = $("reelBar");
+  prog.classList.add("on"); bar.style.width = "0%";
+  try{
+    const imgs = await Promise.all(spots.map(s => loadImg(s.img)));
+    const W = 1080, H = 1920, FPS = 30;
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    const mime = MediaRecorder.isTypeSupported("video/mp4") ? "video/mp4"
+      : MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+    const stream = c.captureStream(FPS);
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8000000 });
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise(res => rec.onstop = res);
+    rec.start(250);
+    const INTRO = 1.1, PER = 1.5, OUTRO = 1.8;
+    const total = INTRO + spots.length * PER + OUTRO;
+    const RC = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+    const st = hunterStats();
+    const t0 = performance.now();
+    const ease = v => v < .5 ? 2*v*v : 1 - Math.pow(-2*v + 2, 2) / 2;
+    await new Promise(done => {
+      function frame(){
+        const t = (performance.now() - t0) / 1000;
+        bar.style.width = Math.round(Math.min(t / total, 1) * 100) + "%";
+        x.fillStyle = "#0A0B0E"; x.fillRect(0, 0, W, H);
+        x.textBaseline = "top";
+        if (t < INTRO){
+          const k = ease(Math.min(t / .7, 1));
+          x.save(); x.globalAlpha = k;
+          x.textAlign = "center";
+          x.fillStyle = "#FF8A1E"; x.font = "800 30px 'Archivo', sans-serif";
+          x.fillText("T Y R E   H U N T", W/2, H*0.40);
+          x.fillStyle = "#F2F3F6"; x.font = "900 " + Math.round(64 + 14*k) + "px 'Archivo', sans-serif";
+          x.fillText(title.slice(0, 22), W/2, H*0.445);
+          if (state.profile && state.profile.handle){
+            x.fillStyle = "#98A0AC"; x.font = "700 30px 'JetBrains Mono', monospace";
+            x.fillText("@" + state.profile.handle, W/2, H*0.53);
+          }
+          x.restore(); x.textAlign = "left";
+        } else if (t < INTRO + spots.length * PER){
+          const i = Math.min(Math.floor((t - INTRO) / PER), spots.length - 1);
+          const lt = ((t - INTRO) - i * PER) / PER;
+          const im = imgs[i], s = spots[i];
+          const sc = (Math.max(W / im.width, H / im.height)) * (1.05 + lt * .09);
+          const dw = im.width * sc, dh = im.height * sc;
+          x.globalAlpha = Math.min(1, lt * 5);
+          x.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh);
+          x.globalAlpha = 1;
+          if (s.rarity === "legendary" && lt < .18){ x.fillStyle = "rgba(255,194,75," + (0.5 * (1 - lt / .18)) + ")"; x.fillRect(0, 0, W, H); }
+          const g = x.createLinearGradient(0, H - 560, 0, H);
+          g.addColorStop(0, "rgba(10,11,14,0)"); g.addColorStop(1, "rgba(10,11,14,.92)");
+          x.fillStyle = g; x.fillRect(0, H - 560, W, 560);
+          x.fillStyle = RC[s.rarity] || RC.everyday; x.fillRect(0, 0, W, 10);
+          const slide = (1 - ease(Math.min(lt * 2.4, 1))) * 60;
+          x.fillStyle = RC[s.rarity] || RC.everyday; x.font = "800 26px 'Archivo', sans-serif";
+          x.fillText((s.rarity || "").toUpperCase() + (s.cxNo ? "  ·  No. " + String(s.cxNo).padStart(3, "0") : ""), 70 + slide, H - 320);
+          x.fillStyle = "#F2F3F6"; x.font = "900 62px 'Archivo', sans-serif";
+          x.fillText(((s.make || "") + " " + (s.model || "")).trim().slice(0, 24), 70 + slide, H - 276);
+          if (s.year){ x.fillStyle = "#98A0AC"; x.font = "700 30px 'JetBrains Mono', monospace"; x.fillText(String(s.year), 70 + slide, H - 196); }
+          x.fillStyle = "#FF8A1E"; x.font = "800 26px 'Archivo', sans-serif";
+          x.fillText("TYRE HUNT", 70, H - 110);
+        } else {
+          const k = ease(Math.min((t - INTRO - spots.length * PER) / .6, 1));
+          x.globalAlpha = k; x.textAlign = "center";
+          x.fillStyle = "#F2F3F6"; x.font = "900 66px 'Archivo', sans-serif";
+          x.fillText(title.slice(0, 22), W/2, H*0.36);
+          x.fillStyle = "#FFC24B"; x.font = "800 40px 'Archivo', sans-serif";
+          x.fillText(spots.length + " CARS  ·  " + spots.filter(s => s.rarity === "legendary").length + " LEGENDARY", W/2, H*0.44);
+          x.fillStyle = "#98A0AC"; x.font = "700 30px 'JetBrains Mono', monospace";
+          x.fillText(st.models + " MODELS IN THE CODEX" + (state.profile && state.profile.handle ? "  ·  @" + state.profile.handle : ""), W/2, H*0.50);
+          x.fillStyle = "#FF8A1E"; x.font = "800 34px 'Archivo', sans-serif";
+          x.fillText("T Y R E   H U N T", W/2, H*0.58);
+          x.globalAlpha = 1; x.textAlign = "left";
+        }
+        if (t < total) requestAnimationFrame(frame);
+        else { rec.stop(); done(); }
+      }
+      requestAnimationFrame(frame);
+    });
+    await stopped;
+    const blob = new Blob(chunks, { type: mime.split(";")[0] });
+    const ext = blob.type.includes("mp4") ? "mp4" : "webm";
+    const file = new File([blob], (fname || "tyrehunt-reel") + "." + ext, { type: blob.type });
+    prog.classList.remove("on");
+    sfx("classic");
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      try{ await navigator.share({ files: [file], title: title + " · TYRE HUNT" }); return; }catch(e){}
+    }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
+    toast("Reel saved" + (ext === "webm" ? " (.webm)" : ""));
+  }catch(e){
+    prog.classList.remove("on");
+    toast("Couldn't cut the reel");
+  }
+}
 
 /* ================= UI helpers ================= */
 let toastT;
@@ -1484,6 +1836,11 @@ async function runVerify(canvas, source){
   detectUI("busy");
   startVerifyStages();
   try{
+    const gate = await localVehicleGate(canvas);
+    if (gate === false){
+      await processResult({ is_vehicle: false, classification: "not_a_vehicle", blurb: "" }, canvas, source || "camera");
+      return;
+    }
     const b64 = canvas.toDataURL("image/jpeg", .82).split(",")[1];
     const res = await verifyWithClaude(b64);
     await processResult(res, canvas, source || "camera");
@@ -1782,6 +2139,7 @@ async function processResult(res, canvas, source, ctx){
 function openVerdict(spot, canvas, raw){
   const v = $("verdict");
   lastVerdictSpot = spot || null;
+  $("vDoc").style.display = (spot && !spot.flagged) ? "" : "none";
   $("vPhoto").style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
   if (spot){
     $("vMake").textContent = (spot.make + " " + spot.model).trim();
@@ -1830,7 +2188,7 @@ function openVerdict(spot, canvas, raw){
     $("vPayline").style.display = "none";
     $("vQuests").innerHTML = "";
     const m = $("vMiss"); m.style.display = "block";
-    m.textContent = "No Tyres this time. Get the whole car in frame, in decent light, and fire again.";
+    m.textContent = "Nothing filed this time. Get the whole car in frame, in decent light, and fire again.";
   }
   const vc = $("vcard"), ph = $("vPhoto");
   vc.classList.remove("reveal");
@@ -1868,6 +2226,13 @@ function countUp(el, target){
 }
 $("vAgain").addEventListener("click", () => { $("verdict").classList.remove("on"); detectUI("off"); });
 $("vShare").addEventListener("click", () => { if (lastVerdictSpot) shareCard(lastVerdictSpot); else toast("Nothing to share on a miss"); });
+$("vDoc").addEventListener("click", () => {
+  if (!lastVerdictSpot) return;
+  $("verdict").classList.remove("on");
+  detectUI("off");
+  openAngles(lastVerdictSpot.id);
+});
+$("dDoc").addEventListener("click", () => { if (dId != null) openAngles(dId); });
 $("verdict").addEventListener("click", e => { if (e.target === $("verdict")) { $("verdict").classList.remove("on"); detectUI("off"); } });
 
 /* ================= GARAGE ================= */
@@ -1876,6 +2241,7 @@ function renderGarage(){
   const st = hunterStats();
   $("garageMeta").textContent = state.spots.length + " spot" + (state.spots.length===1?"":"s") + " · " + st.models + " models · " + st.legend + " legendary";
   $("top8Btn").style.display = state.spots.some(s => s.fav) ? "" : "none";
+  $("reelBtn").style.display = state.spots.filter(s => !s.flagged).length >= 2 ? "" : "none";
   if (!state.spots.length){
     g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="e1">Empty garage</div><p>Every verified capture parks here with its make, rarity, and story. Hit the shutter.</p></div>';
     return;
@@ -2071,6 +2437,11 @@ async function shareTop8(){
   }catch(e){ toast("Couldn't build the Top 8 card"); }
 }
 $("top8Btn").addEventListener("click", shareTop8);
+$("reelBtn").addEventListener("click", () => {
+  const favs = state.spots.filter(s => s.fav && !s.flagged);
+  const pick = favs.length >= 3 ? favs.slice(0, 8) : state.spots.filter(s => !s.flagged).slice(0, 8);
+  makeReel(pick, favs.length >= 3 ? "THE COLLECTION" : "LATEST HUNT", "tyrehunt-collection");
+});
 function cxCard(n, name, tier, c, key){
   const no = "No. " + String(n).padStart(3, "0");
   if (!c) return `<button class="cxcard lk" data-key="${key}"><div class="cph">?</div><div class="cin"><div class="cno">${no}</div><div class="cnm">${esc(name)}</div><div class="cpop">UNSPOTTED</div></div></button>`;
@@ -2338,6 +2709,7 @@ function renderRewards(){
     ["LONGEST STREAK", rec.bestStreak ? rec.bestStreak + " days" : "—"],
     ["RAREST FIND", rec.rarest],
     ["BEST SHOT", rec.bestShot],
+    ["FULL DOSSIERS", rec.dossiers],
     ["BIGGEST EXPEDITION", rec.bigExp],
     ["LEGENDARIES LOGGED", rec.legends || "—"]
   ].map(x => `<div class="redemption"><span>${x[0]}</span><b>${esc(String(x[1]))}</b></div>`).join("")
@@ -2433,10 +2805,11 @@ function openDossier(id){
   $("dStar").classList.toggle("on", !!s.fav);
   $("dMake").value = s.make || ""; $("dModel").value = s.model || ""; $("dYear").value = s.year || "";
   $("dEvent").value = s.event || ""; $("dPlace").value = s.place || "";
+  renderDossierAngles();
   $("dStory").value = s.story || ""; $("dColor").value = s.color || ""; $("dOwner").value = s.owner || "";
   $("dMetaChip").className = "chip " + s.rarity;
   $("dMetaChip").textContent = s.rarity.toUpperCase();
-  $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + (s.shot ? " · SHOT " + s.shot.score : "") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
+  $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + (s.shot ? " · SHOT " + s.shot.score : "") + (isFullDossier(s) ? ' · <span style="color:var(--gold)">FULL DOSSIER</span>' : "") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
   $("dossier").classList.add("on");
 }
 $("dBack").addEventListener("click", () => { $("dossier").classList.remove("on"); renderGarage(); });
@@ -2809,11 +3182,18 @@ function renderExpeditions(){
           <div class="qn">${esc(e.name)}</div>
           <div class="qd">${fmtRange(e.from, e.to)} · ${e.count} cars · ${e.fresh} new · ${e.legend} legendary</div>
         </div>
-        <button class="btn hot" data-exp="${i}" style="flex:0 0 auto;padding:9px 13px;font-size:10px">RECAP</button>
+        <div style="display:flex;gap:7px;flex:0 0 auto">
+          <button class="btn hot" data-exp="${i}" style="padding:9px 13px;font-size:10px">RECAP</button>
+          <button class="btn" data-reel="${i}" style="padding:9px 13px;font-size:10px;color:var(--ember);border-color:rgba(255,138,30,.45)">▶ REEL</button>
+        </div>
       </div>
       <div class="expthumbs">${e.best.map(s => `<div style="background-image:url('${s.img}')"></div>`).join("")}</div>
     </div>`).join("") : '<p class="pfnote">Set an event before a show and every capture files into an expedition — recap card included.</p>';
   document.querySelectorAll("[data-exp]").forEach(b => b.addEventListener("click", () => shareExpedition(expeditions()[+b.dataset.exp])));
+  document.querySelectorAll("[data-reel]").forEach(b => b.addEventListener("click", () => {
+    const e = expeditions()[+b.dataset.reel];
+    if (e) makeReel(e.spots.slice(0, 8), e.name.toUpperCase(), "tyrehunt-" + e.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
+  }));
 }
 async function shareExpedition(e){
   if (!e) return;
@@ -2945,8 +3325,14 @@ async function processQueue(){
       const c = document.createElement("canvas");
       c.width = img.width; c.height = img.height;
       c.getContext("2d").drawImage(img, 0, 0);
-      const b64 = c.toDataURL("image/jpeg", .82).split(",")[1];
-      const res = await verifyWithClaude(b64);
+      const gate = await localVehicleGate(item.img);
+      let res;
+      if (gate === false){
+        res = { is_vehicle: false, classification: "not_a_vehicle", blurb: "" };
+      } else {
+        const b64 = c.toDataURL("image/jpeg", .82).split(",")[1];
+        res = await verifyWithClaude(b64);
+      }
       await processResult(res, c, item.source, { ts: item.ts, geo: item.geo, event: item.event, eventCode: item.eventCode, queued: true, silent: true });
       state.queue.shift();
       ok++;
