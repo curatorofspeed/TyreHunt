@@ -1416,7 +1416,6 @@ window.addEventListener("beforeinstallprompt", e => {
   e.preventDefault();
   deferredPrompt = e;
   renderInstallPill();
-  if (CONFIG.strictCapture) $("galleryBtn").style.visibility = "hidden";
 });
 window.addEventListener("appinstalled", () => { deferredPrompt = null; renderInstallPill(); toast("Installed — hunt from your home screen"); });
 $("installPill").addEventListener("click", async () => {
@@ -1956,6 +1955,7 @@ $("shutter").addEventListener("click", () => {
   else { $("fileCam").click(); }
 });
 $("galleryBtn").addEventListener("click", () => { if (!busy) $("fileGal").click(); });
+if (CONFIG.strictCapture) $("galleryBtn").style.visibility = "hidden";
 $("fileCam").addEventListener("change", e => handleFile(e.target.files[0], e.target, "capture"));
 $("fileGal").addEventListener("change", e => handleFile(e.target.files[0], e.target, "import"));
 
