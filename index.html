@@ -739,7 +739,7 @@ const CONFIG = {
   localGate: true,       // on-device vehicle check before any paid verify call (free, fail-open)
   strictCapture: true,   // live camera captures only; gallery/file imports save but don't count
   thumbEdge: 640,        // stored thumbnail long edge
-  sendEdge: 1100         // long edge sent to the verifier
+  sendEdge: 900          // long edge sent to the verifier (~30% cheaper per capture than 1100)
 };
 const PAYOUT = { everyday:10, classic:75, rare:150, legendary:400 };
 const KEY = "tyrehunt:v1";
@@ -2912,7 +2912,7 @@ function copyText(t){
   catch(e){ toast(t); }
 }
 
-let sb = null, sbSession = null;
+let sb = null, sbSession = null, sbPremium = false;
 async function initSupabase(){
   if (!CONFIG.supabaseUrl || !CONFIG.supabaseAnon) return;
   try{
@@ -2930,10 +2930,21 @@ async function initSupabase(){
     sb.auth.onAuthStateChange((_e, s) => {
       sbSession = s;
       syncProfile();
+      fetchPlan();
       if ($("profile").classList.contains("on")) renderProfile();
     });
+    fetchPlan();
     if ($("profile").classList.contains("on")) renderProfile();
   }catch(e){ sb = null; toast("Sign-in unavailable — network blocked the library"); }
+}
+async function fetchPlan(){
+  sbPremium = false;
+  if (!sb || !sbSession) return;
+  try{
+    const { data } = await sb.from("profiles").select("premium").eq("id", sbSession.user.id).maybeSingle();
+    sbPremium = !!(data && data.premium);
+    if ($("profile").classList.contains("on")) renderProfile();
+  }catch(e){}
 }
 async function syncProfile(){
   if (!sb || !sbSession || !state.profile) return;
@@ -3033,7 +3044,7 @@ function renderProfile(){
     .sort((a, b) => ((b.models == null ? -1 : b.models) - (a.models == null ? -1 : a.models)));
   const acct = sb
     ? (sbSession
-        ? '<p class="pfnote">Signed in — your tag, codex count, and streak sync live.</p>'
+        ? ('<p class="pfnote">Signed in — your tag, codex count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? "HUNTER'S EDITION · 150 verified captures a day" : 'FREE HUNT · 60 verified captures a day') + '</p>')
         : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
            <button class="btn hot" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>
            <p class="pfnote">One tap in your inbox signs you in. No password, ever.</p>`)
