@@ -1416,6 +1416,7 @@ window.addEventListener("beforeinstallprompt", e => {
   e.preventDefault();
   deferredPrompt = e;
   renderInstallPill();
+  if (CONFIG.strictCapture) $("galleryBtn").style.visibility = "hidden";
 });
 window.addEventListener("appinstalled", () => { deferredPrompt = null; renderInstallPill(); toast("Installed — hunt from your home screen"); });
 $("installPill").addEventListener("click", async () => {
@@ -2153,7 +2154,7 @@ async function processResult(res, canvas, source, ctx){
     if (!(ctx && ctx.queued) && state.lastPaidTs && Date.now() - state.lastPaidTs < 20000) flags.push("captures too fast");
     if ((state.dayPaid || 0) >= 40) flags.push("daily cap reached");
   }
-  if (CONFIG.strictCapture && source !== "camera") flags.push("imported photos don't count in strict mode");
+  if (CONFIG.strictCapture && source !== "camera" && source !== "capture") flags.push("imported photos don't count in strict mode");
   // geo-jump is client-only (server has no prior-location context yet)
   if (geo){
     const prev = state.spots.find(sp => sp.lat != null && sp.lng != null);
