@@ -1388,6 +1388,9 @@ $("introGo").addEventListener("click", async () => {
   startCam();
 });
 
+function withTimeout(promise, ms, label){
+  return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error((label || "request") + " timed out")), ms))]);
+}
 /* ================= LOCAL VEHICLE GATE (on-device, free) =================
    A small open-weights classifier runs IN THE BROWSER before any paid
    verify call. Confident non-vehicle frames are rejected on the phone for
@@ -1543,7 +1546,7 @@ async function verifyAngle(canvas, expected){
   if (sb && sbSession){
     const r = await fetch(CONFIG.supabaseUrl + "/functions/v1/verify", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sbSession.access_token, "apikey": CONFIG.supabaseAnon },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sbSession.access_token },
       body: JSON.stringify({ image_b64: b64, media_type: "image/jpeg", mode: "angle", expected })
     });
     if (!r.ok) throw new Error("angle " + r.status);
@@ -1871,15 +1874,14 @@ function stopVerifyStages(){ if (stageTimer){ clearInterval(stageTimer); stageTi
 async function verifyWithClaude(b64){
   // Signed-in + Supabase configured → server-side verify (key stays secret, real dedupe).
   if (sb && sbSession){
-    const r = await fetch(CONFIG.supabaseUrl + "/functions/v1/verify", {
+    const r = await withTimeout(fetch(CONFIG.supabaseUrl + "/functions/v1/verify", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + sbSession.access_token,
-        "apikey": CONFIG.supabaseAnon
+        "Authorization": "Bearer " + sbSession.access_token
       },
       body: JSON.stringify({ image_b64: b64, media_type: "image/jpeg" })
-    });
+    }), 60000, "verify");
     if (!r.ok) throw new Error("verify " + r.status);
     const out = await r.json();
     if (!out || !out.verdict) throw new Error("verify empty");
@@ -3326,6 +3328,10 @@ async function queueCapture(canvas, source){
 }
 async function processQueue(){
   if (draining || !state.queue || !state.queue.length) return;
+  if ((!sb || !sbSession) && !CONFIG.apiKey){
+    toast("Sign in first — tap the streak ring. Your shots are safe in the queue.");
+    return;
+  }
   draining = true;
   renderQueuePill(true);
   let ok = 0;
@@ -3336,7 +3342,7 @@ async function processQueue(){
       const c = document.createElement("canvas");
       c.width = img.width; c.height = img.height;
       c.getContext("2d").drawImage(img, 0, 0);
-      const gate = await localVehicleGate(item.img);
+      const gate = gatePipe ? await localVehicleGate(item.img) : null; // never download the model from the drain path
       let res;
       if (gate === false){
         res = { is_vehicle: false, classification: "not_a_vehicle", blurb: "" };
@@ -3349,10 +3355,18 @@ async function processQueue(){
       ok++;
       await Store.save();
       renderQueuePill(true);
-    }catch(e){ break; }
+    }catch(e){
+      toast("Verify failed — " + ((e && e.message) ? e.message.slice(0, 60) : "network") + ". Shots stay queued.");
+      break;
+    }
   }
   draining = false;
   renderQueuePill();
+  if (ok){
+    sfx("classic");
+    toast(ok + " verified — filed to your garage");
+    renderHUD();
+  }
   if (ok) toast(ok + " queued capture" + (ok > 1 ? "s" : "") + " verified");
 }
 $("queuePill").addEventListener("click", processQueue);
