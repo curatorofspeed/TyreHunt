@@ -89,8 +89,6 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #detect .dt{font-weight:700;font-size:14.5px}
 #detect .dc{font-size:12.5px;color:var(--muted)}
 #detect .dc b{color:var(--pulse-hi);font-family:var(--mono)}
-#detect .lock{display:none;font-size:11px;color:var(--muted);margin-top:3px;align-items:center;gap:5px}
-#detect .lock.on{display:flex}
 #detect.err{border-color:rgba(255,93,93,.4)}
 #detect.err .ai{border-color:var(--bad);color:var(--bad)}
 .spin{width:14px;height:14px;border:2px solid rgba(110,160,255,.3);border-top-color:var(--pulse-hi);border-radius:50%;animation:sp .8s linear infinite;display:inline-block;vertical-align:-2px}
@@ -456,10 +454,6 @@ input[type=file]{display:none}
     <div>
       <div class="dt" id="detTitle">Verifying…</div>
       <div class="dc" id="detSub"><span class="spin"></span> Reading the shot</div>
-      <div class="lock" id="detLock">
-        <svg width="10" height="12" viewBox="0 0 10 12" fill="none"><rect x="1" y="5" width="8" height="6" rx="1.5" stroke="currentColor"/><path d="M3 5V3.5a2 2 0 1 1 4 0V5" stroke="currentColor"/></svg>
-        Plate blurred for privacy
-      </div>
     </div>
   </div>
 
@@ -695,7 +689,7 @@ input[type=file]{display:none}
       <div class="vmk" id="agName" style="font-size:19px"></div>
       <div class="agprog" id="agProg"></div>
       <div class="agrid" id="agGrid"></div>
-      <p class="agnote">Each angle is graded by the verifier — interiors have to be interiors, badges get their text read, plates blur automatically. Three verified angles makes this a <b style="color:var(--gold)">FULL DOSSIER</b>.</p>
+      <p class="agnote">Each angle is graded by the verifier — interiors have to be interiors, badges get their text read. Three verified angles makes this a <b style="color:var(--gold)">FULL DOSSIER</b>.</p>
     </div>
   </section>
   <input type="file" id="angleFile" accept="image/*" capture="environment" style="display:none">
@@ -707,7 +701,7 @@ input[type=file]{display:none}
       <div class="isub">Spot &amp; Collect</div>
       <div class="ibeat"><b>Point. Shoot. Verified.</b><p>Aim at real metal and hit the shutter — the app identifies the car on the spot and files it.</p></div>
       <div class="ibeat"><b>The codex is the score.</b><p>Every model you find fills a numbered field guide. Rank comes from what you've seen — nothing else.</p></div>
-      <div class="ibeat"><b>Live captures only.</b><p>Plates blur automatically. Old photos don't count. You have to be there.</p></div>
+      <div class="ibeat"><b>Live captures only.</b><p>Old photos don't count. Screens and prints get caught. You have to be there.</p></div>
       <button class="btn hot" id="introGo" style="width:100%;margin-top:16px;padding:15px;font-size:13px">START HUNTING</button>
       <p class="pfnote">Camera and location power the hunt — nothing is shared unless you share it.</p>
     </div>
@@ -1453,11 +1447,10 @@ const ANGLES = [
   { id:"detail",   label:"DETAIL" }
 ];
 const ANGLE_PROMPT_FOR = exp => `You are grading a documentation photo for TYRE HUNT, a car-spotting game. The player claims this photo shows the ${exp.toUpperCase()} of a car they are documenting in person.
-Respond with ONLY minified JSON, no markdown fences: {"matches":boolean,"angle":"interior"|"badge"|"rear"|"engine"|"detail"|"exterior"|"other","note":string,"badge_text":string,"plate_box":{"x":number,"y":number,"w":number,"h":number}|null,"authenticity":"live"|"suspect"}
+Respond with ONLY minified JSON, no markdown fences: {"matches":boolean,"angle":"interior"|"badge"|"rear"|"engine"|"detail"|"exterior"|"other","note":string,"badge_text":string,"authenticity":"live"|"suspect"}
 - matches: true if the photo plausibly shows the claimed angle of a real car. interior = seats, dash, cabin. badge = emblem, script, or model designation close-up. rear = the back of the car. engine = engine bay. detail = any close-up craft shot (wheel, trim, gauge, stitching).
 - note: one enthusiast remark or tip about what's in frame, under 12 words.
 - badge_text: if a badge, script, or designation is legible, the exact text, else "".
-- plate_box: license plate bounding box as PERCENTAGES of image width/height if visible, else null.
 - authenticity: "suspect" if this looks like a photo of a screen, print, or press photo; else "live".`;
 
 let agSpotId = null, agPending = null;
@@ -1517,7 +1510,6 @@ $("angleFile").addEventListener("change", async e => {
   const wasFull = isFullDossier(s);
   try{
     const out = await verifyAngle(c, slot);
-    if (out && out.plate_box){ pixelatePlate(c, out.plate_box); }
     const thumb = document.createElement("canvas");
     const tr = Math.min(480 / c.width, 480 / c.height, 1);
     thumb.width = Math.round(c.width * tr); thumb.height = Math.round(c.height * tr);
@@ -1785,7 +1777,7 @@ function handleFile(file, input, src){
 
 const PROMPT = `You are the vision verifier for TYRE HUNT, a car-spotting game. Analyze the attached photo taken by a player on the street.
 Respond with ONLY minified JSON, no markdown fences, exactly this shape:
-{"is_vehicle":boolean,"make":string,"model":string,"year_range":string,"classification":"classic"|"exotic"|"sports"|"everyday"|"not_a_vehicle","rarity":"everyday"|"classic"|"rare"|"legendary","confidence":number,"authenticity":"live"|"suspect","decade":string,"color":string,"tags":string[],"conditions":string[],"shot":{"score":number,"note":string},"plate_box":{"x":number,"y":number,"w":number,"h":number}|null,"blurb":string}
+{"is_vehicle":boolean,"make":string,"model":string,"year_range":string,"classification":"classic"|"exotic"|"sports"|"everyday"|"not_a_vehicle","rarity":"everyday"|"classic"|"rare"|"legendary","confidence":number,"authenticity":"live"|"suspect","decade":string,"color":string,"tags":string[],"conditions":string[],"shot":{"score":number,"note":string},"blurb":string}
 Rules:
 - is_vehicle: true only if a real car, truck, or motorcycle is the clear subject (not a toy, poster, or screen).
 - classification: "classic" for collector-era cars (broadly pre-1995 or recognized modern classics), "exotic" for supercars/hypercars, "sports" for performance cars, "everyday" for common vehicles, "not_a_vehicle" otherwise.
@@ -1797,15 +1789,13 @@ Rules:
 - tags: every tag that clearly applies, chosen ONLY from ["race_car","convertible","wagon","pickup","suv","van","motorcycle","big_wing","widebody","lifted_4x4","air_cooled","american_muscle","lowrider","electric"]. race_car means livery, race numbers, or full race prep. Empty array if none apply.
 - conditions: shooting conditions that clearly apply, chosen ONLY from ["night","rain","snow","fog","golden_hour","motion"]. Empty array if unsure.
 - shot: grade the photograph itself as a car photo. score 0-100 for composition, light, angle, and sharpness — 50 is an average phone snap, 80+ is genuinely good. note: one specific tip or piece of praise for the photographer, under 12 words.
-- plate_box: if a license plate is visible, its bounding box as PERCENTAGES of image width/height ({"x":left,"y":top,"w":width,"h":height}), else null.
 - blurb: one enthusiast-voice sentence about this spot, max 18 words, no emoji.
 - If unsure of exact model, give your best guess and lower confidence. Make and model must never be empty when is_vehicle is true.`;
 
 const SHIELD = '<svg width="15" height="17" viewBox="0 0 13 15" fill="none"><path d="M6.5 1l5 2v4c0 3.2-2.1 5.6-5 7-2.9-1.4-5-3.8-5-7V3l5-2z" stroke="currentColor" stroke-width="1.3"/><path d="M4.3 7.4l1.6 1.6 2.9-3" stroke="currentColor" stroke-width="1.3"/></svg>';
 function detectUI(mode, data){
-  const d = $("detect"), t = $("detTitle"), s = $("detSub"), lock = $("detLock"), icon = $("detIcon");
+  const d = $("detect"), t = $("detTitle"), s = $("detSub"), icon = $("detIcon");
   d.classList.remove("err");
-  lock.classList.remove("on");
   if (mode === "off"){ d.classList.remove("on"); $("frame").classList.remove("hot"); return; }
   d.classList.add("on");
   if (mode === "busy"){
@@ -1818,7 +1808,6 @@ function detectUI(mode, data){
     icon.innerHTML = SHIELD;
     t.textContent = data.title;
     s.innerHTML = 'Confidence: <b>' + data.conf + '%</b>';
-    if (data.plate) lock.classList.add("on");
   }
   if (mode === "err"){
     d.classList.add("err");
@@ -1913,27 +1902,6 @@ async function verifyWithClaude(b64){
   return JSON.parse(clean);
 }
 
-function pixelatePlate(canvas, box){
-  try{
-    const ctx = canvas.getContext("2d");
-    const pad = .18;
-    let x = (box.x - box.w*pad)/100 * canvas.width;
-    let y = (box.y - box.h*pad)/100 * canvas.height;
-    let w = (box.w * (1+pad*2))/100 * canvas.width;
-    let h = (box.h * (1+pad*2))/100 * canvas.height;
-    x = Math.max(0, x); y = Math.max(0, y);
-    w = Math.min(canvas.width - x, w); h = Math.min(canvas.height - y, h);
-    if (w < 4 || h < 4) return false;
-    const px = document.createElement("canvas");
-    px.width = Math.max(2, Math.round(w * .05));
-    px.height = Math.max(2, Math.round(h * .05));
-    px.getContext("2d").drawImage(canvas, x, y, w, h, 0, 0, px.width, px.height);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(px, 0, 0, px.width, px.height, x, y, w, h);
-    ctx.imageSmoothingEnabled = true;
-    return true;
-  }catch(e){ return false; }
-}
 
 function makeThumb(canvas){
   const s = Math.min(1, CONFIG.thumbEdge / Math.max(canvas.width, canvas.height));
@@ -1990,12 +1958,10 @@ async function processResult(res, canvas, source, ctx){
     }
   }
   const counts = flags.length === 0;
-  const plateBlurred = res.plate_box ? pixelatePlate(canvas, res.plate_box) : false;
 
   if (!silent) detectUI("hit", {
     title: (rarity === "everyday" ? "Car detected" : rarity.charAt(0).toUpperCase()+rarity.slice(1) + " car detected"),
-    conf: Math.round(res.confidence ?? 0),
-    plate: plateBlurred
+    conf: Math.round(res.confidence ?? 0)
   });
 
   // codex placement
@@ -2082,7 +2048,7 @@ async function processResult(res, canvas, source, ctx){
     nth: prior + 1, cxNew: counts && prior === 0, cxNo: en ? en.n : null,
     cxKey: en ? "n" + en.n : "x:" + keyStr,
     cxName: en ? en.name : ((res.make || "") + " " + (res.model || "")).trim(),
-    blurb: res.blurb || "", plate: plateBlurred,
+    blurb: res.blurb || "",
     phash, source: source || "camera", flagged: flags.join("; "),
     lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,
     event: (ctx && ctx.event !== undefined) ? (ctx.event || "") : (state.activeEvent || ""),
