@@ -348,6 +348,38 @@ button.bdg[disabled]{cursor:default}
 #reelProg .rbar{height:6px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
 #reelProg .rbar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--ember),var(--gold));transition:width .2s linear}
 
+/* feed */
+.fcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:12px;overflow:hidden}
+.fhead{display:flex;align-items:center;justify-content:space-between;padding:10px 13px}
+.fhead .fh{font:700 12.5px var(--mono);color:var(--ink);letter-spacing:.02em}
+.fhead .fago{font:700 10px var(--mono);color:var(--muted)}
+.fimg{aspect-ratio:4/3;background:#0E1013 center/cover no-repeat}
+.frow{display:flex;align-items:center;gap:12px;padding:10px 13px}
+.frow .flike,.frow .fcmt{font:700 12px var(--mono);color:var(--muted);display:flex;align-items:center;gap:5px}
+.frow .flike.on{color:var(--ember)}
+.frow .fname{margin-left:auto;font-size:12px;color:var(--muted);text-align:right;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fchip{font:700 8.5px var(--mono);letter-spacing:.1em;padding:2px 7px;border-radius:999px;text-transform:uppercase}
+
+/* comments + hunter sheets */
+#cmtSheet,#hunterSheet{position:absolute;inset:0;z-index:25;display:none;flex-direction:column;background:var(--carbon)}
+#cmtSheet.on,#hunterSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
+.sheethead{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 12px;border-bottom:1px solid var(--line)}
+.sheethead h3{font-size:16px;font-weight:900;letter-spacing:.04em}
+.sheetbody{flex:1;overflow-y:auto;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 20px)}
+.cmt{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.cmt .ch{font:700 11.5px var(--mono);color:var(--ember);flex:0 0 auto}
+.cmt .cb{font-size:13px;line-height:1.5;color:var(--ink);min-width:0}
+.cmt .cx{margin-left:auto;color:var(--muted);font-size:12px;padding:2px 6px}
+#cmtBar{display:flex;gap:9px;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 14px);border-top:1px solid var(--line)}
+#cmtBar input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:11px 15px;color:var(--ink);font-size:13px}
+#cmtBar button{flex:0 0 auto;padding:0 18px;border-radius:999px;font:800 11px var(--disp);letter-spacing:.1em;color:#1B0E00;background:linear-gradient(180deg,var(--gold),var(--ember))}
+.hstats{display:flex;gap:16px;margin:12px 0 4px}
+.hstats div{text-align:center}
+.hstats .v{font:800 19px var(--disp);color:var(--ink)}
+.hstats .l{font:700 8.5px var(--disp);letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.hgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.hgrid div{aspect-ratio:1;border-radius:var(--r-sm);background:#0E1013 center/cover no-repeat;border:1px solid var(--line)}
+
 /* angle documentation sheet */
 #angleSheet{position:absolute;inset:0;z-index:23;display:none;flex-direction:column;background:var(--carbon)}
 #angleSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
@@ -488,13 +520,18 @@ input[type=file]{display:none}
     <div class="vhead">
       <div class="eyebrow">Collection</div>
       <h2>Garage</h2>
-      <div class="meta" id="garageMeta">0 spots · 0 Tyres earned</div>
+      <div class="meta" id="garageMeta">0 spots</div>
       <div class="seg" id="gSeg">
         <button data-seg="spots" class="on">SPOTS</button>
+        <button data-seg="feed">FEED</button>
         <button data-seg="codex">CODEX</button>
       </div>
     </div>
     <div class="vbody">
+      <div id="segFeed" style="display:none">
+        <button class="btn" id="feedRefresh" style="width:100%;margin-bottom:12px">↻ REFRESH THE FEED</button>
+        <div id="feedList"></div>
+      </div>
       <div id="segSpots">
         <div style="display:flex;gap:9px;margin-bottom:12px">
           <button class="btn hot" id="top8Btn" style="flex:1;display:none">SHARE MY TOP 8</button>
@@ -679,6 +716,22 @@ input[type=file]{display:none}
       </div>
       <button class="btn" id="dDelete" style="width:100%;margin-top:10px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE SPOT</button>
     </div>
+  </section>
+
+  <!-- ============ COMMENTS ============ -->
+  <section id="cmtSheet">
+    <div class="sheethead"><h3 id="cmtTitle">Comments</h3><button class="btn" id="cmtBack" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
+    <div class="sheetbody" id="cmtList"></div>
+    <div id="cmtBar">
+      <input id="cmtInput" maxlength="240" placeholder="Say something about this spot…">
+      <button id="cmtSend">POST</button>
+    </div>
+  </section>
+
+  <!-- ============ HUNTER PROFILE ============ -->
+  <section id="hunterSheet">
+    <div class="sheethead"><h3 id="hTitle">@hunter</h3><button class="btn" id="hBack" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
+    <div class="sheetbody" id="hBody"></div>
   </section>
 
   <!-- ============ ANGLE DOCUMENTATION ============ -->
@@ -1680,6 +1733,159 @@ async function makeReel(spots, title, fname){
   }
 }
 
+/* ================= COMMUNITY FEED / LIKES / COMMENTS / HUNTERS ================= */
+const RCHIP = { everyday:"color:#8B93A1;border:1px solid rgba(139,147,161,.4)", classic:"color:var(--ember);border:1px solid rgba(255,138,30,.5)", rare:"color:var(--pulse-hi);border:1px solid rgba(94,151,255,.5)", legendary:"color:var(--gold);border:1px solid rgba(255,194,75,.55)" };
+let feedRows = [], feedLikes = {}, feedMine = new Set(), feedCmts = {}, feedHandles = {};
+function feedCardHtml(r){
+  const nm = r.cx_name || ((r.make || "") + " " + (r.model || "")).trim();
+  const likes = feedLikes[r.id] || 0, cmts = feedCmts[r.id] || 0;
+  const mine = feedMine.has(r.id);
+  return `<div class="fcard">
+    <div class="fhead"><button class="fh" data-hunter="${r.user_id}">@${esc(feedHandles[r.user_id] || "hunter")}</button><span class="fago">${ago(r.created_at)}</span></div>
+    <div class="fimg" style="background-image:url('${thumbUrl(r.img_path)}')"></div>
+    <div class="frow">
+      <button class="flike ${mine ? "on" : ""}" data-like="${r.id}">♥ <span>${likes}</span></button>
+      <button class="fcmt" data-cmt="${r.id}">💬 <span>${cmts}</span></button>
+      <span class="fname">${esc(nm)} <span class="fchip" style="${RCHIP[r.rarity] || RCHIP.everyday}">${(r.rarity || "").toUpperCase()}</span></span>
+    </div>
+  </div>`;
+}
+async function renderFeed2(){
+  const box = $("feedList");
+  if (!box) return;
+  if (!sb || !sbSession){ box.innerHTML = '<p class="pfnote">Sign in (tap the streak ring) and the community feed lights up here.</p>'; return; }
+  box.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading the feed…</p>';
+  try{
+    const { data: rows } = await sb.from("captures")
+      .select("id,user_id,make,model,cx_name,rarity,img_path,created_at")
+      .not("img_path", "is", null).is("flagged", null)
+      .order("created_at", { ascending: false }).limit(30);
+    feedRows = rows || [];
+    if (!feedRows.length){ box.innerHTML = '<p class="pfnote">Nothing published yet. Your next verified capture lands here for every hunter to see.</p>'; return; }
+    const ids = feedRows.map(r => r.id);
+    const uids = [...new Set(feedRows.map(r => r.user_id))];
+    const [likesRes, cmtsRes, profsRes] = await Promise.all([
+      sb.from("likes").select("capture_id,user_id").in("capture_id", ids),
+      sb.from("comments").select("capture_id").in("capture_id", ids),
+      sb.from("profiles").select("id,handle").in("id", uids)
+    ]);
+    feedLikes = {}; feedMine = new Set(); feedCmts = {}; feedHandles = {};
+    (likesRes.data || []).forEach(l => { feedLikes[l.capture_id] = (feedLikes[l.capture_id] || 0) + 1; if (l.user_id === sbSession.user.id) feedMine.add(l.capture_id); });
+    (cmtsRes.data || []).forEach(c => { feedCmts[c.capture_id] = (feedCmts[c.capture_id] || 0) + 1; });
+    (profsRes.data || []).forEach(pp => { feedHandles[pp.id] = pp.handle; });
+    box.innerHTML = feedRows.map(feedCardHtml).join("");
+  }catch(e){ box.innerHTML = '<p class="pfnote">Feed didn\'t load — pull refresh in a moment.</p>'; }
+}
+$("feedRefresh").addEventListener("click", renderFeed2);
+$("feedList").addEventListener("click", async e => {
+  const lk = e.target.closest("[data-like]");
+  if (lk){
+    const id = +lk.dataset.like;
+    const cnt = lk.querySelector("span");
+    const mine = feedMine.has(id);
+    lk.classList.toggle("on", !mine);
+    cnt.textContent = Math.max(0, (feedLikes[id] || 0) + (mine ? -1 : 1));
+    try{
+      if (mine){
+        feedMine.delete(id); feedLikes[id] = Math.max(0, (feedLikes[id] || 0) - 1);
+        await sb.from("likes").delete().eq("user_id", sbSession.user.id).eq("capture_id", id);
+      } else {
+        feedMine.add(id); feedLikes[id] = (feedLikes[id] || 0) + 1;
+        sfx("extra");
+        await sb.from("likes").insert({ user_id: sbSession.user.id, capture_id: id });
+      }
+    }catch(err){}
+    return;
+  }
+  const cm = e.target.closest("[data-cmt]");
+  if (cm){ openComments(+cm.dataset.cmt); return; }
+  const hn = e.target.closest("[data-hunter]");
+  if (hn){ openHunter(hn.dataset.hunter); }
+});
+
+/* comments */
+let cmtCapId = null;
+function openComments(id){
+  cmtCapId = id;
+  const r = feedRows.find(x => x.id === id);
+  $("cmtTitle").textContent = r ? ((r.cx_name || ((r.make || "") + " " + (r.model || "")).trim()) || "Comments") : "Comments";
+  $("cmtSheet").classList.add("on");
+  loadComments();
+}
+$("cmtBack").addEventListener("click", () => { $("cmtSheet").classList.remove("on"); renderFeed2(); });
+async function loadComments(){
+  const box = $("cmtList");
+  box.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading…</p>';
+  try{
+    const { data: cs } = await sb.from("comments").select("id,user_id,body,created_at").eq("capture_id", cmtCapId).order("created_at", { ascending: true }).limit(100);
+    if (!cs || !cs.length){ box.innerHTML = '<p class="pfnote">No comments yet. First word is yours.</p>'; return; }
+    const uids = [...new Set(cs.map(c => c.user_id))];
+    const { data: profs } = await sb.from("profiles").select("id,handle").in("id", uids);
+    const hOf = id => { const pp = (profs || []).find(x => x.id === id); return pp ? pp.handle : "hunter"; };
+    box.innerHTML = cs.map(c => `
+      <div class="cmt">
+        <span class="ch">@${esc(hOf(c.user_id))}</span>
+        <span class="cb">${esc(c.body)}</span>
+        ${c.user_id === sbSession.user.id ? `<button class="cx" data-delcmt="${c.id}">✕</button>` : ""}
+      </div>`).join("");
+  }catch(e){ box.innerHTML = '<p class="pfnote">Couldn\'t load comments.</p>'; }
+}
+$("cmtList").addEventListener("click", async e => {
+  const d = e.target.closest("[data-delcmt]");
+  if (!d) return;
+  try{ await sb.from("comments").delete().eq("id", +d.dataset.delcmt); }catch(err){}
+  loadComments();
+});
+$("cmtSend").addEventListener("click", async () => {
+  const v = $("cmtInput").value.trim();
+  if (!v || cmtCapId == null) return;
+  $("cmtInput").value = "";
+  try{
+    await sb.from("comments").insert({ capture_id: cmtCapId, user_id: sbSession.user.id, body: v.slice(0, 240) });
+    sfx("extra");
+  }catch(e){ toast("Comment didn't post"); }
+  loadComments();
+});
+$("cmtInput").addEventListener("keydown", e => { if (e.key === "Enter") $("cmtSend").click(); });
+
+/* hunter profile */
+async function openHunter(uid){
+  $("hunterSheet").classList.add("on");
+  const body = $("hBody");
+  $("hTitle").textContent = "@hunter";
+  body.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading…</p>';
+  try{
+    const [{ data: pp }, { data: caps }] = await Promise.all([
+      sb.from("profiles").select("handle,code,models,legends,streak,spots").eq("id", uid).maybeSingle(),
+      sb.from("captures").select("img_path,cx_name,make,model").eq("user_id", uid).not("img_path", "is", null).is("flagged", null).order("created_at", { ascending: false }).limit(12)
+    ]);
+    if (!pp){ body.innerHTML = '<p class="pfnote">Hunter not found.</p>'; return; }
+    $("hTitle").textContent = "@" + pp.handle;
+    const inCrew = state.crew.some(c => c.code === pp.code);
+    const me = state.profile && state.profile.code === pp.code;
+    body.innerHTML = `
+      <div class="hstats">
+        <div><div class="v">${pp.models ?? 0}</div><div class="l">Models</div></div>
+        <div><div class="v">${pp.legends ?? 0}</div><div class="l">Legendary</div></div>
+        <div><div class="v">${pp.streak ?? 0}</div><div class="l">Streak</div></div>
+        <div><div class="v">${pp.spots ?? 0}</div><div class="l">Spots</div></div>
+      </div>
+      ${me ? "" : `<button class="btn hot" id="hAdd" style="width:100%;margin-top:8px" ${inCrew ? "disabled" : ""}>${inCrew ? "IN YOUR CREW ✓" : "ADD TO CREW"}</button>`}
+      <div class="sechead">Recent spots</div>
+      ${caps && caps.length ? `<div class="hgrid">${caps.map(c => `<div style="background-image:url('${thumbUrl(c.img_path)}')"></div>`).join("")}</div>` : '<p class="pfnote">No published spots yet.</p>'}`;
+    const add = $("hAdd");
+    if (add && !inCrew) add.addEventListener("click", async () => {
+      const d = await sbAddFriend(pp.code);
+      if (!d){ toast("Couldn't add"); return; }
+      state.crew.push({ code: d.code, handle: d.handle, models: d.models, id: d.id });
+      await Store.save();
+      toast("@" + d.handle + " added to your crew");
+      add.disabled = true; add.textContent = "IN YOUR CREW ✓";
+    });
+  }catch(e){ body.innerHTML = '<p class="pfnote">Couldn\'t load this hunter.</p>'; }
+}
+$("hBack").addEventListener("click", () => $("hunterSheet").classList.remove("on"));
+
 /* ================= UI helpers ================= */
 let toastT;
 function toast(msg){
@@ -2233,10 +2439,12 @@ $("gSeg").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
   document.querySelectorAll("#gSeg button").forEach(x => x.classList.toggle("on", x === b));
-  const codex = b.dataset.seg === "codex";
-  $("segSpots").style.display = codex ? "none" : "";
-  $("segCodex").style.display = codex ? "" : "none";
-  if (codex) renderCodex();
+  const seg = b.dataset.seg;
+  $("segSpots").style.display = seg === "spots" ? "" : "none";
+  $("segFeed").style.display = seg === "feed" ? "" : "none";
+  $("segCodex").style.display = seg === "codex" ? "" : "none";
+  if (seg === "codex") renderCodex();
+  if (seg === "feed") renderFeed2();
 });
 $("codexPill").addEventListener("click", () => {
   show("garage");
@@ -2933,6 +3141,15 @@ async function syncProfile(){
 }
 async function syncCapture(s){
   if (!sb || !sbSession) return;
+  let imgPath = null;
+  try{
+    if (s.img && !s.flagged){
+      const blob = await (await fetch(s.img)).blob();
+      imgPath = sbSession.user.id + "/" + s.id + ".jpg";
+      const { error: upErr } = await sb.storage.from("captures").upload(imgPath, blob, { contentType: "image/jpeg", upsert: true });
+      if (upErr) imgPath = null;
+    }
+  }catch(e){ imgPath = null; }
   try{
     await sb.from("captures").insert({
       user_id: sbSession.user.id,
@@ -2941,9 +3158,13 @@ async function syncCapture(s){
       decade: s.decade || "", tags: s.tags || [],
       cx_key: s.cxKey || null, cx_name: s.cxName || null,
       phash: s.phash || null, source: s.source || null, flagged: s.flagged || null,
-      event: s.event || "", event_code: s.eventCode || null, lat: s.lat, lng: s.lng, taken_at: s.ts
+      event: s.event || "", event_code: s.eventCode || null, lat: s.lat, lng: s.lng, taken_at: s.ts,
+      img_path: imgPath
     });
   }catch(e){}
+}
+function thumbUrl(path){
+  try{ return sb.storage.from("captures").getPublicUrl(path).data.publicUrl; }catch(e){ return ""; }
 }
 async function sbAddFriend(code){
   if (!sb || !sbSession) return null;
