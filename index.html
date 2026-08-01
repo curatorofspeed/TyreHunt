@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>TYRE HUNT — Spot & Collect</title>
 <meta name="theme-color" content="#0A0B0E">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://kokxlzygppakgcebkygc.supabase.co" crossorigin>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -477,7 +479,7 @@ input[type=file]{display:none}
       <h1>TYRE HUNT</h1>
       <div class="sub">Spot &amp; Collect</div>
     </div>
-    <div class="balance" id="codexPill" role="button" tabindex="0" title="Open your codex">
+    <div class="balance" id="codexPill" role="button" tabindex="0" title="Open your Registry">
       <div class="crest"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg></div>
       <div><span class="amt" id="cxTop">0/60</span><span class="lbl" id="rankTop">ROOKIE</span></div>
     </div>
@@ -528,7 +530,7 @@ input[type=file]{display:none}
       <div class="seg" id="gSeg">
         <button data-seg="spots" class="on">SPOTS</button>
         <button data-seg="feed">FEED</button>
-        <button data-seg="codex">CODEX</button>
+        <button data-seg="codex">REGISTRY</button>
       </div>
     </div>
     <div class="vbody">
@@ -659,7 +661,7 @@ input[type=file]{display:none}
       <p class="blurb" id="vShotNote" style="margin-top:5px;font-size:11.5px"></p>
       <div class="payline" id="vPayline">
         <div class="crest sm"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg></div>
-        <div><div class="pv" id="vPay">—</div><div class="pl" id="vPayLbl">FILED TO CODEX</div></div>
+        <div><div class="pv" id="vPay">—</div><div class="pl" id="vPayLbl">FILED TO REGISTRY</div></div>
       </div>
       <div id="vQuests"></div>
       <div class="miss" id="vMiss" style="display:none"></div>
@@ -673,7 +675,7 @@ input[type=file]{display:none}
 
   <!-- ============ CODEX ENTRY ============ -->
   <section id="cxSheet">
-    <div id="ceHero"><span id="ceQ">?</span><button class="back" id="ceBack">‹ CODEX</button></div>
+    <div id="ceHero"><span id="ceQ">?</span><button class="back" id="ceBack">‹ REGISTRY</button></div>
     <div id="ceBody" class="vbody"></div>
   </section>
 
@@ -757,7 +759,7 @@ input[type=file]{display:none}
       <h1 class="iw">TYRE HUNT</h1>
       <div class="isub">Spot &amp; Collect</div>
       <div class="ibeat"><b>Point. Shoot. Verified.</b><p>Aim at real metal and hit the shutter — the app identifies the car on the spot and files it.</p></div>
-      <div class="ibeat"><b>The codex is the score.</b><p>Every model you find fills a numbered field guide. Rank comes from what you've seen — nothing else.</p></div>
+      <div class="ibeat"><b>The Registry is the score.</b><p>Every model you find fills a numbered field guide. Rank comes from what you've seen — nothing else.</p></div>
       <div class="ibeat"><b>Live captures only.</b><p>Old photos don't count. Screens and prints get caught. You have to be there.</p></div>
       <button class="btn hot" id="introGo" style="width:100%;margin-top:16px;padding:15px;font-size:13px">START HUNTING</button>
       <p class="pfnote">Camera and location power the hunt — nothing is shared unless you share it.</p>
@@ -817,10 +819,13 @@ const Store = {
     try{ if (!window.storage && window.localStorage){ const v = localStorage.getItem(KEY); if (v) return JSON.parse(v); } }catch(e){}
     return null;
   },
+  saveWarned: false,
   async save(){
     const v = JSON.stringify(state);
     try{ if (window.storage){ await window.storage.set(KEY, v); return; } }catch(e){}
-    try{ if (window.localStorage) localStorage.setItem(KEY, v); }catch(e){}
+    try{ if (window.localStorage){ localStorage.setItem(KEY, v); return; } }catch(e){
+      if (!this.saveWarned){ this.saveWarned = true; try{ toast("Storage is full — new spots may not survive a reload"); }catch(_){} }
+    }
   }
 };
 
@@ -1323,7 +1328,7 @@ function carOfTheDay(){
   return CODEX_SEED[h % CODEX_SEED.length];
 }
 const TITLES = [
-  { id:"rookie-no-more", title:"Rookie No More", req:"5 codex models", test:st => st.models >= 5 },
+  { id:"rookie-no-more", title:"Rookie No More", req:"5 Registry models", test:st => st.models >= 5 },
   { id:"legend-hunter", title:"Legend Hunter", req:"3 legendary models", test:st => st.legend >= 3 },
   { id:"curator-of-speed", title:"Curator of Speed", req:"Reach Curator rank", test:st => { const r = currentRank(st).name; return r === "CURATOR" || r === "LEGEND"; } },
   { id:"night-stalker", title:"Night Stalker", req:"5 night captures of rare+ metal", test:() => state.spots.filter(s => !s.flagged && (s.conds || []).includes("night") && (s.rarity === "rare" || s.rarity === "legendary")).length >= 5 },
@@ -1331,7 +1336,7 @@ const TITLES = [
   { id:"air-cooled-apostle", title:"Air-Cooled Apostle", req:"Complete Air-Cooled Icons", test:() => !!state.setsDone["air-cooled"] },
   { id:"poster-child", title:"Poster Child", req:"Complete Poster Wall", test:() => !!state.setsDone["poster-wall"] },
   { id:"streak-freak", title:"Streak Freak", req:"14-day streak", test:() => (state.bestStreak || state.streak || 0) >= 14 },
-  { id:"master-class", title:"Master Class", req:"Master 3 codex entries", test:() => masteredCount() >= 3 },
+  { id:"master-class", title:"Master Class", req:"Master 3 Registry entries", test:() => masteredCount() >= 3 },
   { id:"globetrotter", title:"Globetrotter", req:"Claim 10 map cells", test:() => cellCount() >= 10 },
   { id:"archivist", title:"The Archivist", req:"3 full dossiers", test:() => fullDossierCount() >= 3 }
 ];
@@ -1350,7 +1355,7 @@ async function planHunt(force){
     const missing = CODEX_SEED.filter(e => !agg["n" + e.n]).sort(() => Math.random() - .5).slice(0, 8).map(e => e.name);
     const here = groundsGeo || state.spots.find(s => s.lat != null) || null;
     const openQ = state.dayQ.ids.map(questById).filter(q => q && !state.dayQ.done[q.id]).map(q => q.name + " (" + q.desc + ")");
-    const prompt = 'You are the hunt master for TYRE HUNT, a car-spotting game. Build today\'s custom hunt plan for one player. Respond ONLY with minified JSON, no markdown fences: {"title":string,"brief":string,"targets":[{"name":string,"why":string}]}. Rules: 4-5 targets, realistically spottable in a normal day (one easy, mostly medium, one stretch), enthusiast voice, each why under 12 words, no emoji, title under 5 words. Context — local time: ' + new Date().toString() + '; approx location: ' + (here ? here.lat + "," + here.lng : "unknown") + '; active event: ' + (state.activeEvent || "none") + '; codex gaps worth weighing: ' + (missing.join(", ") || "none") + '; open daily hunts: ' + (openQ.join("; ") || "none") + '.';
+    const prompt = 'You are the hunt master for TYRE HUNT, a car-spotting game. Build today\'s custom hunt plan for one player. Respond ONLY with minified JSON, no markdown fences: {"title":string,"brief":string,"targets":[{"name":string,"why":string}]}. Rules: 4-5 targets, realistically spottable in a normal day (one easy, mostly medium, one stretch), enthusiast voice, each why under 12 words, no emoji, title under 5 words. Context — local time: ' + new Date().toString() + '; approx location: ' + (here ? here.lat + "," + here.lng : "unknown") + '; active event: ' + (state.activeEvent || "none") + '; registry gaps worth weighing: ' + (missing.join(", ") || "none") + '; open daily hunts: ' + (openQ.join("; ") || "none") + '.';
     const headers = { "Content-Type": "application/json" };
     if (CONFIG.apiKey){
       headers["x-api-key"] = CONFIG.apiKey;
@@ -1709,7 +1714,7 @@ async function makeReel(spots, title, fname){
           x.fillStyle = "#FFC24B"; x.font = "800 40px 'Archivo', sans-serif";
           x.fillText(spots.length + " CARS  ·  " + spots.filter(s => s.rarity === "legendary").length + " LEGENDARY", W/2, H*0.44);
           x.fillStyle = "#98A0AC"; x.font = "700 30px 'JetBrains Mono', monospace";
-          x.fillText(st.models + " MODELS IN THE CODEX" + (state.profile && state.profile.handle ? "  ·  @" + state.profile.handle : ""), W/2, H*0.50);
+          x.fillText(st.models + " MODELS IN THE REGISTRY" + (state.profile && state.profile.handle ? "  ·  @" + state.profile.handle : ""), W/2, H*0.50);
           x.fillStyle = "#FF8A1E"; x.font = "800 34px 'Archivo', sans-serif";
           x.fillText("T Y R E   H U N T", W/2, H*0.58);
           x.globalAlpha = 1; x.textAlign = "left";
@@ -2040,7 +2045,7 @@ async function runVerify(canvas, source){
   detectUI("busy");
   startVerifyStages();
   try{
-    const gate = await localVehicleGate(canvas);
+    const gate = gatePipe ? await localVehicleGate(canvas) : null;
     if (gate === false){
       await processResult({ is_vehicle: false, classification: "not_a_vehicle", blurb: "" }, canvas, source || "camera");
       return;
@@ -2059,7 +2064,7 @@ async function runVerify(canvas, source){
   }
 }
 
-const VERIFY_STAGES = ["Reading the shot", "Identifying the machine", "Checking your codex", "Filing the spot"];
+const VERIFY_STAGES = ["Reading the shot", "Identifying the machine", "Checking the Registry", "Filing the spot"];
 let stageTimer = null, stageIdx = 0;
 function startVerifyStages(){
   stopVerifyStages();
@@ -2309,7 +2314,7 @@ async function processResult(res, canvas, source, ctx){
   if (spot.cxNew) bumpBalance();
   syncProfile();
   if (silent){
-    toast((spot.make + " " + spot.model).trim() + (spot.flagged ? " · saved, not counted" : (spot.cxNew ? " · NEW TO CODEX" : " · logged")));
+    toast((spot.make + " " + spot.model).trim() + (spot.flagged ? " · saved, not counted" : (spot.cxNew ? " · NEW TO REGISTRY" : " · logged")));
   } else {
     openVerdict(spot, canvas, res);
   }
@@ -2341,15 +2346,15 @@ function openVerdict(spot, canvas, raw){
       $("vQuests").innerHTML = "";
       const fm = $("vMiss");
       fm.style.display = "block";
-      fm.textContent = "Saved to your garage, but it won't count toward your codex — " + spot.flagged + ".";
+      fm.textContent = "Saved to your garage, but it won't count toward your Registry — " + spot.flagged + ".";
     } else {
       $("vPayline").style.display = "flex";
       if (spot.cxNew){
         $("vPay").textContent = spot.cxNo ? "No. " + String(spot.cxNo).padStart(3, "0") : "NEW ENTRY";
-        $("vPayLbl").textContent = "NEW TO YOUR CODEX";
+        $("vPayLbl").textContent = "NEW TO YOUR REGISTRY";
       } else {
         $("vPay").textContent = "×" + (spot.nth || 1);
-        $("vPayLbl").textContent = "SIGHTING LOGGED · CODEX UPDATED";
+        $("vPayLbl").textContent = "SIGHTING LOGGED · REGISTRY UPDATED";
       }
       const rows = (lastRankUp ? ['<div class="qhit" style="color:var(--gold);border-color:rgba(255,194,75,.45);background:rgba(255,194,75,.08)"><span>RANK UP · ' + lastRankUp + '</span><span>★</span></div>'] : [])
         .concat(lastQuestHits.map(q => '<div class="qhit"><span>' + q.label + ' · ' + q.name.toUpperCase() + '</span><span>✓</span></div>'));
@@ -2546,7 +2551,7 @@ $("ceBody").addEventListener("click", e => {
 async function loreFor(key, name, tier, yearHint){
   if (state.lore[key]) return state.lore[key];
   try{
-    const prompt = 'Field-guide entry for the ' + name + (yearHint ? ' (' + yearHint + ')' : '') + ', a ' + tier + '-tier car in a car-spotting game codex. Respond ONLY with minified JSON, no markdown fences: {"matters":string,"numbers":string,"note":string}. matters: why this car matters, 2 sentences. numbers: production run, era, and one key spec in a single line. note: how a spotter recognizes one in the wild, 1 sentence. Enthusiast voice, no emoji, under 90 words total.';
+    const prompt = 'Field-guide entry for the ' + name + (yearHint ? ' (' + yearHint + ')' : '') + ', a ' + tier + '-tier car in a car-spotting game registry. Respond ONLY with minified JSON, no markdown fences: {"matters":string,"numbers":string,"note":string}. matters: why this car matters, 2 sentences. numbers: production run, era, and one key spec in a single line. note: how a spotter recognizes one in the wild, 1 sentence. Enthusiast voice, no emoji, under 90 words total.';
     const headers = { "Content-Type": "application/json" };
     if (CONFIG.apiKey){
       headers["x-api-key"] = CONFIG.apiKey;
@@ -2824,7 +2829,7 @@ function renderQuests(){
       <div class="qic">${stamped ? check : target}</div>
       <div>
         <div class="qn">${cd.name}</div>
-        <div class="qd">${stamped ? "Stamped today" : "Capture one today for a dated codex stamp"}</div>
+        <div class="qd">${stamped ? "Stamped today" : "Capture one today for a dated Registry stamp"}</div>
       </div>
       <div class="qpay"><div class="v">${stamped ? "STAMPED" : "TODAY"}</div><div class="u"></div></div>
     </div>` : "";
@@ -3054,7 +3059,7 @@ function shareCard(s){
     x.fillText((s.year ? s.year + "  ·  " : "") + new Date(s.ts).toLocaleDateString(), 64, ph + 286);
     x.fillStyle = "#FFC24B"; x.font = "700 40px 'JetBrains Mono', monospace";
     const cxe = CODEX_SEED.find(e => entryMatches(e, s));
-    x.fillText(cxe ? "CODEX No. " + String(cxe.n).padStart(3, "0") : "FIELD ENTRY", 64, ph + 344);
+    x.fillText(cxe ? "REGISTRY No. " + String(cxe.n).padStart(3, "0") : "FIELD ENTRY", 64, ph + 344);
     x.fillStyle = "#FF8A1E"; x.font = "800 27px 'Archivo', sans-serif";
     x.fillText("TYRE HUNT", 64, H - 86);
     x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
@@ -3239,7 +3244,7 @@ function renderProfile(){
     .sort((a, b) => ((b.models == null ? -1 : b.models) - (a.models == null ? -1 : a.models)));
   const acct = sb
     ? (sbSession
-        ? ('<p class="pfnote">Signed in — your tag, codex count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? "HUNTER'S EDITION · 150 verified captures a day" : 'FREE HUNT · 60 verified captures a day') + '</p>')
+        ? ('<p class="pfnote">Signed in — your tag, Registry count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? "HUNTER'S EDITION · 150 verified captures a day" : 'FREE HUNT · 60 verified captures a day') + '</p>')
         : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
            <button class="btn hot" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>
            <p class="pfnote">One tap in your inbox signs you in. No password, ever.</p>`)
@@ -3754,6 +3759,7 @@ async function overlayTerritory(ctx, X, Y, minLa, maxLa, minLo, maxLo){
   if (state.seenIntro){ startCam(); }
   else { $("intro").classList.add("on"); }
   if (navigator.onLine) processQueue();
+  if (CONFIG.localGate && navigator.onLine) setTimeout(() => { gateReady(); }, 5000); // silent background preload
 })();
 </script>
 </body>
