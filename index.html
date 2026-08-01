@@ -449,6 +449,16 @@ button.bdg[disabled]{cursor:default}
 #feedBadge{display:none;position:absolute;top:2px;right:calc(50% - 22px);min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--ember);color:#1B0E00;font:800 9px var(--disp);line-height:15px;text-align:center;box-shadow:0 0 8px rgba(255,138,30,.5)}
 #feedBadge.on{display:block;animation:sheetIn .25s ease}
 
+/* moderation sheet */
+#modSheet{position:absolute;inset:0;z-index:27;display:none;align-items:flex-end;background:rgba(6,7,9,.6);backdrop-filter:blur(2px)}
+#modSheet.on{display:flex}
+#modBox{width:100%;background:var(--carbon);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 18px);animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
+#modBox .mh{font:900 14px var(--disp);letter-spacing:.04em;margin-bottom:3px}
+#modBox .ms{font-size:11.5px;color:var(--muted);margin-bottom:13px}
+#modBox .btn{width:100%;margin-bottom:9px;text-align:center}
+#modBox .btn.warn{color:var(--bad);border-color:rgba(255,93,93,.35)}
+.modDots{flex:0 0 auto;color:var(--muted);font-weight:800;padding:2px 7px;font-size:13px;letter-spacing:.05em}
+
 /* hunt ticker — ambient activity over the camera */
 #ticker{position:absolute;left:12px;bottom:150px;z-index:6;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:none}
 .tick{pointer-events:auto;max-width:236px;background:rgba(12,14,19,.8);backdrop-filter:blur(3px);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font:600 11px var(--disp);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:tickIn .25s cubic-bezier(.2,.8,.3,1)}
@@ -739,6 +749,16 @@ input[type=file]{display:none}
         <button class="btn" id="dShare">SHARE CARD</button>
       </div>
       <button class="btn" id="dDelete" style="width:100%;margin-top:10px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE SPOT</button>
+    </div>
+  </section>
+
+  <!-- ============ MODERATION ============ -->
+  <section id="modSheet">
+    <div id="modBox">
+      <div class="mh" id="modTitle">@hunter</div>
+      <div class="ms">Reports go to the operator for review. Blocking hides all their spots and comments from you.</div>
+      <div id="modActs"></div>
+      <button class="btn" id="modCancel">CANCEL</button>
     </div>
   </section>
 
@@ -1745,6 +1765,105 @@ async function makeReel(spots, title, fname){
   }
 }
 
+/* ================= MODERATION (report + block) ================= */
+const myBlocks = new Set();
+async function fetchBlocks(){
+  myBlocks.clear();
+  if (!sb || !sbSession) return;
+  try{
+    const { data } = await sb.from("blocks").select("blocked").eq("blocker", sbSession.user.id);
+    (data || []).forEach(b => myBlocks.add(b.blocked));
+  }catch(e){}
+}
+let modCtx = null;
+async function openMod(uid, capId, cmtId){
+  if (!sbSession || uid === sbSession.user.id) return;
+  modCtx = { uid, capId: capId || null, cmtId: cmtId || null };
+  $("modTitle").textContent = "@" + (await handleOf(uid));
+  const blocked = myBlocks.has(uid);
+  const target = modCtx.cmtId ? "COMMENT" : "SPOT";
+  $("modActs").innerHTML = (modCtx.capId || modCtx.cmtId ? `
+    <button class="btn warn" data-modact="report" data-reason="not a real spot">REPORT ${target} · NOT REAL</button>
+    <button class="btn warn" data-modact="report" data-reason="offensive">REPORT ${target} · OFFENSIVE</button>
+    <button class="btn warn" data-modact="report" data-reason="spam">REPORT ${target} · SPAM</button>` : `
+    <button class="btn warn" data-modact="report" data-reason="user report">REPORT HUNTER</button>`) + `
+    <button class="btn ${blocked ? "" : "warn"}" data-modact="${blocked ? "unblock" : "block"}">${blocked ? "UNBLOCK" : "BLOCK"} ${$("modTitle").textContent}</button>`;
+  $("modSheet").classList.add("on");
+}
+$("modCancel").addEventListener("click", () => $("modSheet").classList.remove("on"));
+let delAcctArm = false;
+document.addEventListener("click", async e => {
+  const b = e.target.closest("#delAcct");
+  if (!b) return;
+  if (!delAcctArm){
+    delAcctArm = true;
+    b.textContent = "TAP AGAIN — DELETES YOUR ACCOUNT FOREVER";
+    setTimeout(() => { delAcctArm = false; const x = $("delAcct"); if (x) x.textContent = "DELETE ACCOUNT"; }, 6000);
+    return;
+  }
+  delAcctArm = false;
+  b.disabled = true;
+  b.textContent = "DELETING…";
+  try{
+    const r = await withTimeout(fetch(CONFIG.supabaseUrl + "/functions/v1/delete-account", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + sbSession.access_token }
+    }), 30000, "delete");
+    if (!r.ok) throw new Error("delete " + r.status);
+    try{ await sb.auth.signOut(); }catch(_e){}
+    sbSession = null; sbPremium = false;
+    myBlocks.clear(); myCaps.ids.clear();
+    toast("Account deleted. Your local garage stays on this device.");
+    renderProfile();
+  }catch(err){
+    b.disabled = false;
+    b.textContent = "DELETE ACCOUNT";
+    toast("Deletion failed — try again or contact support");
+  }
+});
+$("modSheet").addEventListener("click", e => { if (e.target === $("modSheet")) $("modSheet").classList.remove("on"); });
+$("modActs").addEventListener("click", async e => {
+  const b = e.target.closest("[data-modact]");
+  if (!b || !modCtx) return;
+  const act = b.dataset.modact;
+  $("modSheet").classList.remove("on");
+  if (act === "report"){
+    try{
+      await sb.from("reports").insert({
+        reporter: sbSession.user.id, reported_user: modCtx.uid,
+        capture_id: modCtx.capId, comment_id: modCtx.cmtId,
+        reason: b.dataset.reason
+      });
+      toast("Reported — the operator reviews these");
+    }catch(err){ toast("Report didn't file — try again"); }
+    return;
+  }
+  if (act === "block"){
+    try{
+      await sb.from("blocks").insert({ blocker: sbSession.user.id, blocked: modCtx.uid });
+      myBlocks.add(modCtx.uid);
+      toast($("modTitle").textContent + " blocked — their spots and comments are hidden");
+      refreshAfterBlock();
+    }catch(err){ toast("Block failed — try again"); }
+    return;
+  }
+  if (act === "unblock"){
+    try{
+      await sb.from("blocks").delete().eq("blocker", sbSession.user.id).eq("blocked", modCtx.uid);
+      myBlocks.delete(modCtx.uid);
+      toast($("modTitle").textContent + " unblocked");
+      refreshAfterBlock();
+    }catch(err){}
+  }
+});
+function refreshAfterBlock(){
+  const seg = $("segFeed");
+  if (seg && seg.style.display !== "none" && $("view-garage") === null){ /* base-layer guard no-op */ }
+  if (seg && seg.style.display !== "none") renderFeed2();
+  if ($("cmtSheet").classList.contains("on")) loadComments();
+  if ($("hunterSheet").classList.contains("on") && modCtx) openHunter(modCtx.uid);
+}
+
 /* ================= SOCIAL PULL (badge + notifications) ================= */
 let unseenFeed = 0;
 const myCaps = { ids: new Set(), names: {} };
@@ -1803,6 +1922,7 @@ function initRealtime(){
       })
       .subscribe();
     primeMyCaps();
+    fetchBlocks();
   }catch(e){ rtChan = null; }
 }
 async function handleOf(uid){
@@ -1814,21 +1934,21 @@ async function handleOf(uid){
   return feedHandles[uid] || "hunter";
 }
 async function liveLike(l){
-  if (!l || !sbSession || l.user_id === sbSession.user.id) return;
+  if (!l || !sbSession || l.user_id === sbSession.user.id || myBlocks.has(l.user_id)) return;
   if (!myCaps.ids.has(l.capture_id)) return;
   const who = await handleOf(l.user_id);
   tickerPush("♥ @" + who + " liked your " + (myCaps.names[l.capture_id] || "spot"));
   sfx("extra");
 }
 async function liveComment(c){
-  if (!c || !sbSession || c.user_id === sbSession.user.id) return;
+  if (!c || !sbSession || c.user_id === sbSession.user.id || myBlocks.has(c.user_id)) return;
   if (!myCaps.ids.has(c.capture_id)) return;
   const who = await handleOf(c.user_id);
   tickerPush("💬 @" + who + " on your " + (myCaps.names[c.capture_id] || "spot") + ": " + String(c.body || "").slice(0, 40));
   sfx("extra");
 }
 async function liveCapture(r){
-  if (!r || !r.img_path || r.flagged) return;
+  if (!r || !r.img_path || r.flagged || myBlocks.has(r.user_id)) return;
   const mine = sbSession && r.user_id === sbSession.user.id;
   if (mine){ myCaps.ids.add(r.id); myCaps.names[r.id] = r.cx_name || ((r.make || "") + " " + (r.model || "")).trim(); }
   else {
@@ -1877,7 +1997,7 @@ function feedCardHtml(r){
   const likes = feedLikes[r.id] || 0, cmts = feedCmts[r.id] || 0;
   const mine = feedMine.has(r.id);
   return `<div class="fcard">
-    <div class="fhead"><button class="fh" data-hunter="${r.user_id}">@${esc(feedHandles[r.user_id] || "hunter")}</button><span class="fago">${ago(r.created_at)}</span></div>
+    <div class="fhead"><button class="fh" data-hunter="${r.user_id}">@${esc(feedHandles[r.user_id] || "hunter")}</button><span style="display:flex;align-items:center;gap:6px"><span class="fago">${ago(r.created_at)}</span>${sbSession && r.user_id !== sbSession.user.id ? `<button class="modDots" data-mod="${r.user_id}|${r.id}|">⋯</button>` : ""}</span></div>
     <div class="fimg" style="background-image:url('${thumbUrl(r.img_path)}')"></div>
     <div class="frow">
       <button class="flike ${mine ? "on" : ""}" data-like="${r.id}">♥ <span>${likes}</span></button>
@@ -1896,7 +2016,7 @@ async function renderFeed2(){
       .select("id,user_id,make,model,cx_name,rarity,img_path,created_at")
       .not("img_path", "is", null).is("flagged", null)
       .order("created_at", { ascending: false }).limit(30);
-    feedRows = rows || [];
+    feedRows = (rows || []).filter(r => !myBlocks.has(r.user_id));
     if (!feedRows.length){ box.innerHTML = '<p class="pfnote">Nothing published yet. Your next verified capture lands here for every hunter to see.</p>'; return; }
     const ids = feedRows.map(r => r.id);
     const uids = [...new Set(feedRows.map(r => r.user_id))];
@@ -1936,7 +2056,9 @@ $("feedList").addEventListener("click", async e => {
   const cm = e.target.closest("[data-cmt]");
   if (cm){ openComments(+cm.dataset.cmt); return; }
   const hn = e.target.closest("[data-hunter]");
-  if (hn){ openHunter(hn.dataset.hunter); }
+  if (hn){ openHunter(hn.dataset.hunter); return; }
+  const md = e.target.closest("[data-mod]");
+  if (md){ const [u, cap, cmt] = md.dataset.mod.split("|"); openMod(u, cap ? +cap : null, cmt ? +cmt : null); }
 });
 
 /* comments */
@@ -1953,7 +2075,8 @@ async function loadComments(){
   const box = $("cmtList");
   box.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading…</p>';
   try{
-    const { data: cs } = await sb.from("comments").select("id,user_id,body,created_at").eq("capture_id", cmtCapId).order("created_at", { ascending: true }).limit(100);
+    let { data: cs } = await sb.from("comments").select("id,user_id,body,created_at").eq("capture_id", cmtCapId).order("created_at", { ascending: true }).limit(100);
+    cs = (cs || []).filter(c => !myBlocks.has(c.user_id));
     if (!cs || !cs.length){ box.innerHTML = '<p class="pfnote">No comments yet. First word is yours.</p>'; return; }
     const uids = [...new Set(cs.map(c => c.user_id))];
     const { data: profs } = await sb.from("profiles").select("id,handle").in("id", uids);
@@ -1962,11 +2085,13 @@ async function loadComments(){
       <div class="cmt">
         <span class="ch">@${esc(hOf(c.user_id))}</span>
         <span class="cb">${esc(c.body)}</span>
-        ${c.user_id === sbSession.user.id ? `<button class="cx" data-delcmt="${c.id}">✕</button>` : ""}
+        ${c.user_id === sbSession.user.id ? `<button class="cx" data-delcmt="${c.id}">✕</button>` : `<button class="cx modDots" data-mod="${c.user_id}||${c.id}">⋯</button>`}
       </div>`).join("");
   }catch(e){ box.innerHTML = '<p class="pfnote">Couldn\'t load comments.</p>'; }
 }
 $("cmtList").addEventListener("click", async e => {
+  const md = e.target.closest("[data-mod]");
+  if (md){ const [u, cap, cmt] = md.dataset.mod.split("|"); openMod(u, cap ? +cap : null, cmt ? +cmt : null); return; }
   const d = e.target.closest("[data-delcmt]");
   if (!d) return;
   try{ await sb.from("comments").delete().eq("id", +d.dataset.delcmt); }catch(err){}
@@ -2006,9 +2131,12 @@ async function openHunter(uid){
         <div><div class="v">${pp.streak ?? 0}</div><div class="l">Streak</div></div>
         <div><div class="v">${pp.spots ?? 0}</div><div class="l">Spots</div></div>
       </div>
-      ${me ? "" : `<button class="btn hot" id="hAdd" style="width:100%;margin-top:8px" ${inCrew ? "disabled" : ""}>${inCrew ? "IN YOUR CREW ✓" : "ADD TO CREW"}</button>`}
+      ${me ? "" : `<button class="btn hot" id="hAdd" style="width:100%;margin-top:8px" ${inCrew ? "disabled" : ""}>${inCrew ? "IN YOUR CREW ✓" : "ADD TO CREW"}</button>
+      <button class="btn" id="hMod" style="width:100%;margin-top:9px;color:var(--muted)">${myBlocks.has(uid) ? "BLOCKED — MANAGE" : "REPORT OR BLOCK"}</button>`}
       <div class="sechead">Recent spots</div>
       ${caps && caps.length ? `<div class="hgrid">${caps.map(c => `<div style="background-image:url('${thumbUrl(c.img_path)}')"></div>`).join("")}</div>` : '<p class="pfnote">No published spots yet.</p>'}`;
+    const hm = $("hMod");
+    if (hm) hm.addEventListener("click", () => openMod(uid, null, null));
     const add = $("hAdd");
     if (add && !inCrew) add.addEventListener("click", async () => {
       const d = await sbAddFriend(pp.code);
@@ -3368,7 +3496,7 @@ function renderProfile(){
     .sort((a, b) => ((b.models == null ? -1 : b.models) - (a.models == null ? -1 : a.models)));
   const acct = sb
     ? (sbSession
-        ? ('<p class="pfnote">Signed in — your tag, Registry count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? "HUNTER'S EDITION · 150 verified captures a day" : 'FREE HUNT · 60 verified captures a day') + '</p>')
+        ? ('<p class="pfnote">Signed in — your tag, Registry count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? "HUNTER'S EDITION · 150 verified captures a day" : 'FREE HUNT · 60 verified captures a day') + '</p><p class="pfnote" style="margin-top:10px"><a href="privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline">Privacy</a> · <a href="terms.html" target="_blank" style="color:var(--muted);text-decoration:underline">Terms</a></p><button class="btn" id="delAcct" style="width:100%;margin-top:12px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE ACCOUNT</button>')
         : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
            <button class="btn hot" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>
            <p class="pfnote">One tap in your inbox signs you in. No password, ever.</p>`)
