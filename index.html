@@ -446,6 +446,9 @@ button.bdg[disabled]{cursor:default}
   #detect{max-width:min(420px, calc(100% - 170px))}
 }
 
+#feedBadge{display:none;position:absolute;top:2px;right:calc(50% - 22px);min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--ember);color:#1B0E00;font:800 9px var(--disp);line-height:15px;text-align:center;box-shadow:0 0 8px rgba(255,138,30,.5)}
+#feedBadge.on{display:block;animation:sheetIn .25s ease}
+
 /* toast */
 #toast{position:absolute;left:50%;bottom:120px;transform:translate(-50%,20px);z-index:30;background:#171A22;border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 16px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;max-width:88%}
 #toast.on{opacity:1;transform:translate(-50%,0)}
@@ -625,9 +628,10 @@ input[type=file]{display:none}
 
   <!-- ============ TABS ============ -->
   <nav id="tabs">
-    <button class="tab" data-view="garage">
+    <button class="tab" data-view="garage" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 10l9-6 9 6v10a1 1 0 0 1-1 1h-3v-7H7v7H4a1 1 0 0 1-1-1V10z"/><path d="M7 17h10M7 19.5h10"/></svg>
       <span class="tl">GARAGE</span>
+      <span id="feedBadge"></span>
     </button>
     <button class="tab" data-view="map">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-6.5-5.4-6.5-10A6.5 6.5 0 0 1 12 4.5 6.5 6.5 0 0 1 18.5 11c0 4.6-6.5 10-6.5 10z"/><circle cx="12" cy="11" r="2.3"/></svg>
@@ -809,7 +813,7 @@ let state = {
   boosts: { shield: 0, turboUntil: 0 },
   lastPaidTs: 0, dayPaid: 0,
   bestStreak: 0, cotdStamps: {}, title: "", aiHunt: null, lore: {},
-  sound: true, seenIntro: false,
+  sound: true, seenIntro: false, lastFeedSeen: 0,
   spots: [], redemptions: [], queue: []
 };
 const $ = id => document.getElementById(id);
@@ -891,6 +895,7 @@ function ensureDay(){
   if (!state.lore) state.lore = {};
   if (typeof state.sound !== "boolean") state.sound = true;
   if (typeof state.activeEventCode !== "string") state.activeEventCode = "";
+  if (typeof state.lastFeedSeen !== "number") state.lastFeedSeen = 0;
   if (state.seenIntro === undefined) state.seenIntro = state.spots.length > 0;
   if (!state.boosts) state.boosts = { shield: 0, turboUntil: 0 };
   if (typeof state.dayPaid !== "number") state.dayPaid = 0;
@@ -1729,6 +1734,29 @@ async function makeReel(spots, title, fname){
   }
 }
 
+/* ================= SOCIAL PULL (badge + notifications) ================= */
+let unseenFeed = 0;
+const myCaps = { ids: new Set(), names: {} };
+async function primeMyCaps(){
+  if (!sb || !sbSession) return;
+  try{
+    const { data } = await sb.from("captures").select("id,cx_name,make,model").eq("user_id", sbSession.user.id).limit(500);
+    (data || []).forEach(c => { myCaps.ids.add(c.id); myCaps.names[c.id] = c.cx_name || ((c.make || "") + " " + (c.model || "")).trim(); });
+  }catch(e){}
+}
+function renderFeedBadge(){
+  const b = $("feedBadge");
+  if (!b) return;
+  b.textContent = unseenFeed > 9 ? "9+" : String(unseenFeed);
+  b.classList.toggle("on", unseenFeed > 0);
+}
+function clearFeedBadge(){
+  unseenFeed = 0;
+  state.lastFeedSeen = Date.now();
+  Store.save();
+  renderFeedBadge();
+}
+
 /* ================= LIVE (Supabase Realtime) ================= */
 let rtChan = null;
 function initRealtime(){
@@ -1738,12 +1766,43 @@ function initRealtime(){
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "captures" }, payload => {
         try{ liveCapture(payload.new); }catch(e){}
       })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "likes" }, payload => {
+        try{ liveLike(payload.new); }catch(e){}
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "comments" }, payload => {
+        try{ liveComment(payload.new); }catch(e){}
+      })
       .subscribe();
+    primeMyCaps();
   }catch(e){ rtChan = null; }
+}
+async function handleOf(uid){
+  if (feedHandles[uid]) return feedHandles[uid];
+  try{
+    const { data } = await sb.from("profiles").select("handle").eq("id", uid).maybeSingle();
+    if (data) feedHandles[uid] = data.handle;
+  }catch(e){}
+  return feedHandles[uid] || "hunter";
+}
+async function liveLike(l){
+  if (!l || !sbSession || l.user_id === sbSession.user.id) return;
+  if (!myCaps.ids.has(l.capture_id)) return;
+  const who = await handleOf(l.user_id);
+  toast("♥ @" + who + " liked your " + (myCaps.names[l.capture_id] || "spot"));
+  sfx("extra");
+}
+async function liveComment(c){
+  if (!c || !sbSession || c.user_id === sbSession.user.id) return;
+  if (!myCaps.ids.has(c.capture_id)) return;
+  const who = await handleOf(c.user_id);
+  toast("💬 @" + who + " on your " + (myCaps.names[c.capture_id] || "spot") + ": " + String(c.body || "").slice(0, 40));
+  sfx("extra");
 }
 async function liveCapture(r){
   if (!r || !r.img_path || r.flagged) return;
   const mine = sbSession && r.user_id === sbSession.user.id;
+  if (mine){ myCaps.ids.add(r.id); myCaps.names[r.id] = r.cx_name || ((r.make || "") + " " + (r.model || "")).trim(); }
+  else { unseenFeed++; renderFeedBadge(); }
   if (!feedHandles[r.user_id]){
     try{
       const { data } = await sb.from("profiles").select("handle").eq("id", r.user_id).maybeSingle();
@@ -2483,7 +2542,7 @@ $("gSeg").addEventListener("click", e => {
   $("segFeed").style.display = seg === "feed" ? "" : "none";
   $("segCodex").style.display = seg === "codex" ? "" : "none";
   if (seg === "codex") renderCodex();
-  if (seg === "feed") renderFeed2();
+  if (seg === "feed"){ renderFeed2(); clearFeedBadge(); }
 });
 $("codexPill").addEventListener("click", () => {
   show("garage");
