@@ -341,7 +341,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .ptitle{font:800 11px var(--disp);letter-spacing:.22em;color:var(--gold);margin-top:6px;text-transform:uppercase}
 .bdg.eq{border-color:var(--pulse-hi);box-shadow:0 0 12px rgba(110,160,255,.22)}
 button.bdg[disabled]{cursor:default}
-@media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard .vph.holo::after,#flash.on,.view.on,#verdict.on,#verdict.on #vcard,#dossier.on,#profile.on,#cxSheet.on,#scanline.on{animation:none}button{transition:none}}
+@media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard .vph.holo::after,#flash.on,.view.on,#verdict.on,#verdict.on #vcard,#dossier.on,#profile.on,#cxSheet.on,#scanline.on,.tick{animation:none}button{transition:none}}
 
 /* reel render progress */
 #reelProg{position:absolute;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(10,11,14,.88);backdrop-filter:blur(4px)}
@@ -449,6 +449,13 @@ button.bdg[disabled]{cursor:default}
 #feedBadge{display:none;position:absolute;top:2px;right:calc(50% - 22px);min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--ember);color:#1B0E00;font:800 9px var(--disp);line-height:15px;text-align:center;box-shadow:0 0 8px rgba(255,138,30,.5)}
 #feedBadge.on{display:block;animation:sheetIn .25s ease}
 
+/* hunt ticker — ambient activity over the camera */
+#ticker{position:absolute;left:12px;bottom:150px;z-index:6;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:none}
+.tick{pointer-events:auto;max-width:236px;background:rgba(12,14,19,.8);backdrop-filter:blur(3px);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font:600 11px var(--disp);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:tickIn .25s cubic-bezier(.2,.8,.3,1)}
+.tick.out{opacity:0;transform:translateY(-6px);transition:opacity .4s ease,transform .4s ease}
+@keyframes tickIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (orientation: landscape) and (max-height: 520px){ #ticker{bottom:14px;left:12px} .tick{max-width:200px} }
+
 /* toast */
 #toast{position:absolute;left:50%;bottom:120px;transform:translate(-50%,20px);z-index:30;background:#171A22;border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 16px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;max-width:88%}
 #toast.on{opacity:1;transform:translate(-50%,0)}
@@ -511,6 +518,8 @@ input[type=file]{display:none}
       <div class="dc" id="detSub"><span class="spin"></span> Reading the shot</div>
     </div>
   </div>
+
+  <div id="ticker"></div>
 
   <div id="huntfoot">
     <div id="controls">
@@ -583,6 +592,8 @@ input[type=file]{display:none}
       <div id="mapinfo"></div>
       <div class="sechead">Expeditions</div>
       <div id="expList"></div>
+      <div class="sechead">Live event calendar · traditional dates</div>
+      <div id="calList"></div>
       <div class="sechead">Hunting grounds</div>
       <div id="groundList"></div>
     </div>
@@ -1757,6 +1768,24 @@ function clearFeedBadge(){
   renderFeedBadge();
 }
 
+function tickerPush(txt){
+  const t = $("ticker");
+  const camTab = document.querySelector(".tab.cam");
+  const huntOn = camTab && camTab.classList.contains("on");
+  if (!t || !huntOn){ toast(txt); return; }
+  const el = document.createElement("button");
+  el.className = "tick";
+  el.textContent = txt;
+  el.addEventListener("click", () => {
+    show("garage");
+    const fb = document.querySelector('#gSeg [data-seg="feed"]');
+    if (fb) fb.click();
+  });
+  t.appendChild(el);
+  while (t.children.length > 3) t.firstElementChild.remove();
+  setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 450); }, 6000);
+}
+
 /* ================= LIVE (Supabase Realtime) ================= */
 let rtChan = null;
 function initRealtime(){
@@ -1788,21 +1817,27 @@ async function liveLike(l){
   if (!l || !sbSession || l.user_id === sbSession.user.id) return;
   if (!myCaps.ids.has(l.capture_id)) return;
   const who = await handleOf(l.user_id);
-  toast("♥ @" + who + " liked your " + (myCaps.names[l.capture_id] || "spot"));
+  tickerPush("♥ @" + who + " liked your " + (myCaps.names[l.capture_id] || "spot"));
   sfx("extra");
 }
 async function liveComment(c){
   if (!c || !sbSession || c.user_id === sbSession.user.id) return;
   if (!myCaps.ids.has(c.capture_id)) return;
   const who = await handleOf(c.user_id);
-  toast("💬 @" + who + " on your " + (myCaps.names[c.capture_id] || "spot") + ": " + String(c.body || "").slice(0, 40));
+  tickerPush("💬 @" + who + " on your " + (myCaps.names[c.capture_id] || "spot") + ": " + String(c.body || "").slice(0, 40));
   sfx("extra");
 }
 async function liveCapture(r){
   if (!r || !r.img_path || r.flagged) return;
   const mine = sbSession && r.user_id === sbSession.user.id;
   if (mine){ myCaps.ids.add(r.id); myCaps.names[r.id] = r.cx_name || ((r.make || "") + " " + (r.model || "")).trim(); }
-  else { unseenFeed++; renderFeedBadge(); }
+  else {
+    unseenFeed++;
+    renderFeedBadge();
+    if (!(state.activeEventCode && r.event_code === state.activeEventCode)){
+      tickerPush("● @" + (feedHandles[r.user_id] || "hunter") + " filed " + (r.cx_name || ((r.make || "") + " " + (r.model || "")).trim()));
+    }
+  }
   if (!feedHandles[r.user_id]){
     try{
       const { data } = await sb.from("profiles").select("handle").eq("id", r.user_id).maybeSingle();
@@ -1814,7 +1849,7 @@ async function liveCapture(r){
     lobbyCache.ts = 0;
     if ($("view-quests").classList.contains("on")) fillLobby();
     if (!mine){
-      toast("● @" + (feedHandles[r.user_id] || "hunter") + " just filed " + (r.cx_name || ((r.make || "") + " " + (r.model || "")).trim()));
+      tickerPush("● @" + (feedHandles[r.user_id] || "hunter") + " just filed " + (r.cx_name || ((r.make || "") + " " + (r.model || "")).trim()));
       sfx("extra");
     }
   }
@@ -3545,6 +3580,121 @@ async function shareExpedition(e){
 }
 
 /* ================= HUNTING GROUNDS ================= */
+
+/* ================= EVENT CALENDAR (recurrence rules — self-renewing, traditional dates) ================= */
+const EVENT_CAL = [
+  // series: F1 | WEC | IMSA | CONCOURS | CULTURE
+  { name:"Tokyo Auto Salon", series:"CULTURE", loc:"Chiba, Japan", lat:35.648, lng:140.034, month:1, nth:2, dow:0, span:3 },
+  { name:"Cavallino Classic", series:"CONCOURS", loc:"Palm Beach, FL", lat:26.705, lng:-80.036, month:1, nth:4, dow:0, span:4 },
+  { name:"Rolex 24 at Daytona", series:"IMSA", loc:"Daytona, FL", lat:29.185, lng:-81.07, month:1, nth:-1, dow:0, span:4 },
+  { name:"Rétromobile", series:"CONCOURS", loc:"Paris, France", lat:48.832, lng:2.287, month:2, nth:1, dow:6, span:5 },
+  { name:"Amelia Island Concours", series:"CONCOURS", loc:"Amelia Island, FL", lat:30.67, lng:-81.46, month:3, nth:1, dow:0, span:4 },
+  { name:"12 Hours of Sebring", series:"IMSA", loc:"Sebring, FL", lat:27.454, lng:-81.348, month:3, nth:3, dow:6, span:4 },
+  { name:"Suzuka Grand Prix", series:"F1", loc:"Suzuka, Japan", lat:34.843, lng:136.541, month:4, nth:1, dow:0, span:4 },
+  { name:"Long Beach Grand Prix", series:"IMSA", loc:"Long Beach, CA", lat:33.766, lng:-118.193, month:4, nth:2, dow:6, span:3 },
+  { name:"Techno-Classica", series:"CONCOURS", loc:"Essen, Germany", lat:51.428, lng:6.994, month:4, nth:2, dow:0, span:5 },
+  { name:"Miami Grand Prix", series:"F1", loc:"Miami Gardens, FL", lat:25.958, lng:-80.238, month:5, nth:1, dow:0, span:4 },
+  { name:"WEC Spa 6 Hours", series:"WEC", loc:"Spa-Francorchamps, Belgium", lat:50.437, lng:5.971, month:5, nth:2, dow:6, span:3 },
+  { name:"Monaco Grand Prix", series:"F1", loc:"Monte Carlo, Monaco", lat:43.735, lng:7.421, month:5, nth:-1, dow:0, span:4 },
+  { name:"Villa d'Este", series:"CONCOURS", loc:"Lake Como, Italy", lat:45.842, lng:9.075, month:5, nth:-1, dow:0, span:3 },
+  { name:"24 Hours of Le Mans", series:"WEC", loc:"Le Mans, France", lat:47.95, lng:0.208, month:6, nth:2, dow:0, span:7 },
+  { name:"British Grand Prix", series:"F1", loc:"Silverstone, UK", lat:52.073, lng:-1.014, month:7, nth:1, dow:0, span:4 },
+  { name:"Goodwood Festival of Speed", series:"CULTURE", loc:"Goodwood, UK", lat:50.859, lng:-0.752, month:7, nth:2, dow:0, span:4 },
+  { name:"Belgian Grand Prix", series:"F1", loc:"Spa-Francorchamps, Belgium", lat:50.437, lng:5.971, month:7, nth:-1, dow:0, span:4 },
+  { name:"IMSA Road America", series:"IMSA", loc:"Elkhart Lake, WI", lat:43.798, lng:-87.99, month:8, nth:1, dow:0, span:3 },
+  { name:"Monterey Car Week", series:"CONCOURS", loc:"Monterey, CA", lat:36.568, lng:-121.95, month:8, nth:3, dow:0, span:7 },
+  { name:"Italian Grand Prix", series:"F1", loc:"Monza, Italy", lat:45.616, lng:9.281, month:9, nth:1, dow:0, span:4 },
+  { name:"Goodwood Revival", series:"CULTURE", loc:"Goodwood, UK", lat:50.859, lng:-0.752, month:9, nth:2, dow:0, span:3 },
+  { name:"Singapore Grand Prix", series:"F1", loc:"Marina Bay, Singapore", lat:1.291, lng:103.864, month:9, nth:3, dow:0, span:4 },
+  { name:"WEC Fuji 6 Hours", series:"WEC", loc:"Fuji Speedway, Japan", lat:35.372, lng:138.927, month:9, nth:-1, dow:0, span:3 },
+  { name:"Petit Le Mans", series:"IMSA", loc:"Road Atlanta, GA", lat:34.146, lng:-83.816, month:10, nth:2, dow:6, span:4 },
+  { name:"United States Grand Prix", series:"F1", loc:"Austin, TX", lat:30.133, lng:-97.641, month:10, nth:3, dow:0, span:4 },
+  { name:"SEMA Show", series:"CULTURE", loc:"Las Vegas, NV", lat:36.131, lng:-115.151, month:11, nth:1, dow:2, span:4 },
+  { name:"WEC Bahrain 8 Hours", series:"WEC", loc:"Sakhir, Bahrain", lat:26.033, lng:50.511, month:11, nth:1, dow:6, span:3 },
+  { name:"Las Vegas Grand Prix", series:"F1", loc:"Las Vegas, NV", lat:36.11, lng:-115.16, month:11, nth:3, dow:6, span:4 },
+  { name:"Abu Dhabi Grand Prix", series:"F1", loc:"Yas Marina, UAE", lat:24.467, lng:54.603, month:12, nth:1, dow:0, span:4 }
+];
+const SERIES_CHIP = { F1:"color:var(--ember);border:1px solid rgba(255,138,30,.5)", WEC:"color:var(--gold);border:1px solid rgba(255,194,75,.55)", IMSA:"color:var(--pulse-hi);border:1px solid rgba(94,151,255,.5)", CONCOURS:"color:var(--ink);border:1px solid rgba(255,255,255,.28)", CULTURE:"color:var(--muted);border:1px solid rgba(139,147,161,.4)" };
+function nthDow(y, m, nth, dow){
+  if (nth > 0){
+    const first = new Date(y, m - 1, 1);
+    const off = (dow - first.getDay() + 7) % 7;
+    return new Date(y, m - 1, 1 + off + (nth - 1) * 7);
+  }
+  const last = new Date(y, m, 0);
+  const off = (last.getDay() - dow + 7) % 7;
+  return new Date(y, m - 1, last.getDate() - off);
+}
+function eventDates(e, y){
+  const end = nthDow(y, e.month, e.nth, e.dow);
+  const start = new Date(end);
+  start.setDate(end.getDate() - (e.span - 1));
+  return { start, end };
+}
+const MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+function fmtRange(a, b){
+  const s = MON[a.getMonth()] + " " + a.getDate();
+  return a.getMonth() === b.getMonth() ? s + "–" + b.getDate() : s + " – " + MON[b.getMonth()] + " " + b.getDate();
+}
+function calendarList(){
+  const now = Date.now(), y = new Date().getFullYear();
+  return EVENT_CAL.map(e => {
+    let d = eventDates(e, y), status;
+    if (now > d.end.getTime() + 30 * 864e5){ d = eventDates(e, y + 1); status = "upcoming"; }
+    else if (now > d.end.getTime() + 864e5) status = "wrapped";
+    else if (now >= d.start.getTime() - 864e5) status = "live";
+    else status = "upcoming";
+    return { ...e, start: d.start, end: d.end, status };
+  }).sort((a, b) => {
+    const w = x => x.status === "live" ? 0 : x.status === "upcoming" ? 1 : 2;
+    return w(a) - w(b) || a.start - b.start;
+  });
+}
+function renderCalendar(){
+  const box = $("calList");
+  if (!box) return;
+  const here = groundsGeo || state.spots.find(sp => sp.lat != null) || null;
+  box.innerHTML = calendarList().map((e, i) => {
+    const km = here ? haversine(here.lat, here.lng, e.lat, e.lng) : null;
+    const days = Math.ceil((e.start.getTime() - Date.now()) / 864e5);
+    const when = e.status === "live"
+      ? '<span style="color:var(--ember);font-weight:800">● LIVE NOW</span> · ' + fmtRange(e.start, e.end)
+      : e.status === "wrapped"
+        ? 'WRAPPED · ' + fmtRange(e.start, e.end)
+        : fmtRange(e.start, e.end) + (days <= 60 ? " · in " + days + "d" : "");
+    return `<div class="place" data-cal="${i}" style="${e.status === "wrapped" ? "opacity:.55" : ""}${e.status === "live" ? "border-color:rgba(255,138,30,.55)" : ""}">
+      <div class="prow">
+        <div class="qn">${e.name}</div>
+        <span class="chip" style="flex:0 0 auto;${SERIES_CHIP[e.series]}">${e.series}</span>
+      </div>
+      <div class="qd" style="margin-top:3px">${e.loc}${km != null ? " · " + (km < 1 ? "<1" : Math.round(km)) + " km" : ""}</div>
+      <div class="qd" style="margin-top:2px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em">${when}</div>
+    </div>`;
+  }).join("");
+}
+document.addEventListener("click", e => {
+  const row = e.target.closest("[data-cal]");
+  if (!row) return;
+  const ev = calendarList()[+row.dataset.cal];
+  if (!ev) return;
+  (async () => {
+    state.activeEvent = ev.name;
+    state.activeEventCode = "";
+    if (sb && sbSession){
+      const code = Array.from({ length: 4 }, () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 31)]).join("");
+      try{
+        await sb.from("events").insert({ code, name: ev.name, created_by: sbSession.user.id });
+        state.activeEventCode = code;
+        toast("Event set · " + ev.name + " · lobby " + code);
+      }catch(err){ toast("Event set · " + ev.name); }
+    } else {
+      toast("Event set · " + ev.name);
+    }
+    renderEventPill();
+    await Store.save();
+  })();
+});
+
 const GROUNDS = [
   { name:"Monterey Car Week", type:"EVENT", loc:"Monterey, USA", lat:36.5686, lng:-121.9497, hunt:"Pre-war royalty to hypercar debuts — the deepest week on earth" },
   { name:"Goodwood Festival of Speed", type:"EVENT", loc:"Chichester, UK", lat:50.8578, lng:-0.7530, hunt:"Race legends running the hill, paddocks wide open" },
@@ -3566,6 +3716,7 @@ const GROUNDS = [
 const GROUND_CHIP = { EVENT:"classic", MUSEUM:"rare", STREET:"legendary", TRACK:"everyday" };
 let groundsGeo = null, groundsTried = false;
 function renderGrounds(){
+  renderCalendar();
   const here = groundsGeo || state.spots.find(s => s.lat != null) || null;
   const rows = GROUNDS.map(g => ({ ...g, km: here ? haversine(here.lat, here.lng, g.lat, g.lng) : null }))
     .sort((a, b) => ((a.km == null ? 1e9 : a.km) - (b.km == null ? 1e9 : b.km)));
