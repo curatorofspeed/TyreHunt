@@ -65,12 +65,14 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #nocam p{font-size:12.5px;line-height:1.5}
 
 /* ---------- HUD ---------- */
-#hud{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 6px}
+#hud{position:relative;z-index:5;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 4px}
+#hud .streak{justify-self:start}
+#hud .balance{justify-self:end}
 .streak{position:relative;width:52px;height:52px;flex:0 0 auto}
 .streak svg{transform:rotate(-90deg)}
 .streak .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 15px var(--mono);color:var(--ink)}
-.wordmark{text-align:center;flex:1;min-width:0}
-.wordmark h1{font-size:clamp(16px,5vw,20px);font-weight:900;letter-spacing:.18em;background:linear-gradient(180deg,#FFFFFF 20%,var(--gold) 65%,var(--ember) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+.wordmark{text-align:center;min-width:0;justify-self:center}
+.wordmark h1{line-height:0}
 .wordmark .sub{display:none}
 .balance{display:flex;align-items:center;gap:7px;background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:6px 11px 6px 6px;flex:0 0 auto}
 .coin{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#FFE2A6,var(--gold) 42%,var(--ember-deep) 100%);border:1.5px solid rgba(255,214,138,.8);display:flex;align-items:center;justify-content:center;font:900 13px var(--disp);color:#3A2000;box-shadow:0 0 10px rgba(255,160,50,.45)}
@@ -80,12 +82,14 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .balance.pop{animation:pop .5s ease}
 @keyframes pop{40%{transform:scale(1.12)}}
 
-/* ---------- challenge bar ---------- */
-#challenge{position:relative;z-index:5;margin:6px 16px 0;display:flex;align-items:center;gap:10px;padding:2px 2px}
-#challenge .t{font-size:9px;font-weight:700;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;white-space:nowrap}
-#challenge .bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
-#challenge .bar i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--pulse),var(--pulse-hi));box-shadow:0 0 8px rgba(90,150,255,.7);transition:width .5s ease}
-#challenge .n{font:700 12.5px var(--mono);white-space:nowrap}
+/* ---------- contextual signal line: silent unless it has something true to say ---------- */
+#signal{position:relative;z-index:5;margin:6px 14px 0;display:none;align-items:center;gap:9px;padding:7px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--line);animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
+#signal.on{display:flex}
+#signal .dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto;background:var(--ember);box-shadow:0 0 8px rgba(255,138,30,.7)}
+#signal.live .dot{animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+#signal .tx{font:700 10.5px var(--disp);letter-spacing:.06em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+#signal .sub{font:700 9.5px var(--mono);letter-spacing:.1em;color:var(--muted);flex:0 0 auto}
 
 /* ---------- detection chip ---------- */
 #detect{position:relative;z-index:5;margin:16px auto 0;width:max-content;max-width:calc(100% - 40px);background:var(--glass);border:1px solid rgba(110,160,255,.35);border-radius:var(--r-md);padding:11px 16px;display:none;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
@@ -116,7 +120,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #quest .pay .v{font:800 19px var(--mono);color:var(--ember)}
 #quest .pay .u{font-size:8.5px;letter-spacing:.2em;color:var(--muted)}
 #controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:12px 18px 2px}
-#controls .ctl{justify-self:end}
+#controls .ctlstack{justify-self:end;display:flex;flex-direction:column;align-items:center;gap:7px}
+#controls #eventPill{font:700 8.5px var(--mono);letter-spacing:.12em;color:var(--muted);background:transparent;border:1px dashed rgba(255,255,255,.2);border-radius:999px;padding:5px 10px;white-space:nowrap}
+#controls #eventPill:active{border-color:var(--ember);color:var(--ember)}
 #questMini{justify-self:start;display:flex;flex-direction:column;align-items:flex-start;gap:2px;max-width:132px;text-align:left;background:var(--glass);border:1px solid rgba(255,138,30,.45);border-radius:var(--r-md);padding:8px 11px}
 #questMini .qml{font:800 8px var(--disp);letter-spacing:.22em;color:var(--ember)}
 #questMini .qmn{font:700 11px var(--disp);color:var(--ink);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -440,12 +446,12 @@ button.bdg[disabled]{cursor:default}
   #app{max-width:none}
   #huntfoot{position:absolute;right:0;top:0;bottom:0;left:auto;margin:0;width:132px;padding:8px calc(env(safe-area-inset-right,0px) + 10px) 8px 10px;display:flex;align-items:center;background:linear-gradient(270deg,rgba(10,11,14,.62) 55%,rgba(10,11,14,0));z-index:6}
   #controls{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:0;width:100%}
-  #controls .ctl{justify-self:auto}
+  #controls .ctlstack{justify-self:auto}
   #questMini{justify-self:auto;max-width:112px;align-items:center;text-align:center}
   #questMini .qmn{-webkit-line-clamp:3}
   #shutter{width:74px;height:74px}
   #frame{left:5%;right:150px;top:16%;bottom:16%}
-  #challenge,#utilrow{margin-right:150px}
+  #signal,#utilrow{margin-right:150px}
   #detect{max-width:min(420px, calc(100% - 170px))}
 }
 
@@ -453,14 +459,13 @@ button.bdg[disabled]{cursor:default}
 #feedBadge.on{display:block;animation:sheetIn .25s ease}
 
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.thmark{width:1em;height:1em;flex:0 0 auto;color:currentColor;overflow:visible}
-.hbrand{display:flex;align-items:center;justify-content:center;gap:8px}
-.thword{height:.72em;width:auto;flex:0 0 auto}
-.hbrand .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.thmark{width:.82em;height:.82em;position:relative;top:-.02em}
-#intro .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.thmark{width:64px;height:64px;color:var(--ink);display:block;margin:0 auto 10px}
-#intro .thword{display:block;width:min(62%,230px);height:auto;margin:0 auto;color:var(--ink)}
+.thmark{flex:0 0 auto;color:currentColor;overflow:visible}
+.thword{width:auto;flex:0 0 auto}
+/* hunt header: a quiet brand anchor only — the viewfinder is the product */
+.hbrand{display:flex;align-items:center;justify-content:center;gap:8px;height:26px}
+.hbrand .thmark{width:24px;height:24px;color:var(--ink);opacity:.92}
+#intro .thmark{width:60px;height:60px;color:var(--ink);display:block;margin:0 auto 12px}
+#intro .thword{display:block;width:min(58%,215px);height:auto;margin:0 auto;color:var(--ink)}
 
 /* hunter's edition */
 .plancards{display:flex;gap:10px;margin:16px 0 4px}
@@ -556,7 +561,7 @@ input[type=file]{display:none}
       <div class="num" id="streakNum">0</div>
     </div>
     <div class="wordmark">
-      <h1 class="hbrand"><svg class="thmark" viewBox="0 0 97.8 100" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M42.83 99.45C31.81 97.71 23.95 93.86 16.03 86.34C5.89 76.71 0.39 63.90 0.41 50.00C0.42 41.74 1.87 35.29 5.34 28.06C13.33 11.37 28.24 1.28 46.47 0.20C59.51 -0.58 72.04 3.98 81.65 13.00C88.72 19.64 93.12 26.74 95.99 36.18C97.33 40.59 97.47 41.83 97.48 49.73C97.49 60.06 96.62 63.98 92.43 72.55C87.74 82.16 80.06 89.85 70.38 94.62C67.39 96.09 63.06 97.77 60.75 98.35C55.76 99.60 47.15 100.13 42.83 99.45ZM57.07 82.83C66.94 79.90 74.58 72.89 78.34 63.32C79.76 59.71 80.10 58.00 80.31 53.25C80.61 46.51 79.79 42.52 76.86 36.54C73.19 29.02 65.17 22.61 56.72 20.43C52.46 19.33 44.65 19.32 40.47 20.41C25.78 24.22 16.04 36.81 16.11 51.90C16.13 57.38 17.09 61.32 19.75 66.82C21.83 71.12 27.71 77.31 32.07 79.75C34.84 81.31 40.27 83.29 43.48 83.90C45.94 84.37 54.02 83.74 57.07 82.83ZM43.48 76.07C34.83 74.53 28.45 69.60 24.51 61.41C22.61 57.46 22.55 57.15 22.55 51.09C22.55 44.99 22.60 44.74 24.59 40.57C28.93 31.47 37.35 26.11 47.30 26.09C51.66 26.09 56.53 27.30 59.78 29.20C63.09 31.14 67.74 35.61 69.41 38.46C72.69 44.06 73.67 51.44 71.98 57.90C69.68 66.75 62.08 73.88 52.86 75.83C48.84 76.68 47.18 76.73 43.48 76.07ZM60.51 66.79C62.76 65.76 63.78 62.14 62.35 60.28C61.45 59.11 59.56 58.15 58.15 58.15C56.67 58.15 53.80 60.98 53.80 62.43C53.80 66.13 57.17 68.31 60.51 66.79ZM12.74 34.21C16.38 28.56 24.74 20.46 30.17 17.34C32.56 15.96 35.49 14.44 36.68 13.95L38.86 13.06L35.87 13.39C31.77 13.83 25.81 15.86 21.93 18.14C13.46 23.10 7.36 33.22 6.33 44.02L5.99 47.55L8.06 42.91C9.20 40.35 11.30 36.44 12.74 34.21ZM38.71 42.54C41.00 40.27 41.85 39.04 41.85 37.96C41.85 36.36 40.15 34.78 38.43 34.78C37.87 34.78 35.97 36.16 34.20 37.85C30.76 41.14 30.19 42.79 31.88 44.66C33.51 46.46 35.32 45.90 38.71 42.54Z"/><circle cx="58.2" cy="62.5" r="4.6" fill="var(--ember)"/></svg><svg class="thword" viewBox="0 0 490.9 100" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M67.88 92.76L68.18 85.35L83.33 84.85L98.48 84.34L98.79 80.62L99.10 76.91L82.63 76.58C67.13 76.28 65.96 76.12 62.76 73.84C56.37 69.28 55.60 65.85 55.58 41.67L55.56 20.20L63.64 20.20L71.72 20.20L71.72 40.20C71.72 54.41 72.07 60.55 72.93 61.41C73.74 62.23 78.31 62.63 86.85 62.63L99.56 62.63L99.72 45.71C99.80 36.40 99.90 26.86 99.94 24.49L100.00 20.20L107.58 20.20L115.15 20.20L115.13 53.28C115.11 83.35 114.94 86.74 113.23 90.50C112.07 93.05 109.85 95.57 107.44 97.07C103.76 99.35 102.48 99.51 85.56 99.83L67.58 100.16L67.88 92.76ZM21.38 76.04C17.94 75.39 11.53 68.53 10.76 64.68C10.40 62.86 10.10 55.28 10.10 47.85L10.10 34.34L5.05 34.34L0.00 34.34L0.00 27.27L0.00 20.20L5.05 20.20L10.10 20.20L10.10 10.61L10.10 1.01L17.68 1.01L25.25 1.01L25.25 10.61L25.25 20.20L35.35 20.20L45.45 20.20L45.45 27.27L45.45 34.34L35.35 34.34L25.25 34.34L25.25 46.90C25.25 62.73 25.17 62.63 37.45 62.63L46.46 62.63L46.46 69.70L46.46 76.77L35.10 76.63C28.85 76.55 22.68 76.29 21.38 76.04ZM125.25 54.51C125.25 34.19 125.43 31.89 127.29 28.26C128.60 25.69 130.74 23.54 133.31 22.24C136.74 20.48 139.26 20.20 151.47 20.20L165.66 20.20L165.66 27.27L165.66 34.34L154.62 34.34C145.93 34.34 143.24 34.68 141.99 35.93C140.66 37.26 140.40 40.65 140.40 57.14L140.40 76.77L132.83 76.77L125.25 76.77L125.25 54.51ZM182.32 75.34C178.25 73.53 174.91 69.74 173.71 65.57C173.17 63.68 172.73 55.19 172.73 46.69C172.73 29.15 173.66 25.51 178.98 22.21C182.09 20.29 183.65 20.16 201.52 20.43C219.76 20.69 220.87 20.82 224.01 23.06C229.27 26.82 230.27 29.84 230.55 42.91L230.81 54.61L215.15 55.00C206.54 55.22 197.11 55.43 194.19 55.48C189.35 55.55 188.89 55.76 188.89 57.88C188.89 62.35 190.18 62.63 210.81 62.63L230.30 62.63L230.30 69.70L230.30 76.77L207.83 76.73C191.36 76.70 184.54 76.33 182.32 75.34ZM241.08 76.09C240.71 75.72 240.40 58.73 240.40 38.33L240.40 1.24L245.82 0.57C248.79 0.19 252.43 0.19 253.90 0.56C256.54 1.22 256.57 1.30 256.57 10.72L256.57 20.20L271.46 20.22C289.38 20.25 293.53 21.55 296.91 28.17C298.82 31.92 298.99 34.02 298.99 54.51L298.99 76.77L291.41 76.77L283.84 76.77L283.84 57.51C283.84 46.17 283.41 37.45 282.79 36.30C281.84 34.53 280.57 34.34 269.16 34.34L256.57 34.34L256.57 55.56L256.57 76.77L249.16 76.77C245.08 76.77 241.45 76.46 241.08 76.09ZM317.73 74.48C315.54 73.24 312.81 70.63 311.67 68.69C309.78 65.46 309.57 63.20 309.27 42.68L308.95 20.20L317.10 20.20L325.25 20.20L325.25 40.20C325.25 54.41 325.60 60.55 326.46 61.41C327.28 62.23 331.85 62.63 340.38 62.63L353.08 62.63L353.11 41.67L353.14 20.71L360.91 20.41L368.69 20.12L368.69 48.44L368.69 76.77L345.20 76.75C322.78 76.74 321.54 76.63 317.73 74.48ZM378.79 48.43L378.79 20.10L402.96 20.40C425.54 20.69 427.31 20.84 429.92 22.79C436.28 27.55 436.83 29.18 437.37 45.27C437.65 53.43 437.72 63.85 437.52 68.43L437.17 76.77L429.69 76.77L422.22 76.77L422.22 56.77C422.22 42.56 421.87 36.42 421.01 35.56C420.20 34.74 415.69 34.34 407.37 34.34L394.95 34.34L394.95 55.56L394.95 76.77L386.87 76.77L378.79 76.77L378.79 48.43ZM462.61 74.45C455.42 70.65 454.11 66.94 453.70 49.24L453.35 34.34L448.90 34.34L444.44 34.34L444.44 27.27L444.44 20.20L448.99 20.20L453.54 20.20L453.54 10.61L453.54 1.01L461.62 1.01L469.70 1.01L469.70 10.61L469.70 20.20L479.29 20.20L488.89 20.20L488.89 27.27L488.89 34.34L479.29 34.34L469.70 34.34L469.70 47.44C469.70 63.03 469.36 62.63 482.26 62.63L490.91 62.63L490.91 69.70L490.91 76.77L478.95 76.77C468.43 76.77 466.46 76.49 462.61 74.45ZM214.96 38.13L214.65 34.85L201.77 34.57L188.89 34.28L188.89 37.85L188.89 41.41L202.08 41.41L215.28 41.41L214.96 38.13Z"/></svg><span class="vh">tyrehunt</span></h1>
+      <h1 class="hbrand"><svg class="thmark" viewBox="0 0 97.8 100" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M42.83 99.45C31.81 97.71 23.95 93.86 16.03 86.34C5.89 76.71 0.39 63.90 0.41 50.00C0.42 41.74 1.87 35.29 5.34 28.06C13.33 11.37 28.24 1.28 46.47 0.20C59.51 -0.58 72.04 3.98 81.65 13.00C88.72 19.64 93.12 26.74 95.99 36.18C97.33 40.59 97.47 41.83 97.48 49.73C97.49 60.06 96.62 63.98 92.43 72.55C87.74 82.16 80.06 89.85 70.38 94.62C67.39 96.09 63.06 97.77 60.75 98.35C55.76 99.60 47.15 100.13 42.83 99.45ZM57.07 82.83C66.94 79.90 74.58 72.89 78.34 63.32C79.76 59.71 80.10 58.00 80.31 53.25C80.61 46.51 79.79 42.52 76.86 36.54C73.19 29.02 65.17 22.61 56.72 20.43C52.46 19.33 44.65 19.32 40.47 20.41C25.78 24.22 16.04 36.81 16.11 51.90C16.13 57.38 17.09 61.32 19.75 66.82C21.83 71.12 27.71 77.31 32.07 79.75C34.84 81.31 40.27 83.29 43.48 83.90C45.94 84.37 54.02 83.74 57.07 82.83ZM43.48 76.07C34.83 74.53 28.45 69.60 24.51 61.41C22.61 57.46 22.55 57.15 22.55 51.09C22.55 44.99 22.60 44.74 24.59 40.57C28.93 31.47 37.35 26.11 47.30 26.09C51.66 26.09 56.53 27.30 59.78 29.20C63.09 31.14 67.74 35.61 69.41 38.46C72.69 44.06 73.67 51.44 71.98 57.90C69.68 66.75 62.08 73.88 52.86 75.83C48.84 76.68 47.18 76.73 43.48 76.07ZM60.51 66.79C62.76 65.76 63.78 62.14 62.35 60.28C61.45 59.11 59.56 58.15 58.15 58.15C56.67 58.15 53.80 60.98 53.80 62.43C53.80 66.13 57.17 68.31 60.51 66.79ZM12.74 34.21C16.38 28.56 24.74 20.46 30.17 17.34C32.56 15.96 35.49 14.44 36.68 13.95L38.86 13.06L35.87 13.39C31.77 13.83 25.81 15.86 21.93 18.14C13.46 23.10 7.36 33.22 6.33 44.02L5.99 47.55L8.06 42.91C9.20 40.35 11.30 36.44 12.74 34.21ZM38.71 42.54C41.00 40.27 41.85 39.04 41.85 37.96C41.85 36.36 40.15 34.78 38.43 34.78C37.87 34.78 35.97 36.16 34.20 37.85C30.76 41.14 30.19 42.79 31.88 44.66C33.51 46.46 35.32 45.90 38.71 42.54Z"/><circle cx="58.2" cy="62.5" r="4.6" fill="var(--ember)"/></svg><span class="vh">tyrehunt</span></h1>
       <div class="sub">Spot &amp; Collect</div>
     </div>
     <div class="balance" id="codexPill" role="button" tabindex="0" title="Open your Registry">
@@ -565,14 +570,13 @@ input[type=file]{display:none}
     </div>
   </header>
 
-  <div id="challenge">
-    <span class="t">Nearby challenge</span>
-    <div class="bar"><i id="chBar"></i></div>
-    <span class="n"><span id="chN">0</span> / 3</span>
-  </div>
+  <button id="signal">
+    <span class="dot"></span>
+    <span class="tx" id="sigText"></span>
+    <span class="sub" id="sigSub"></span>
+  </button>
 
   <div id="utilrow">
-    <button id="eventPill">SET EVENT</button>
     <button id="queuePill">● 0 QUEUED</button>
     <button id="installPill">⤓ INSTALL</button>
     <button id="importPill">⇪ IMPORT</button>
@@ -595,11 +599,14 @@ input[type=file]{display:none}
         <span class="qmn" id="questTitle">—</span>
       </button>
       <button id="shutter" aria-label="Capture"><i></i></button>
-      <button class="ctl" id="flashBtn">
-        <span class="ic"><svg width="18" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2L5 13.5h5.5L10 22l8.5-11.5H13L13 2z" stroke-linejoin="round"/></svg></span>
-        <span class="cl">FLASH</span>
-        <span class="cs" id="flashState">OFF</span>
-      </button>
+      <div class="ctlstack">
+        <button class="ctl" id="flashBtn">
+          <span class="ic"><svg width="18" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2L5 13.5h5.5L10 22l8.5-11.5H13L13 2z" stroke-linejoin="round"/></svg></span>
+          <span class="cl">FLASH</span>
+          <span class="cs" id="flashState">OFF</span>
+        </button>
+        <button id="eventPill">SET EVENT</button>
+      </div>
     </div>
   </div>
 
@@ -1376,6 +1383,47 @@ function currentRank(st){
   let r = RANKS[0];
   RANKS.forEach(x => { if (x.need(st)) r = x; });
   return r;
+}
+/* Only claims a promotion is N models away if N more models genuinely
+   satisfies that rank — never guesses past the other requirements. */
+/* Closest calendar event or hunting ground worth a trip. Location comes
+   from the hunter's own captures or their granted geo — never anyone else's. */
+function nearbySpot(){
+  const here = (typeof groundsGeo !== "undefined" && groundsGeo) || state.spots.find(sp => sp.lat != null);
+  if (!here || here.lat == null) return null;
+  let best = null;
+  try{
+    calendarList().forEach(e => {
+      if (e.status === "wrapped") return;
+      const km = haversine(here.lat, here.lng, e.lat, e.lng);
+      if (km > 250) return;
+      const days = Math.ceil((e.start.getTime() - Date.now()) / 864e5);
+      if (days > 21) return;
+      const score = km + Math.max(0, days) * 12;
+      if (!best || score < best.score) best = { score, km, days, name: e.name, live: e.status === "live" };
+    });
+  }catch(err){}
+  if (!best){
+    try{
+      GROUNDS.forEach(g => {
+        const km = haversine(here.lat, here.lng, g.lat, g.lng);
+        if (km > 60) return;
+        const score = km + 400;
+        if (!best || score < best.score) best = { score, km, days: null, name: g.name, live: false, ground: true };
+      });
+    }catch(err){}
+  }
+  return best;
+}
+function nextRankHint(st){
+  const cur = currentRank(st);
+  const i = RANKS.indexOf(cur);
+  const next = RANKS[i + 1];
+  if (!next) return null;
+  for (let d = 1; d <= 3; d++){
+    if (next.need({ ...st, models: st.models + d })) return { name: next.name, need: d };
+  }
+  return null;
 }
 
 const SETS = [
@@ -2604,11 +2652,61 @@ function renderHUD(){
   $("streakNum").textContent = state.streak;
   const C = 138.2, p = Math.min(state.streak/30, 1);
   $("streakArc").style.strokeDashoffset = C * (1 - p);
-  const n = Math.min(state.daySpots, 3);
-  $("chN").textContent = n;
-  $("chBar").style.width = (n/3*100) + "%";
+  renderSignal();
   renderFeaturedQuest();
 }
+/* One line, by priority. Nothing to say -> the row disappears and the
+   viewfinder gets the space back. */
+let sigLiveCount = 0, sigTapTarget = null;
+function renderSignal(){
+  const el = $("signal");
+  if (!el) return;
+  const st = hunterStats();
+  let text = null, sub = "", live = false, target = null;
+
+  if (state.activeEvent){
+    text = state.activeEvent.toUpperCase();
+    sub = sigLiveCount > 0 ? sigLiveCount + " LIVE" : (state.activeEventCode || "");
+    live = sigLiveCount > 0;
+    target = "quests";
+  } else if (typeof liveBounties !== "undefined" && liveBounties.length){
+    const b = liveBounties.find(x => !sbSession || x.owner !== sbSession.user.id);
+    if (b){
+      text = ((b.make || "") + " " + (b.model || "")).trim() + " is out" + (b.region ? " in " + b.region : "");
+      sub = "BOUNTY";
+      target = "quests";
+    }
+  }
+  if (!text){
+    const near = nearbySpot();
+    if (near){
+      const dist = near.km < 1 ? "<1 km" : Math.round(near.km) + " km";
+      text = near.name.toUpperCase();
+      sub = near.live ? "LIVE · " + dist
+          : near.days === null ? dist
+          : near.days <= 0 ? dist
+          : "IN " + near.days + "D · " + dist;
+      live = !!near.live;
+      target = "map";
+    }
+  }
+  if (!text){
+    const hint = nextRankHint(st);
+    if (hint){
+      text = hint.need + " more model" + (hint.need === 1 ? "" : "s") + " to " + hint.name;
+      sub = currentRank(st).name;
+      target = "garage";
+    }
+  }
+  sigTapTarget = target;
+  if (!text){ el.classList.remove("on", "live"); return; }
+  $("sigText").textContent = text;
+  $("sigSub").textContent = sub;
+  el.classList.toggle("live", live);
+  el.classList.add("on");
+}
+$("signal").addEventListener("click", () => { if (sigTapTarget) show(sigTapTarget); });
+
 function bumpBalance(){
   const b = $("codexPill"); b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
 }
@@ -3535,7 +3633,7 @@ function renderQuests(){
      <div class="qcard ${state.dayBonus ? "done" : ""}">
        <div class="qic">${state.dayBonus ? check : target}</div>
        <div>
-         <div class="qn">Nearby challenge</div>
+         <div class="qn">Today&rsquo;s three</div>
          <div class="qd">${state.dayBonus ? "Complete" : "Spot 3 cars today"}</div>
          ${!state.dayBonus ? `<div class="qbar"><i style="width:${n/3*100}%"></i></div>` : ""}
        </div>
@@ -3668,10 +3766,11 @@ $("eventPill").addEventListener("click", async () => {
 });
 function renderEventPill(){
   const p = $("eventPill");
-  p.textContent = state.activeEvent
-    ? "● " + state.activeEvent.toUpperCase() + (state.activeEventCode ? " · " + state.activeEventCode : "")
-    : "SET EVENT";
-  p.classList.toggle("on", !!state.activeEvent);
+  // when an event is active the signal line carries it — don't say it twice
+  p.style.display = state.activeEvent ? "none" : "";
+  p.textContent = "SET EVENT";
+  p.classList.remove("on");
+  renderSignal();
 }
 
 let dId = null, delArm = false;
@@ -4399,6 +4498,8 @@ async function fillLobby(){
   try{
     const { data: caps } = await sb.from("captures").select("user_id,cx_key,created_at").eq("event_code", code).is("flagged", null);
     const hot = (caps || []).some(c => Date.now() - new Date(c.created_at).getTime() < 9e5);
+    sigLiveCount = new Set((caps || []).filter(c => Date.now() - new Date(c.created_at).getTime() < 9e5).map(c => c.user_id)).size;
+    renderSignal();
     if (hot) head = head.replace("Live lobby", '<span style="color:var(--ember)">● LIVE</span> · Lobby');
     let html;
     if (!caps || !caps.length){
