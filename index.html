@@ -841,7 +841,7 @@ input[type=file]{display:none}
           <span class="tick">✓</span>
         </button>
       </div>
-      <div class="perk"><span class="pi">◎</span><div><div class="pt">150 VERIFIED CAPTURES A DAY</div><div class="pd">Two and a half times the free limit. Enough to shoot a whole concours lawn without thinking about it.</div></div></div>
+      <div class="perk"><span class="pi">◎</span><div><div class="pt">150 VERIFIED CAPTURES A DAY</div><div class="pd">Five times the free limit. Enough to shoot a whole concours lawn without thinking about it.</div></div></div>
       <div class="perk"><span class="pi">◎</span><div><div class="pt">UNLIMITED BOUNTIES</div><div class="pd">Free hunters post one bounty at a time. Run as many as you like on the cars you own.</div></div></div>
       <div class="perk"><span class="pi">◎</span><div><div class="pt">GOLD REGISTRY CARDS</div><div class="pd">Your share cards and reels carry the Hunter's Edition mark.</div></div></div>
       <div class="perk"><span class="pi">◎</span><div><div class="pt">FIRST LOOK</div><div class="pd">New features land in your app before anyone else's.</div></div></div>
@@ -964,6 +964,8 @@ const CONFIG = {
   thumbEdge: 640,        // stored thumbnail long edge
   stripeMonthly: "https://buy.stripe.com/test_5kQ8wR2Q0ficgjV5Jz4F200",  // $4.99/mo (TEST)
   stripeYearly:  "https://buy.stripe.com/test_3cIeVf1LW5HCd7J0pf4F201",  // $39/yr (TEST)
+  freeDayCap: 30,        // verified captures per day, free hunters
+  premiumDayCap: 150,    // verified captures per day, Hunter's Edition
   sendEdge: 900          // long edge sent to the verifier (~30% cheaper per capture than 1100)
 };
 const PAYOUT = { everyday:10, classic:75, rare:150, legendary:400 };
@@ -2105,6 +2107,17 @@ function bountyCount(){ return state.spots.filter(s => s.bounty).length; }
 function isSleeping(s){ return s && (s.condition === "sleeping" || s.condition === "project" || s.condition === "wreck"); }
 function sleepingCount(){ return state.spots.filter(s => !s.flagged && isSleeping(s)).length; }
 
+function capReached(){
+  if (sbPremium) return;
+  const today = new Date().toDateString();
+  if (state.capToastDay === today) return;
+  state.capToastDay = today;
+  Store.save();
+  sfx("classic");
+  toast(CONFIG.freeDayCap + " verified today — that's a real haul. Hunter's Edition lifts the daily limit.");
+  setTimeout(() => { if (!$("premSheet").classList.contains("on")) openPremium(); }, 1400);
+}
+
 /* ================= HUNTER'S EDITION ================= */
 let premPlan = "year", premPlanChosen = false;
 function premLink(){
@@ -2222,20 +2235,28 @@ document.addEventListener("click", async e => {
   b.disabled = true;
   b.textContent = "DELETING…";
   try{
+    if (!sb || !sbSession){ toast("You're not signed in on this copy of the app"); b.disabled = false; b.textContent = "DELETE ACCOUNT"; return; }
     const r = await withTimeout(fetch(CONFIG.supabaseUrl + "/functions/v1/delete-account", {
       method: "POST",
       headers: { "Authorization": "Bearer " + sbSession.access_token }
     }), 30000, "delete");
-    if (!r.ok) throw new Error("delete " + r.status);
+    if (!r.ok){
+      let detail = "";
+      try{ const j = await r.json(); detail = j.error || ""; }catch(_e){}
+      throw new Error("delete " + r.status + (detail ? " · " + detail : ""));
+    }
     try{ await sb.auth.signOut(); }catch(_e){}
     sbSession = null; sbPremium = false;
     myBlocks.clear(); myCaps.ids.clear();
+    state.profile = null; state.crew = [];
+    await Store.save();
     toast("Account deleted. Your local garage stays on this device.");
     renderProfile();
+    renderHUD();
   }catch(err){
     b.disabled = false;
     b.textContent = "DELETE ACCOUNT";
-    toast("Deletion failed — try again or contact support");
+    toast("Deletion failed — " + ((err && err.message) ? err.message.slice(0, 70) : "unknown"));
   }
 });
 $("modSheet").addEventListener("click", e => { if (e.target === $("modSheet")) $("modSheet").classList.remove("on"); });
@@ -2829,8 +2850,9 @@ async function processResult(res, canvas, source, ctx){
     if (dup) flags.push("duplicate of an earlier capture");
     if (res.authenticity === "suspect") flags.push("didn't pass the authenticity check");
     if (!(ctx && ctx.queued) && state.lastPaidTs && Date.now() - state.lastPaidTs < 20000) flags.push("captures too fast");
-    if ((state.dayPaid || 0) >= 40) flags.push("daily cap reached");
+    if ((state.dayPaid || 0) >= (sbPremium ? CONFIG.premiumDayCap : CONFIG.freeDayCap)) flags.push("daily cap reached");
   }
+  if (flags.includes("daily cap reached")) capReached();
   if (CONFIG.strictCapture && source !== "camera" && source !== "capture") flags.push("imported photos don't count in strict mode");
   // geo-jump is client-only (server has no prior-location context yet)
   if (geo){
@@ -3920,7 +3942,7 @@ function renderProfile(){
     .sort((a, b) => ((b.models == null ? -1 : b.models) - (a.models == null ? -1 : a.models)));
   const acct = sb
     ? (sbSession
-        ? ('<p class="pfnote">Signed in — your tag, Registry count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? "HUNTER'S EDITION · 150 verified captures a day" : 'FREE HUNT · 60 verified captures a day') + '</p><button class="btn" id="planBtn" style="width:100%;margin-top:11px;' + (sbPremium ? 'color:var(--gold);border-color:rgba(255,194,75,.45)' : '') + '">' + (sbPremium ? "MANAGE HUNTER\'S EDITION" : "SEE HUNTER\'S EDITION") + '</button><p class="pfnote" style="margin-top:10px"><a href="privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline">Privacy</a> · <a href="terms.html" target="_blank" style="color:var(--muted);text-decoration:underline">Terms</a></p><button class="btn" id="delAcct" style="width:100%;margin-top:12px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE ACCOUNT</button>')
+        ? ('<p class="pfnote">Signed in — your tag, Registry count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? ("HUNTER'S EDITION · " + CONFIG.premiumDayCap + " verified captures a day") : ("FREE HUNT · " + CONFIG.freeDayCap + " verified captures a day")) + '</p><button class="btn" id="planBtn" style="width:100%;margin-top:11px;' + (sbPremium ? 'color:var(--gold);border-color:rgba(255,194,75,.45)' : '') + '">' + (sbPremium ? "MANAGE HUNTER\'S EDITION" : "SEE HUNTER\'S EDITION") + '</button><p class="pfnote" style="margin-top:10px"><a href="privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline">Privacy</a> · <a href="terms.html" target="_blank" style="color:var(--muted);text-decoration:underline">Terms</a></p><button class="btn" id="delAcct" style="width:100%;margin-top:12px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE ACCOUNT</button>')
         : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
            <button class="btn hot" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>
            <p class="pfnote">One tap in your inbox signs you in. No password, ever.</p>`)
