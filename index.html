@@ -365,8 +365,8 @@ button.bdg[disabled]{cursor:default}
 .fchip{font:700 8.5px var(--mono);letter-spacing:.1em;padding:2px 7px;border-radius:999px;text-transform:uppercase}
 
 /* comments + hunter sheets */
-#cmtSheet,#hunterSheet{position:absolute;inset:0;z-index:25;display:none;flex-direction:column;background:var(--carbon)}
-#cmtSheet.on,#hunterSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
+#cmtSheet,#hunterSheet,#bountySheet,#leadSheet{position:absolute;inset:0;z-index:25;display:none;flex-direction:column;background:var(--carbon)}
+#cmtSheet.on,#hunterSheet.on,#bountySheet.on,#leadSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
 .sheethead{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 12px;border-bottom:1px solid var(--line)}
 .sheethead h3{font-size:16px;font-weight:900;letter-spacing:.04em}
 .sheetbody{flex:1;overflow-y:auto;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 20px)}
@@ -448,6 +448,23 @@ button.bdg[disabled]{cursor:default}
 
 #feedBadge{display:none;position:absolute;top:2px;right:calc(50% - 22px);min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--ember);color:#1B0E00;font:800 9px var(--disp);line-height:15px;text-align:center;box-shadow:0 0 8px rgba(255,138,30,.5)}
 #feedBadge.on{display:block;animation:sheetIn .25s ease}
+
+/* bounty + most wanted */
+.bcard{background:var(--panel);border:1px solid rgba(255,194,75,.4);border-radius:var(--r-md);padding:13px 15px;margin-bottom:10px}
+.bcard.mine{border-color:rgba(94,151,255,.45)}
+.bhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bhead .bn{font:800 14px var(--disp);color:var(--ink)}
+.btag{font:800 8.5px var(--disp);letter-spacing:.16em;padding:3px 8px;border-radius:999px;flex:0 0 auto}
+.btag.live{color:var(--gold);border:1px solid rgba(255,194,75,.5)}
+.btag.mine{color:var(--pulse-hi);border:1px solid rgba(94,151,255,.5)}
+.btag.found{color:var(--ok,#3ECF8E);border:1px solid rgba(62,207,142,.45)}
+.bmeta{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+.wcard{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:var(--r-md);padding:13px 15px;margin-bottom:10px}
+.wcard .wn{font:800 14px var(--disp);color:var(--ink)}
+.wcard .wy{font:700 10px var(--mono);color:var(--gold);letter-spacing:.08em;margin-top:2px}
+.wcard .wb{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.55}
+.wcard .wl{font-size:10.5px;color:var(--muted);margin-top:6px;font-family:var(--mono);letter-spacing:.04em}
+.sleepchip{font:800 8.5px var(--disp);letter-spacing:.14em;padding:3px 8px;border-radius:999px;color:#9DA7B8;border:1px solid rgba(157,167,184,.45);background:rgba(157,167,184,.08)}
 
 /* moderation sheet */
 #modSheet{position:absolute;inset:0;z-index:27;display:none;align-items:flex-end;background:rgba(6,7,9,.6);backdrop-filter:blur(2px)}
@@ -620,6 +637,13 @@ input[type=file]{display:none}
       <button id="huntPlanBtn" style="background:linear-gradient(145deg,var(--ember),var(--ember-deep));color:#1B0E00;border-radius:999px;padding:10px 14px;font-weight:800;font-size:10px;letter-spacing:.12em;flex:0 0 auto">PLAN MY HUNT</button>
     </div>
     <div class="vbody" id="questList"></div>
+    <div class="vbody" id="boardBody" style="padding-top:0">
+      <div class="sechead">Bounty board · owners want to be found</div>
+      <div id="bountyList"></div>
+      <div class="sechead">Most wanted · built, then lost</div>
+      <p class="pfnote" style="margin:-4px 0 10px">Cars the record says exist but nobody can find. Spot something that fits — file a lead, don't claim a capture.</p>
+      <div id="wantedList"></div>
+    </div>
   </section>
 
   <!-- ============ REWARDS ============ -->
@@ -746,9 +770,42 @@ input[type=file]{display:none}
       <div class="vbtns" style="margin-top:2px">
         <button class="btn hot" id="dSave">SAVE DOSSIER</button>
         <button class="btn" id="dDoc">DOCUMENT</button>
+        <button class="btn" id="dBounty" style="display:none;color:var(--gold);border-color:rgba(255,194,75,.45)">BOUNTY</button>
         <button class="btn" id="dShare">SHARE CARD</button>
       </div>
       <button class="btn" id="dDelete" style="width:100%;margin-top:10px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE SPOT</button>
+    </div>
+  </section>
+
+  <!-- ============ POST BOUNTY ============ -->
+  <section id="bountySheet">
+    <div class="sheethead"><h3>Post a bounty</h3><button class="btn" id="bBack" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
+    <div class="sheetbody">
+      <div class="vmk" id="bCar" style="font-size:19px"></div>
+      <p class="pfnote" style="margin-top:6px">Hunters who spot this car in the wild get a bounty badge. You'll see who found you. Never post a plate, an address, or a live location — a region or event is the right amount.</p>
+      <div class="dfield"><label>Where it'll be out</label><input id="bRegion" maxlength="60" placeholder="Monterey, CA · Cars & Coffee · Cle Elum"></div>
+      <div class="dfield"><label>Note for hunters (optional)</label><input id="bNote" maxlength="160" placeholder="Out Saturday morning. Say hi."></div>
+      <div class="dfield"><label>Open for</label>
+        <div class="seg" id="bWindow" style="margin-top:4px">
+          <button data-days="2" class="on">WEEKEND</button>
+          <button data-days="7">A WEEK</button>
+          <button data-days="30">A MONTH</button>
+        </div>
+      </div>
+      <button class="btn hot" id="bPost" style="width:100%;margin-top:14px">POST BOUNTY</button>
+      <div id="bMine"></div>
+    </div>
+  </section>
+
+  <!-- ============ FILE A LEAD ============ -->
+  <section id="leadSheet">
+    <div class="sheethead"><h3 id="lTitle">File a lead</h3><button class="btn" id="lBack" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
+    <div class="sheetbody">
+      <div id="lCar"></div>
+      <p class="pfnote" style="margin-top:10px">Leads go to the operator, not the Registry — a photo can't verify a chassis number. Tell us what you saw and where you saw it. Good leads get credited.</p>
+      <div class="dfield"><label>What you saw</label><textarea id="lBody" maxlength="600" placeholder="Under a tarp behind a body shop off Route 9. Riveted spine down the roof, no engine. Owner said it came from an estate in the 70s."></textarea></div>
+      <button class="btn hot" id="lSend" style="width:100%;margin-top:8px">SEND LEAD</button>
+      <div id="lMine" style="margin-top:16px"></div>
     </div>
   </section>
 
@@ -1394,6 +1451,7 @@ function recordsData(){
     bigExp: ex ? ex.name + " · " + ex.count : "—",
     bestShot: bs ? bs.score + " · " + bs.name : "—",
     dossiers: fullDossierCount(),
+    sleeping: sleepingCount(),
     legends: st.legend
   };
 }
@@ -1414,7 +1472,9 @@ const TITLES = [
   { id:"streak-freak", title:"Streak Freak", req:"14-day streak", test:() => (state.bestStreak || state.streak || 0) >= 14 },
   { id:"master-class", title:"Master Class", req:"Master 3 Registry entries", test:() => masteredCount() >= 3 },
   { id:"globetrotter", title:"Globetrotter", req:"Claim 10 map cells", test:() => cellCount() >= 10 },
-  { id:"archivist", title:"The Archivist", req:"3 full dossiers", test:() => fullDossierCount() >= 3 }
+  { id:"archivist", title:"The Archivist", req:"3 full dossiers", test:() => fullDossierCount() >= 3 },
+  { id:"bountyhunter", title:"Bounty Hunter", req:"Claim 3 bounties", test:() => bountyCount() >= 3 },
+  { id:"barnfinder", title:"The Barn Finder", req:"Find 5 sleeping cars", test:() => sleepingCount() >= 5 }
 ];
 function titlesUnlocked(){
   const st = hunterStats();
@@ -1764,6 +1824,177 @@ async function makeReel(spots, title, fname){
     toast("Couldn't cut the reel");
   }
 }
+
+/* ================= MOST WANTED (built, then lost) ================= */
+const MOST_WANTED = [
+  { key:"atlantic", name:"Bugatti Type 57 SC Atlantic", sub:"chassis 57453 · \u201cLa Voiture Noire\u201d", built:"1936 · one of four",
+    body:"Jean Bugatti's personal Atlantic and the most valuable missing car on earth. Three of the four survive as concours royalty; this one has no confirmed sighting since the late 1930s, when it was reportedly loaded onto a train out of Alsace ahead of the German advance. Bugatti's own history says the trail ends there.",
+    last:"Last trace: en route to Bordeaux, France · c. 1938–41" },
+  { key:"aerolithe", name:"Bugatti A\u00e9rolithe", sub:"the Elektron show car", built:"1935 · one built",
+    body:"The magnesium-alloy prototype that gave the Atlantic its shape and its riveted spine. It vanished around 1936 — dismantled for parts, lost to the war, or quietly parked somewhere. Only recreations exist today.",
+    last:"Last trace: France · c. 1936" },
+  { key:"375mm", name:"Ferrari 375 MM", sub:"chassis 0378AM · Pinin Farina Berlinetta", built:"1953 · one of 26",
+    body:"Every other 375 MM is accounted for. This one was sold to a collector in Genoa in 1953 and simply stopped appearing. The Ferrari world's long-standing suspicion is that somebody, somewhere, knows exactly where it is.",
+    last:"Last known: Genoa, Italy · 1953" },
+  { key:"sj506", name:"Duesenberg SJ", sub:"chassis 506", built:"1930s · one of ~36 supercharged",
+    body:"One of the supercharged Duesenbergs — the fastest American cars of their era — and one of the few whose chassis has never been traced through the registries that track the rest.",
+    last:"Last known: United States" },
+  { key:"littlebastard", name:"Porsche 550 Spyder", sub:"James Dean's \u201cLittle Bastard\u201d", built:"1955 · the wreck",
+    body:"After Dean's crash the remains toured as a highway-safety exhibit for years. In 1960 the car was crated for shipment to Los Angeles and never arrived. Parts have surfaced over the decades; the hulk never has.",
+    last:"Last trace: in transit, Miami \u2192 Los Angeles · 1960" },
+  { key:"motorama", name:"GM Motorama dream cars", sub:"several unaccounted", built:"1950s · show cars",
+    body:"GM's Motorama concepts were mostly ordered destroyed, but a stubborn number escaped the crusher and were last seen in salvage yards decades ago. Cars like the 1953 Buick Wildcat and the fastback Corvette Corvair remain unlocated — the most findable entries on this board.",
+    last:"Last trace: Michigan salvage yards · 1970s" },
+  { key:"btf-b", name:"DeLorean DMC-12 \u2018B\u2019 car", sub:"Back to the Future", built:"1980s · film hero car",
+    body:"One of the DeLoreans used for the film's most famous shots. It disappeared after production wrapped and only fragments have ever resurfaced. Most believe the complete car no longer exists — most is not all.",
+    last:"Last trace: studio backlot, California" }
+];
+let wantedKey = null, myLeads = [];
+function renderWanted(){
+  const box = $("wantedList");
+  if (!box) return;
+  box.innerHTML = MOST_WANTED.map(w => `
+    <div class="wcard" data-wanted="${w.key}">
+      <div class="wn">${esc(w.name)}</div>
+      <div class="wy">${esc(w.built)} · ${esc(w.sub)}</div>
+      <div class="wb">${esc(w.body.slice(0, 132))}…</div>
+      <div class="wl">${esc(w.last)}</div>
+    </div>`).join("");
+}
+$("wantedList").addEventListener("click", e => {
+  const c = e.target.closest("[data-wanted]");
+  if (c) openLead(c.dataset.wanted);
+});
+async function openLead(key){
+  wantedKey = key;
+  const w = MOST_WANTED.find(x => x.key === key);
+  if (!w) return;
+  $("lTitle").textContent = "Lead · " + w.name;
+  $("lCar").innerHTML = `<div class="wcard" style="margin:0"><div class="wn">${esc(w.name)}</div><div class="wy">${esc(w.built)} · ${esc(w.sub)}</div><div class="wb">${esc(w.body)}</div><div class="wl">${esc(w.last)}</div></div>`;
+  $("lBody").value = "";
+  $("leadSheet").classList.add("on");
+  $("lMine").innerHTML = "";
+  if (sb && sbSession){
+    try{
+      const { data } = await sb.from("leads").select("body,created_at").eq("wanted_key", key).eq("hunter", sbSession.user.id).order("created_at", { ascending: false }).limit(5);
+      if (data && data.length) $("lMine").innerHTML = '<div class="sechead">Your leads on this car</div>' + data.map(l => `<p class="pfnote">${ago(l.created_at)} · ${esc(l.body.slice(0, 90))}</p>`).join("");
+    }catch(e){}
+  }
+}
+$("lBack").addEventListener("click", () => $("leadSheet").classList.remove("on"));
+$("lSend").addEventListener("click", async () => {
+  const v = $("lBody").value.trim();
+  if (!v){ toast("Tell us what you saw first"); return; }
+  if (!sb || !sbSession){ toast("Sign in to file a lead"); return; }
+  try{
+    const latest = state.spots.find(x => !x.flagged);
+    await sb.from("leads").insert({ hunter: sbSession.user.id, wanted_key: wantedKey, body: v.slice(0, 600), capture_id: null });
+    sfx("classic");
+    toast("Lead filed — the operator reviews every one");
+    $("leadSheet").classList.remove("on");
+  }catch(e){ toast("Lead didn't send — try again"); }
+});
+
+/* ================= BOUNTIES (owner-declared, self only) ================= */
+let liveBounties = [], bountySpotId = null, bWindowDays = 2;
+async function fetchBounties(){
+  if (!sb || !sbSession) return;
+  try{
+    const { data } = await sb.from("bounties").select("*").eq("active", true).gte("window_end", new Date().toISOString()).order("created_at", { ascending: false }).limit(60);
+    liveBounties = (data || []).filter(b => !myBlocks.has(b.owner));
+  }catch(e){ liveBounties = []; }
+}
+async function renderBounties(){
+  const box = $("bountyList");
+  if (!box) return;
+  if (!sb || !sbSession){ box.innerHTML = '<p class="pfnote">Sign in to see bounties hunters are chasing.</p>'; return; }
+  await fetchBounties();
+  if (!liveBounties.length){
+    box.innerHTML = '<p class="pfnote">No open bounties. Document one of your own cars (three verified angles) and you can post the first.</p>';
+    return;
+  }
+  const ids = liveBounties.map(b => b.id);
+  let hits = {};
+  try{
+    const { data } = await sb.from("bounty_hits").select("bounty_id,hunter").in("bounty_id", ids);
+    (data || []).forEach(h => { hits[h.bounty_id] = (hits[h.bounty_id] || 0) + 1; if (sbSession && h.hunter === sbSession.user.id) hits["me" + h.bounty_id] = true; });
+  }catch(e){}
+  const uids = [...new Set(liveBounties.map(b => b.owner))];
+  try{
+    const { data } = await sb.from("profiles").select("id,handle").in("id", uids);
+    (data || []).forEach(pp => { feedHandles[pp.id] = pp.handle; });
+  }catch(e){}
+  box.innerHTML = liveBounties.map(b => {
+    const mine = sbSession && b.owner === sbSession.user.id;
+    const found = hits["me" + b.id];
+    const ends = Math.max(0, Math.ceil((new Date(b.window_end).getTime() - Date.now()) / 864e5));
+    return `<div class="bcard ${mine ? "mine" : ""}">
+      <div class="bhead">
+        <span class="bn">${esc(((b.make || "") + " " + (b.model || "")).trim())}</span>
+        <span class="btag ${mine ? "mine" : found ? "found" : "live"}">${mine ? "YOUR CAR" : found ? "FOUND ✓" : "OPEN"}</span>
+      </div>
+      <div class="bmeta">@${esc(feedHandles[b.owner] || "hunter")} · ${esc(b.region || "anywhere")} · ${ends}d left${b.note ? "<br>" + esc(b.note) : ""}</div>
+      <div class="bmeta" style="color:var(--gold)">${hits[b.id] || 0} hunter${(hits[b.id] || 0) === 1 ? "" : "s"} found it</div>
+    </div>`;
+  }).join("");
+}
+function openBounty(spotId){
+  const sp = state.spots.find(x => x.id === spotId);
+  if (!sp) return;
+  if (!isFullDossier(sp)){ toast("Document three verified angles first — that's how we know it's your car"); return; }
+  bountySpotId = spotId;
+  $("bCar").textContent = ((sp.make || "") + " " + (sp.model || "")).trim();
+  $("bRegion").value = sp.place || sp.event || "";
+  $("bNote").value = "";
+  $("bountySheet").classList.add("on");
+}
+$("bBack").addEventListener("click", () => $("bountySheet").classList.remove("on"));
+$("bWindow").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  document.querySelectorAll("#bWindow button").forEach(x => x.classList.toggle("on", x === b));
+  bWindowDays = +b.dataset.days;
+});
+$("bPost").addEventListener("click", async () => {
+  const sp = state.spots.find(x => x.id === bountySpotId);
+  if (!sp) return;
+  if (!sb || !sbSession){ toast("Sign in to post a bounty"); return; }
+  const region = $("bRegion").value.trim();
+  if (!region){ toast("Add a region or event — never an address"); return; }
+  try{
+    await sb.from("bounties").insert({
+      owner: sbSession.user.id, make: sp.make, model: sp.model, year_range: sp.year,
+      cx_key: sp.cxKey || null, region: region.slice(0, 60), note: $("bNote").value.trim().slice(0, 160),
+      event_code: state.activeEventCode || null,
+      window_end: new Date(Date.now() + bWindowDays * 864e5).toISOString()
+    });
+    sfx("classic");
+    toast("Bounty posted — hunters can claim it for " + bWindowDays + " days");
+    $("bountySheet").classList.remove("on");
+    renderBounties();
+  }catch(e){ toast("Bounty didn't post — try again"); }
+});
+async function checkBounty(spot){
+  if (!sb || !sbSession || !spot || spot.flagged) return;
+  if (!liveBounties.length) await fetchBounties();
+  const mk = (spot.make || "").toLowerCase(), md = (spot.model || "").toLowerCase();
+  if (!mk && !md) return;
+  const hit = liveBounties.find(b => b.owner !== sbSession.user.id
+    && (b.make || "").toLowerCase() === mk
+    && ((b.model || "").toLowerCase() === md || (md && (b.model || "").toLowerCase().includes(md))));
+  if (!hit) return;
+  try{
+    const { error } = await sb.from("bounty_hits").insert({ bounty_id: hit.id, hunter: sbSession.user.id, capture_id: null });
+    if (error) return;
+    spot.bounty = true;
+    await Store.save();
+    sfx("legendary");
+    toast("BOUNTY CLAIMED · you found @" + (feedHandles[hit.owner] || "a hunter") + "'s " + ((hit.make || "") + " " + (hit.model || "")).trim());
+  }catch(e){}
+}
+function bountyCount(){ return state.spots.filter(s => s.bounty).length; }
+function isSleeping(s){ return s && (s.condition === "sleeping" || s.condition === "project" || s.condition === "wreck"); }
+function sleepingCount(){ return state.spots.filter(s => !s.flagged && isSleeping(s)).length; }
 
 /* ================= MODERATION (report + block) ================= */
 const myBlocks = new Set();
@@ -2515,7 +2746,7 @@ async function processResult(res, canvas, source, ctx){
     nth: prior + 1, cxNew: counts && prior === 0, cxNo: en ? en.n : null,
     cxKey: en ? "n" + en.n : "x:" + keyStr,
     cxName: en ? en.name : ((res.make || "") + " " + (res.model || "")).trim(),
-    blurb: res.blurb || "",
+    blurb: res.blurb || "", condition: res.condition || "active",
     phash, source: source || "camera", flagged: flags.join("; "),
     lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,
     event: (ctx && ctx.event !== undefined) ? (ctx.event || "") : (state.activeEvent || ""),
@@ -2668,6 +2899,7 @@ $("vDoc").addEventListener("click", () => {
   openAngles(lastVerdictSpot.id);
 });
 $("dDoc").addEventListener("click", () => { if (dId != null) openAngles(dId); });
+$("dBounty").addEventListener("click", () => { if (dId != null) openBounty(dId); });
 $("verdict").addEventListener("click", e => { if (e.target === $("verdict")) { $("verdict").classList.remove("on"); detectUI("off"); } });
 
 /* ================= GARAGE ================= */
@@ -3017,6 +3249,8 @@ window.addEventListener("resize", () => { if ($("view-map").classList.contains("
 
 /* ================= QUESTS ================= */
 function renderQuests(){
+  renderWanted();
+  renderBounties();
   ensureDay();
   const check = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 12.5l4.6 4.6L19.5 6.7"/></svg>';
   const target = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg>';
@@ -3147,6 +3381,7 @@ function renderRewards(){
     ["RAREST FIND", rec.rarest],
     ["BEST SHOT", rec.bestShot],
     ["FULL DOSSIERS", rec.dossiers],
+    ["SLEEPING CARS", rec.sleeping],
     ["BIGGEST EXPEDITION", rec.bigExp],
     ["LEGENDARIES LOGGED", rec.legends || "—"]
   ].map(x => `<div class="redemption"><span>${x[0]}</span><b>${esc(String(x[1]))}</b></div>`).join("")
@@ -3243,10 +3478,11 @@ function openDossier(id){
   $("dMake").value = s.make || ""; $("dModel").value = s.model || ""; $("dYear").value = s.year || "";
   $("dEvent").value = s.event || ""; $("dPlace").value = s.place || "";
   renderDossierAngles();
+  $("dBounty").style.display = isFullDossier(s) ? "" : "none";
   $("dStory").value = s.story || ""; $("dColor").value = s.color || ""; $("dOwner").value = s.owner || "";
   $("dMetaChip").className = "chip " + s.rarity;
   $("dMetaChip").textContent = s.rarity.toUpperCase();
-  $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + (s.shot ? " · SHOT " + s.shot.score : "") + (isFullDossier(s) ? ' · <span style="color:var(--gold)">FULL DOSSIER</span>' : "") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
+  $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + (s.shot ? " · SHOT " + s.shot.score : "") + (isFullDossier(s) ? ' · <span style="color:var(--gold)">FULL DOSSIER</span>' : "") + (isSleeping(s) ? ' · <span class="sleepchip">' + (s.condition === "sleeping" ? "SLEEPING" : s.condition === "project" ? "PROJECT" : "WRECK") + '</span>' : "") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
   $("dossier").classList.add("on");
 }
 $("dBack").addEventListener("click", () => { $("dossier").classList.remove("on"); renderGarage(); });
