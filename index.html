@@ -463,6 +463,16 @@ button.bdg[disabled]{cursor:default}
 #intro .thword{display:block;width:min(62%,230px);height:auto;margin:0 auto;color:var(--ink)}
 
 /* hunter's edition */
+.plancards{display:flex;gap:10px;margin:16px 0 4px}
+.plancard{flex:1;position:relative;text-align:left;background:var(--panel);border:1.5px solid var(--line);border-radius:var(--r-md);padding:13px 13px 12px;transition:border-color .15s ease,background .15s ease}
+.plancard.on{border-color:var(--gold);background:linear-gradient(180deg,rgba(255,194,75,.10),rgba(255,194,75,.02))}
+.plancard .pn{font:800 9px var(--disp);letter-spacing:.2em;color:var(--muted)}
+.plancard.on .pn{color:var(--gold)}
+.plancard .pp{font:900 21px var(--disp);color:var(--ink);margin-top:5px;line-height:1}
+.plancard .ps{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.35}
+.plancard .save{position:absolute;top:-8px;right:9px;font:800 8px var(--disp);letter-spacing:.12em;color:#1B0E00;background:linear-gradient(180deg,var(--gold),var(--ember));padding:3px 7px;border-radius:999px}
+.plancard .tick{position:absolute;bottom:11px;right:11px;color:var(--gold);font-size:12px;opacity:0;transition:opacity .15s ease}
+.plancard.on .tick{opacity:1}
 #premSheet{position:absolute;inset:0;z-index:28;display:none;flex-direction:column;background:var(--carbon)}
 #premSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
 .premhero{padding:26px 20px 18px;text-align:center;background:radial-gradient(120% 80% at 50% 0%,rgba(255,194,75,.14),transparent 70%)}
@@ -816,16 +826,26 @@ input[type=file]{display:none}
         <h3>Hunter's Edition</h3>
         <p>Every capture you file is graded by a vision model that costs real money to run. Hunter's Edition funds the judge — and gives you more of it.</p>
       </div>
+      <div class="plancards" id="planCards">
+        <button class="plancard on" data-plan="year">
+          <span class="save">SAVE 35%</span>
+          <div class="pn">YEARLY</div>
+          <div class="pp">$39</div>
+          <div class="ps">$3.25 a month<br>billed once a year</div>
+          <span class="tick">✓</span>
+        </button>
+        <button class="plancard" data-plan="month">
+          <div class="pn">MONTHLY</div>
+          <div class="pp">$4.99</div>
+          <div class="ps">billed every<br>month</div>
+          <span class="tick">✓</span>
+        </button>
+      </div>
       <div class="perk"><span class="pi">◎</span><div><div class="pt">150 VERIFIED CAPTURES A DAY</div><div class="pd">Two and a half times the free limit. Enough to shoot a whole concours lawn without thinking about it.</div></div></div>
       <div class="perk"><span class="pi">◎</span><div><div class="pt">UNLIMITED BOUNTIES</div><div class="pd">Free hunters post one bounty at a time. Run as many as you like on the cars you own.</div></div></div>
       <div class="perk"><span class="pi">◎</span><div><div class="pt">GOLD REGISTRY CARDS</div><div class="pd">Your share cards and reels carry the Hunter's Edition mark.</div></div></div>
       <div class="perk"><span class="pi">◎</span><div><div class="pt">FIRST LOOK</div><div class="pd">New features land in your app before anyone else's.</div></div></div>
       <div class="perk" style="border-bottom:none"><span class="pi">◎</span><div><div class="pt">YOU KEEP THE APP ALIVE</div><div class="pd">Solo-built, no ads, no data selling. Subscriptions are the entire business model.</div></div></div>
-      <div class="seg" id="planSeg" style="margin-top:16px">
-        <button data-plan="year" class="on">YEARLY · BEST VALUE</button>
-        <button data-plan="month">MONTHLY</button>
-      </div>
-      <div class="premprice"><span class="amt" id="premAmt">$39</span><span class="per" id="premPer"> / year · $3.25 a month</span></div>
       <button class="btn hot" id="premGo" style="width:100%;margin-top:10px;padding:15px;font-size:13px">UPGRADE ON THE WEB</button>
       <button class="btn" id="premCheck" style="width:100%;margin-top:9px">I ALREADY UPGRADED — REFRESH</button>
       <p class="premnote">Checkout is handled by Stripe — the charge shows on your statement as Link, their payment service. Cancel any time from the receipt email. Verification limits are what the subscription pays for — nobody can buy their way past the judge.</p>
@@ -2091,25 +2111,25 @@ function premLink(){
   return premPlan === "year" ? (CONFIG.stripeYearly || CONFIG.stripeMonthly) : (CONFIG.stripeMonthly || CONFIG.stripeYearly);
 }
 function renderPlanChoice(){
-  const yearly = !!CONFIG.stripeYearly;
-  $("planSeg").style.display = yearly && CONFIG.stripeMonthly ? "" : "none";
-  if (!yearly) premPlan = "month";
+  const hasYear = !!CONFIG.stripeYearly, hasMonth = !!CONFIG.stripeMonthly;
+  if (!hasYear) premPlan = "month";
+  else if (!hasMonth) premPlan = "year";
   else if (!premPlanChosen) premPlan = "year";
-  document.querySelectorAll("#planSeg button").forEach(b => b.classList.toggle("on", b.dataset.plan === premPlan));
-  if (premPlan === "year"){
-    $("premAmt").textContent = "$39";
-    $("premPer").textContent = " / year · $3.25 a month";
-  } else {
-    $("premAmt").textContent = "$4.99";
-    $("premPer").textContent = " / month";
-  }
-  $("premGo").style.display = premLink() ? "" : "none";
+  document.querySelectorAll("#planCards .plancard").forEach(b => {
+    const isYear = b.dataset.plan === "year";
+    b.style.display = (isYear ? hasYear : hasMonth) ? "" : "none";
+    b.classList.toggle("on", b.dataset.plan === premPlan);
+  });
+  const go = $("premGo");
+  go.style.display = premLink() ? "" : "none";
+  go.textContent = premPlan === "year" ? "GET YEARLY · $39" : "GET MONTHLY · $4.99";
 }
-$("planSeg").addEventListener("click", e => {
-  const b = e.target.closest("button");
+$("planCards").addEventListener("click", e => {
+  const b = e.target.closest(".plancard");
   if (!b) return;
   premPlan = b.dataset.plan;
   premPlanChosen = true;
+  sfx("tick");
   renderPlanChoice();
 });
 function openPremium(){
