@@ -1117,7 +1117,7 @@ const CONFIG = {
   stripeMonthly: "https://buy.stripe.com/test_5kQ8wR2Q0ficgjV5Jz4F200",  // $4.99/mo (TEST)
   stripeYearly:  "https://buy.stripe.com/test_3cIeVf1LW5HCd7J0pf4F201",  // $39/yr (TEST)
   appUrl: "https://hunt.tyrehunt.app",
-  vapidPublic: "BLrGb82FgrZw16Xb3M0a8wH3II8QrDt5SWkr7NjABcuRPLHzg6r7IXxGgQwgjVNVPCi4JdGytGMWBkP6DFwpw74",       // paste your VAPID public key — blank keeps notifications switched off
+  vapidPublic: "",       // paste your VAPID public key — blank keeps notifications switched off
    // burned onto every share, so a reel can be followed home
   freeDayCap: 30,        // verified captures per day, free hunters
   premiumDayCap: 150,    // verified captures per day, Hunter's Edition
@@ -5022,14 +5022,39 @@ async function syncCapture(s){
 function thumbUrl(path){
   try{ return sb.storage.from("captures").getPublicUrl(path).data.publicUrl; }catch(e){ return ""; }
 }
-async function sbAddFriend(code){
-  if (!sb || !sbSession) return null;
+/* Accepts whatever the hunter actually types: a code in any case, with or
+   without dashes, with or without the TH prefix, or simply their @handle —
+   which is far easier to say out loud at a car show than eight characters. */
+function normaliseCode(raw){
+  const up = String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const body = up.startsWith("TH") ? up.slice(2) : up;
+  if (body.length !== 8) return null;
+  return "TH-" + body.slice(0, 4) + "-" + body.slice(4);
+}
+async function findHunter(raw){
+  if (!sb || !sbSession) return { err: "signin" };
+  const q = String(raw || "").trim().replace(/^@/, "");
+  if (!q) return { err: "empty" };
+  const code = normaliseCode(q);
   try{
-    const { data } = await sb.from("profiles").select("id,handle,code,models").eq("code", code).maybeSingle();
-    if (!data) return null;
-    await sb.from("friends").upsert({ user_id: sbSession.user.id, friend_id: data.id });
-    return data;
-  }catch(e){ return null; }
+    if (code){
+      const { data } = await sb.from("profiles").select("id,handle,code,models").eq("code", code).maybeSingle();
+      if (data) return { hunter: data };
+      return { err: "nocode", tried: code };
+    }
+    const { data } = await sb.from("profiles").select("id,handle,code,models")
+      .ilike("handle", q).maybeSingle();
+    if (data) return { hunter: data };
+    return { err: "nohandle", tried: q };
+  }catch(e){ return { err: "net" }; }
+}
+async function sbAddFriend(codeOrHandle){
+  const res = await findHunter(codeOrHandle);
+  if (!res.hunter) return null;
+  try{
+    await sb.from("friends").upsert({ user_id: sbSession.user.id, friend_id: res.hunter.id });
+  }catch(e){}
+  return res.hunter;
 }
 async function refreshCrew(){
   if (!sb || !sbSession || !state.crew.length) return;
@@ -5052,7 +5077,7 @@ async function drawQR(){
   try{
     if (!qrLoaded){ await loadScript("https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"); qrLoaded = true; }
     box.innerHTML = "";
-    new QRCode(box, { text: "TYREHUNT|" + state.profile.code + "|" + state.profile.handle, width: 132, height: 132, colorDark: "#0A0B0E", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    new QRCode(box, { text: crewLink(state.profile.code), width: 132, height: 132, colorDark: "#0A0B0E", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
   }catch(e){ if (box.parentElement) box.parentElement.style.display = "none"; }
 }
 
@@ -5119,7 +5144,7 @@ function renderProfile(){
       <div class="tc">${p.code}</div>
       ${state.title ? '<div class="ptitle">' + esc(titleNameOf(state.title)) + '</div>' : ""}
       <div class="qrwrap"><div id="qrBox"></div></div>
-      <p class="pfnote" style="margin-top:8px">Crew scans this or types your code</p>
+      <p class="pfnote" style="margin-top:8px">Any phone camera opens this — no typing</p>
     </div>
     <div class="vbtns" style="margin-top:12px">
       <button class="btn hot" id="pfShareTag">SHARE TAG</button>
@@ -5134,7 +5159,7 @@ function renderProfile(){
     <div id="themeGrid"></div>
     <div class="sechead">Add hunter</div>
     <div style="display:flex;gap:10px;align-items:flex-start">
-      <div class="dfield" style="flex:1;margin:0"><input id="pfAdd" placeholder="TH-XXXX-XXXX" autocapitalize="characters"></div>
+      <div class="dfield" style="flex:1;margin:0"><input id="pfAdd" placeholder="@handle or TH-XXXX-XXXX" autocapitalize="none"></div>
       <button class="btn hot" id="pfAddBtn" style="flex:0 0 auto;padding:12px 18px">ADD</button>
     </div>
     <div class="sechead">Crew leaderboard</div>
@@ -5178,20 +5203,26 @@ function renderProfile(){
   if (sb && sbSession){ loadDuels(); fillFeed(); }
 }
 async function addCrew(){
-  const code = ($("pfAdd").value || "").toUpperCase().trim();
-  if (!/^TH-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)){ toast("Codes look like TH-XXXX-XXXX"); return; }
-  if (state.profile && code === state.profile.code){ toast("That's your own code"); return; }
-  if (state.crew.some(c => c.code === code)){ toast("Already in your crew"); return; }
-  let entry = { code, handle: null, models: null, id: null };
-  if (sb && sbSession){
-    const d = await sbAddFriend(code);
-    if (!d){ toast("No hunter found with that code"); return; }
-    entry = { code: d.code, handle: d.handle, models: d.models, id: d.id };
-  }
-  state.crew.push(entry);
+  const raw = ($("pfAdd").value || "").trim();
+  if (!raw){ toast("Enter a code or a handle"); return; }
+  const mine = state.profile && (normaliseCode(raw) === state.profile.code
+    || raw.replace(/^@/, "").toLowerCase() === String(state.profile.handle || "").toLowerCase());
+  if (mine){ toast("That's you"); return; }
+  const res = await findHunter(raw);
+  if (res.err === "signin"){ toast("Sign in first — crews sync through your account"); return; }
+  if (res.err === "nocode"){ toast("No hunter with code " + res.tried + " — they may not have signed in yet"); return; }
+  if (res.err === "nohandle"){ toast("No hunter called @" + res.tried); return; }
+  if (!res.hunter){ toast("Couldn't reach the crew list — try again"); return; }
+  const h = res.hunter;
+  if (state.crew.some(c => c.code === h.code)){ toast("@" + h.handle + " is already in your crew"); return; }
+  try{ await sb.from("friends").upsert({ user_id: sbSession.user.id, friend_id: h.id }); }catch(e){}
+  state.crew.push({ code: h.code, handle: h.handle, models: h.models, id: h.id });
   await Store.save();
+  $("pfAdd").value = "";
   renderProfile();
-  toast("Crew +1");
+  sfx("extra");
+  buzz(12);
+  toast("@" + h.handle + " added to your crew");
 }
 
 /* ================= CARD DELIVERY ================= */
