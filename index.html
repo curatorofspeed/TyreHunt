@@ -483,8 +483,8 @@ button.bdg[disabled]{cursor:default}
 /* one-time code sign-in */
 #otpBox{display:none;margin-top:12px}
 #otpBox.on{display:block;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
-#otpCode{width:100%;text-align:center;font:800 26px var(--mono);letter-spacing:.42em;padding:14px 10px 14px 18px;background:var(--panel);border:1.5px solid rgba(255,138,30,.45);border-radius:var(--r-md);color:var(--ink)}
-#otpCode::placeholder{letter-spacing:.3em;color:var(--muted);font-size:19px}
+#otpCode{width:100%;text-align:center;font:800 24px var(--mono);letter-spacing:.24em;padding:14px 10px 14px 16px;background:var(--panel);border:1.5px solid rgba(255,138,30,.45);border-radius:var(--r-md);color:var(--ink)}
+#otpCode::placeholder{letter-spacing:.14em;color:var(--muted);font-size:15px}
 .otpnote{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:9px;text-align:center}
 .otpnote b{color:var(--ink)}
 
@@ -4440,7 +4440,7 @@ async function verifyOtpCode(){
   const field = $("otpCode"), btn = $("otpGo");
   if (!field || !sb) return;
   const token = (field.value || "").replace(/\D/g, "");
-  if (token.length < 6){ toast("Enter the 6-digit code"); return; }
+  if (token.length < 6){ toast("Enter the code from your email"); return; }
   const email = otpEmail || (($("pfEmail") && $("pfEmail").value) || "").trim();
   if (!email){ toast("Enter your email first"); return; }
   btn.disabled = true; btn.textContent = "SIGNING IN…";
@@ -4585,9 +4585,9 @@ function renderProfile(){
       <div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
       <button class="btn" style="width:100%" id="pfMagic">EMAIL ME A CODE</button>
       <div id="otpBox">
-        <input id="otpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+        <input id="otpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="ENTER CODE">
         <button class="btn hot" style="width:100%;margin-top:9px" id="otpGo">SIGN IN</button>
-        <p class="otpnote">We sent a <b>6-digit code</b> to your email. Type it here — that works even if the link opens in another browser.</p>
+        <p class="otpnote">We sent a <b>code</b> to your email. Type it here — that works even if the link opens in another browser.</p>
       </div>`;
     $("pfClaim").addEventListener("click", async () => {
       const h = ($("pfHandle").value || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
@@ -4611,9 +4611,9 @@ function renderProfile(){
         : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
            <button class="btn hot" style="width:100%" id="pfMagic">EMAIL ME A CODE</button>
            <div id="otpBox">
-             <input id="otpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+             <input id="otpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="ENTER CODE">
              <button class="btn hot" style="width:100%;margin-top:9px" id="otpGo">SIGN IN</button>
-             <p class="otpnote">We sent a <b>6-digit code</b> to your email. Type it here — that works even if the link opens in another browser.</p>
+             <p class="otpnote">We sent a <b>code</b> to your email. Type it here — that works even if the link opens in another browser.</p>
            </div>
            <p class="pfnote">No password, ever.</p>`)
     : (CONFIG.supabaseUrl && CONFIG.supabaseAnon
