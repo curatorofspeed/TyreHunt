@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>TYRE HUNT — Spot & Collect</title>
 <meta name="theme-color" content="#0A0B0E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tyrehunt">
+<meta property="og:title" content="tyrehunt — spot real cars, build a verified Registry">
+<meta property="og:description" content="Point your camera at real metal. A verifier names it, grades the shot, and files it to your Registry. Old photos don't count.">
+<meta property="og:url" content="https://hunt.tyrehunt.app">
+<meta property="og:image" content="https://tyrehunt.app/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="tyrehunt">
+<meta name="twitter:description" content="Point your camera at real metal. Verified captures build your Registry.">
+<meta name="twitter:image" content="https://tyrehunt.app/icon-512.png">
+<meta name="description" content="A camera-first game for people who notice cars. Shoot what you find, a verifier names it, and it's filed to your Registry.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230A0B0E'/%3E%3Cpath fill='none' stroke='%23F2F3F6' stroke-width='5.6' stroke-linecap='round' d='M4.5 54 A47.5 47.5 0 0 1 69.8 10'/%3E%3Cpath fill='%23F2F3F6' fill-rule='evenodd' d='M52 12 a42 42 0 1 0 0 84 a42 42 0 1 0 0-84 Z M52 23 a31 31 0 1 1 0 62 a31 31 0 1 1 0-62 Z M52 30 a24 24 0 1 0 0 48 a24 24 0 1 0 0-48 Z M62.5 43.5 a6.5 6.5 0 1 1 0 13 a6.5 6.5 0 1 1 0-13 Z'/%3E%3Ccircle cx='44' cy='65' r='6' fill='%23FF8A1E'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -935,6 +946,7 @@ input[type=file]{display:none}
         <button class="btn" id="dDoc">DOCUMENT</button>
         <button class="btn" id="dBounty" style="display:none;color:var(--gold);border-color:rgba(255,194,75,.45)">BOUNTY</button>
         <button class="btn" id="dShare">SHARE CARD</button>
+        <button class="btn" id="dLink" aria-label="Copy a link to this spot">LINK</button>
       </div>
       <button class="btn" id="dDelete" style="width:100%;margin-top:10px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE SPOT</button>
     </div>
@@ -1104,6 +1116,9 @@ const CONFIG = {
   thumbEdge: 640,        // stored thumbnail long edge
   stripeMonthly: "https://buy.stripe.com/test_5kQ8wR2Q0ficgjV5Jz4F200",  // $4.99/mo (TEST)
   stripeYearly:  "https://buy.stripe.com/test_3cIeVf1LW5HCd7J0pf4F201",  // $39/yr (TEST)
+  appUrl: "https://hunt.tyrehunt.app",
+  vapidPublic: "",       // paste your VAPID public key — blank keeps notifications switched off
+   // burned onto every share, so a reel can be followed home
   freeDayCap: 30,        // verified captures per day, free hunters
   premiumDayCap: 150,    // verified captures per day, Hunter's Edition
   sendEdge: 900          // long edge sent to the verifier (~30% cheaper per capture than 1100)
@@ -1121,7 +1136,7 @@ let state = {
   boosts: { shield: 0, turboUntil: 0 },
   lastPaidTs: 0, dayPaid: 0,
   bestStreak: 0, cotdStamps: {}, title: "", aiHunt: null, lore: {},
-  sound: true, seenIntro: false, lastFeedSeen: 0, theme: "standard", themesSeen: [], coach: {},
+  sound: true, seenIntro: false, lastFeedSeen: 0, theme: "standard", themesSeen: [], coach: {}, pushAsked: false,
   spots: [], redemptions: [], queue: []
 };
 const $ = id => document.getElementById(id);
@@ -2009,6 +2024,16 @@ function drawMark(x, cx, cy, size, color){
   x.beginPath(); x.arc(58.2, 62.5, 4.6, 0, 7); x.fill();
   x.restore();
 }
+/* The line that makes a share findable. Without this a reel is a
+   dead end — someone sees it, loves it, and cannot get to the app. */
+function drawHandle(x, cx, y, size, color){
+  x.save();
+  x.textAlign = "center";
+  x.fillStyle = color;
+  x.font = "700 " + size + "px 'JetBrains Mono', monospace";
+  x.fillText("hunt.tyrehunt.app", cx, y);
+  x.restore();
+}
 function drawWord(x, cx, cy, height, color){
   if (!_pWord) _pWord = new Path2D(BRAND_WORD_D);
   const u = height / 100;
@@ -2099,6 +2124,7 @@ async function makeReel(spots, title, fname){
           x.fillStyle = "#98A0AC"; x.font = "700 30px 'JetBrains Mono', monospace";
           x.fillText(st.models + " MODELS IN THE REGISTRY" + (state.profile && state.profile.handle ? "  ·  @" + state.profile.handle : ""), W/2, H*0.50);
           drawMark(x, W/2, H*0.645, 76, "#F2F3F6");
+          drawHandle(x, W/2, H*0.72, 30, "rgba(242,243,246,.72)");
           x.fillStyle = "#FF8A1E"; x.font = "800 34px 'Archivo', sans-serif";
           drawWord(x, W/2, H*0.592, 56, "#F2F3F6");
           x.globalAlpha = 1; x.textAlign = "left";
@@ -2115,7 +2141,7 @@ async function makeReel(spots, title, fname){
     prog.classList.remove("on");
     sfx("classic");
     if (navigator.canShare && navigator.canShare({ files: [file] })){
-      try{ await navigator.share({ files: [file], title: title + " · TYRE HUNT" }); return; }catch(e){}
+      try{ await navigator.share({ files: [file], title: title + " · TYRE HUNT", text: title + " — hunted on TYRE HUNT", url: CONFIG.appUrl }); return; }catch(e){}
     }
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
@@ -2196,6 +2222,174 @@ function armLongPress(){
   grid.addEventListener("touchmove", () => { moved = true; cancel(); }, { passive: true });
   grid.addEventListener("touchend", cancel);
   grid.addEventListener("touchcancel", cancel);
+}
+
+/* ================= PUSH NOTIFICATIONS =================
+   Only ever asked for after a hunter has done something social —
+   never on first launch, because a cold permission prompt is the
+   fastest way to a permanent "no". */
+let pushReg = null;
+function pushSupported(){
+  return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window && !!CONFIG.vapidPublic;
+}
+function urlB64ToUint8(base64){
+  const pad = "=".repeat((4 - base64.length % 4) % 4);
+  const b64 = (base64 + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(b64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+async function registerSW(){
+  if (!("serviceWorker" in navigator)) return null;
+  try{ pushReg = await navigator.serviceWorker.register("sw.js"); return pushReg; }
+  catch(e){ return null; }
+}
+async function pushEnabled(){
+  if (!pushSupported() || Notification.permission !== "granted") return false;
+  const reg = pushReg || await navigator.serviceWorker.getRegistration();
+  if (!reg) return false;
+  const sub = await reg.pushManager.getSubscription();
+  return !!sub;
+}
+async function enablePush(loud){
+  if (!pushSupported()){ if (loud) toast("Notifications aren't available here"); return false; }
+  if (!sb || !sbSession){ if (loud) toast("Sign in first"); return false; }
+  try{
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted"){ if (loud) toast("Notifications stay off — you can change that in settings"); return false; }
+    const reg = pushReg || await registerSW();
+    if (!reg){ if (loud) toast("Couldn't start notifications"); return false; }
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8(CONFIG.vapidPublic)
+      });
+    }
+    const j = sub.toJSON();
+    await sb.from("push_subs").upsert({
+      user_id: sbSession.user.id,
+      endpoint: j.endpoint,
+      p256dh: j.keys.p256dh,
+      auth: j.keys.auth
+    }, { onConflict: "endpoint" });
+    state.pushAsked = true; await Store.save();
+    if (loud) toast("Notifications on — you'll hear about likes and finds");
+    renderProfile();
+    return true;
+  }catch(e){
+    if (loud) toast("Couldn't turn notifications on");
+    return false;
+  }
+}
+async function disablePush(){
+  try{
+    const reg = pushReg || await navigator.serviceWorker.getRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if (sub){
+      const j = sub.toJSON();
+      if (sb && sbSession) await sb.from("push_subs").delete().eq("endpoint", j.endpoint);
+      await sub.unsubscribe();
+    }
+    toast("Notifications off");
+    renderProfile();
+  }catch(e){}
+}
+/* Ask once, and only after the hunter has felt the social loop. */
+async function maybeOfferPush(){
+  if (state.pushAsked || !pushSupported() || !sbSession) return;
+  if (Notification.permission !== "default") return;
+  if (state.spots.filter(x => !x.flagged).length < 3) return;
+  state.pushAsked = true; await Store.save();
+  toast("Turn on notifications to hear when hunters like your spots");
+  setTimeout(() => enablePush(true), 1400);
+}
+/* Tell someone their spot got attention. Fire-and-forget. */
+async function notify(toUserId, title, message, url){
+  if (!sb || !sbSession || !toUserId || toUserId === sbSession.user.id) return;
+  try{
+    await fetch(CONFIG.supabaseUrl + "/functions/v1/send-push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sbSession.access_token },
+      body: JSON.stringify({ to: toUserId, title, message, url: url || "/" })
+    });
+  }catch(e){}
+}
+
+/* ================= DEEP LINKS =================
+   Shared things need addresses. Without these you can only share
+   "the app", never "this Miura I found". */
+function deepLink(params){
+  const u = new URL(CONFIG.appUrl);
+  Object.keys(params).forEach(k => { if (params[k]) u.searchParams.set(k, params[k]); });
+  return u.toString();
+}
+function crewLink(code){ return deepLink({ crew: code }); }
+function hunterLink(handle){ return deepLink({ h: handle }); }
+function captureLink(id){ return deepLink({ c: id }); }
+function lobbyLink(code){ return deepLink({ lobby: code }); }
+
+/* Read the address on arrival, then clear it so a refresh doesn't
+   re-trigger and the URL stays clean. */
+async function routeDeepLink(){
+  let q;
+  try{ q = new URLSearchParams(location.search); }catch(e){ return; }
+  if (!q || ![...q.keys()].length) return;
+  const crew = q.get("crew"), h = q.get("h"), c = q.get("c"), lobby = q.get("lobby");
+  try{ history.replaceState(null, "", location.origin + location.pathname); }catch(e){}
+
+  // give the app a beat to finish booting and (maybe) restore a session
+  setTimeout(async () => {
+    if (crew){
+      if (!sb || !sbSession){ toast("Sign in and we'll add " + crew + " to your crew"); state.pendingCrew = crew; Store.save(); return; }
+      await addCrewByCode(crew);
+      return;
+    }
+    if (lobby){
+      $("eventCode") && ($("eventCode").value = lobby);
+      state.activeEventCode = lobby;
+      await Store.save();
+      show("quests");
+      toast("Lobby " + lobby + " — you're in");
+      if (typeof fillLobby === "function") fillLobby();
+      return;
+    }
+    if (h){
+      if (!sb || !sbSession){ toast("Sign in to see @" + h); return; }
+      try{
+        const { data } = await sb.from("profiles").select("id").eq("handle", h).maybeSingle();
+        if (data && data.id){ show("garage"); openHunter(data.id); }
+        else toast("No hunter called @" + h);
+      }catch(e){}
+      return;
+    }
+    if (c){
+      show("garage");
+      const fb = document.querySelector('#gSeg [data-seg="feed"]');
+      if (fb) fb.click();
+      setTimeout(() => {
+        const card = document.querySelector('.fcard [data-like="' + c + '"]');
+        if (card) card.closest(".fcard").scrollIntoView({ block: "center", behavior: "smooth" });
+        else toast("That spot isn't in the recent feed");
+      }, 1200);
+    }
+  }, 900);
+}
+
+/* a crew add that both the sheet and a link can call */
+async function addCrewByCode(code){
+  code = (code || "").toUpperCase().trim();
+  if (!code) return;
+  if (state.profile && state.profile.code === code){ toast("That's your own code"); return; }
+  if (state.crew.some(x => x.code === code)){ toast("Already in your crew"); return; }
+  const d = await sbAddFriend(code);
+  if (!d){ toast("No hunter with that code"); return; }
+  state.crew.push({ code: d.code, handle: d.handle, models: d.models, id: d.id });
+  await Store.save();
+  renderProfile();
+  sfx("extra");
+  toast("@" + d.handle + " added to your crew");
 }
 
 /* ================= GESTURES =================
@@ -2300,6 +2494,20 @@ async function checkOperator(){
   }catch(e){}
   renderOpEntry();
 }
+async function renderPushBtn(){
+  const b = $("pushBtn");
+  if (!b) return;
+  if (!pushSupported() || !sbSession){ b.style.display = "none"; return; }
+  const on = await pushEnabled();
+  b.style.display = "";
+  b.textContent = on ? "NOTIFICATIONS: ON" : "TURN ON NOTIFICATIONS";
+  b.style.color = on ? "var(--gold)" : "";
+  b.style.borderColor = on ? "rgba(255,194,75,.45)" : "";
+}
+document.addEventListener("click", async e => {
+  if (!e.target.closest("#pushBtn")) return;
+  (await pushEnabled()) ? disablePush() : enablePush(true);
+});
 function renderOpEntry(){
   const b = $("opBtn");
   if (b) b.style.display = isOperator ? "" : "none";
@@ -2759,6 +2967,8 @@ async function checkBounty(spot){
     await Store.save();
     sfx("legendary");
     toast("BOUNTY CLAIMED · you found @" + (feedHandles[hit.owner] || "a hunter") + "'s " + ((hit.make || "") + " " + (hit.model || "")).trim());
+    notify(hit.owner, "Your car was found",
+      "@" + ((state.profile && state.profile.handle) || "a hunter") + " spotted your " + ((hit.make || "") + " " + (hit.model || "")).trim(), "/");
   }catch(e){}
 }
 function bountyCount(){ return state.spots.filter(s => s.bounty).length; }
@@ -3219,6 +3429,10 @@ $("feedList").addEventListener("click", async e => {
         feedMine.add(id); feedLikes[id] = (feedLikes[id] || 0) + 1;
         sfx("extra");
         await sb.from("likes").insert({ user_id: sbSession.user.id, capture_id: id });
+        const row = feedRows.find(r => r.id === id);
+        if (row) notify(row.user_id, "♥ Your spot got a like",
+          "@" + ((state.profile && state.profile.handle) || "a hunter") + " liked your " +
+          (row.cx_name || ((row.make || "") + " " + (row.model || "")).trim()), captureLink(id));
       }
     }catch(err){}
     return;
@@ -3274,6 +3488,9 @@ $("cmtSend").addEventListener("click", async () => {
   try{
     await sb.from("comments").insert({ capture_id: cmtCapId, user_id: sbSession.user.id, body: v.slice(0, 240) });
     sfx("extra");
+    const crow = feedRows.find(r => r.id === cmtCapId);
+    if (crow) notify(crow.user_id, "💬 New comment",
+      "@" + ((state.profile && state.profile.handle) || "a hunter") + ": " + v.slice(0, 80), captureLink(cmtCapId));
   }catch(e){ toast("Comment didn't post"); }
   loadComments();
 });
@@ -3397,6 +3614,18 @@ function renderSignal(){
   el.classList.add("on");
 }
 $("signal").addEventListener("click", () => { if (sigTapTarget) show(sigTapTarget); });
+document.addEventListener("click", async e => {
+  if (!e.target.closest("#lobbyShare")) return;
+  const code = state.activeEventCode;
+  if (!code) return;
+  const url = lobbyLink(code);
+  const text = (state.activeEvent || "A hunt") + " — join lobby " + code;
+  if (navigator.share){
+    try{ await navigator.share({ title: "TYRE HUNT lobby", text, url }); return; }catch(err){}
+  }
+  try{ await navigator.clipboard.writeText(url); toast("Lobby link copied"); }
+  catch(err){ toast(url); }
+});
 
 function bumpBalance(){
   const b = $("codexPill"); b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
@@ -3803,6 +4032,7 @@ async function processResult(res, canvas, source, ctx){
   if (counts){
     checkBounty(spot);
     checkThemeUnlocks();
+    maybeOfferPush();
     if (state.spots.length === 1) coachAfterFirst();
     else if (state.spots.length === 3) coachAfterThird();
   }
@@ -3915,6 +4145,25 @@ $("vDoc").addEventListener("click", () => {
 });
 $("dDoc").addEventListener("click", () => { if (dId != null) openAngles(dId); });
 $("dBounty").addEventListener("click", () => { if (dId != null) openBounty(dId); });
+$("dLink").addEventListener("click", async () => {
+  const sp = state.spots.find(x => x.id === dId);
+  if (!sp) return;
+  const name = ((sp.make || "") + " " + (sp.model || "")).trim();
+  // the server id is what another hunter can actually open
+  let link = CONFIG.appUrl;
+  if (sb && sbSession && sp.phash){
+    try{
+      const { data } = await sb.from("captures").select("id").eq("user_id", sbSession.user.id).eq("phash", sp.phash).maybeSingle();
+      if (data && data.id) link = captureLink(data.id);
+    }catch(e){}
+  }
+  const text = name ? name + " — filed on TYRE HUNT" : "Filed on TYRE HUNT";
+  if (navigator.share){
+    try{ await navigator.share({ title: "TYRE HUNT", text, url: link }); return; }catch(e){}
+  }
+  try{ await navigator.clipboard.writeText(link); toast("Link copied"); }
+  catch(e){ toast(link); }
+});
 $("verdict").addEventListener("click", e => { if (e.target === $("verdict")) { $("verdict").classList.remove("on"); detectUI("off"); } });
 
 /* ================= GARAGE ================= */
@@ -4716,6 +4965,10 @@ async function restoreProfile(){
       await Store.save();
       renderProfile();
       renderHUD();
+      if (state.pendingCrew){
+        const pc = state.pendingCrew; state.pendingCrew = null; await Store.save();
+        setTimeout(() => addCrewByCode(pc), 600);
+      }
       if (!before) toast("Welcome back, @" + data.handle);
       else if (before !== data.handle) toast("Signed in as @" + data.handle);
       syncProfile();
@@ -4812,7 +5065,7 @@ function openProfile(){
   if (sb && sbSession) refreshCrew().then(renderProfile);
 }
 function renderProfile(){
-  setTimeout(() => { renderThemes(); renderOpEntry(); }, 0);
+  setTimeout(() => { renderThemes(); renderOpEntry(); renderPushBtn(); }, 0);
   const p = state.profile, body = $("pfBody");
   $("pfMeta").textContent = p ? "@" + p.handle + " · " + p.code : "Claim a tag to hunt with a crew";
   if (!p){
@@ -4875,6 +5128,7 @@ function renderProfile(){
     <div class="sechead">Account</div>
     ${acct}
     <button class="btn" id="pfSound" style="width:100%;margin-top:10px">SOUND: ${state.sound ? "ON" : "OFF"}</button>
+    <button class="btn" id="pushBtn" style="width:100%;margin-bottom:10px;display:none">NOTIFICATIONS</button>
     <button class="btn" id="opBtn" style="width:100%;margin-bottom:14px;display:none;color:var(--gold);border-color:rgba(255,194,75,.45)">OPERATOR CONSOLE</button>
     <div class="sechead">Viewfinder</div>
     <div id="themeGrid"></div>
@@ -4900,8 +5154,10 @@ function renderProfile(){
     <div id="crewFeed"><p class="pfnote">Loading…</p></div>` : ""}`;
   drawQR();
   $("pfShareTag").addEventListener("click", async () => {
-    const msg = "Add me on TYRE HUNT — hunter code " + p.code;
-    if (navigator.share){ try{ await navigator.share({ text: msg }); return; }catch(e){} }
+    const msg = "Add me on TYRE HUNT — hunter code " + p.code + "\n" + crewLink(p.code);
+    if (navigator.share){
+      try{ await navigator.share({ title: "Hunt with me on TYRE HUNT", text: "Add me — hunter code " + p.code, url: crewLink(p.code) }); return; }catch(e){}
+    }
     copyText(msg);
   });
   $("pfCopy").addEventListener("click", () => copyText(p.code));
@@ -4944,7 +5200,7 @@ function deliverCard(c, filename, text){
   c.toBlob(async blob => {
     if (!blob){ toast("Couldn't render the card"); return; }
     const file = new File([blob], filename, { type: "image/jpeg" });
-    const payload = { files: [file], title: "TYRE HUNT", text };
+    const payload = { files: [file], title: "TYRE HUNT", text, url: CONFIG.appUrl };
     if (navigator.canShare && navigator.canShare({ files: [file] })){
       try{ await navigator.share(payload); return; }
       catch(e){ if (e && e.name === "AbortError") return; }
@@ -5481,6 +5737,8 @@ async function overlayTerritory(ctx, X, Y, minLa, maxLa, minLo, maxLo){
   armSheetGestures();
   armPullToRefresh();
   armLongPress();
+  routeDeepLink();
+  registerSW();
   if (navigator.onLine) processQueue();
 })();
 </script>
