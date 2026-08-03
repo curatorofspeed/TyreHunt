@@ -480,6 +480,14 @@ button.bdg[disabled]{cursor:default}
 #intro .thmark{width:60px;height:60px;color:var(--ink);display:block;margin:0 auto 12px}
 #intro .thword{display:block;width:min(58%,215px);height:auto;margin:0 auto;color:var(--ink)}
 
+/* one-time code sign-in */
+#otpBox{display:none;margin-top:12px}
+#otpBox.on{display:block;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
+#otpCode{width:100%;text-align:center;font:800 26px var(--mono);letter-spacing:.42em;padding:14px 10px 14px 18px;background:var(--panel);border:1.5px solid rgba(255,138,30,.45);border-radius:var(--r-md);color:var(--ink)}
+#otpCode::placeholder{letter-spacing:.3em;color:var(--muted);font-size:19px}
+.otpnote{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:9px;text-align:center}
+.otpnote b{color:var(--ink)}
+
 /* operator console */
 #opSheet{position:absolute;inset:0;z-index:29;display:none;flex-direction:column;background:var(--carbon)}
 #opSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
@@ -4396,15 +4404,60 @@ async function fetchPlan(){
 function bindMagic(){
   const magic = $("pfMagic");
   if (!magic) return;
+  const go = $("otpGo");
+  if (go) go.addEventListener("click", verifyOtpCode);
+  const codeField = $("otpCode");
+  if (codeField) codeField.addEventListener("keydown", e => { if (e.key === "Enter") verifyOtpCode(); });
   magic.addEventListener("click", async () => {
     if (!sb){ toast("Sign-in unavailable right now"); return; }
     const email = ($("pfEmail").value || "").trim();
     if (!email.includes("@")){ toast("Enter an email"); return; }
+    magic.disabled = true;
+    const label = magic.textContent;
+    magic.textContent = "SENDING…";
     try{
-      await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
-      toast("Magic link sent — check your inbox");
-    }catch(e){ toast("Couldn't send the link"); }
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: location.origin + location.pathname }
+      });
+      if (error) throw error;
+      otpEmail = email;
+      const box = $("otpBox");
+      if (box){ box.classList.add("on"); const f = $("otpCode"); if (f) f.focus(); }
+      toast("Code sent — check your email");
+    }catch(e){
+      const msg = (e && (e.message || e.error_description)) ? String(e.message || e.error_description) : "unknown error";
+      toast("Sign-in failed — " + msg.slice(0, 90));
+      console.error("SIGNIN FAILED", e);
+    }
+    magic.disabled = false;
+    magic.textContent = label;
   });
+}
+
+let otpEmail = "";
+async function verifyOtpCode(){
+  const field = $("otpCode"), btn = $("otpGo");
+  if (!field || !sb) return;
+  const token = (field.value || "").replace(/\D/g, "");
+  if (token.length < 6){ toast("Enter the 6-digit code"); return; }
+  const email = otpEmail || (($("pfEmail") && $("pfEmail").value) || "").trim();
+  if (!email){ toast("Enter your email first"); return; }
+  btn.disabled = true; btn.textContent = "SIGNING IN…";
+  try{
+    const { error } = await sb.auth.verifyOtp({ email, token, type: "email" });
+    if (error) throw error;
+    field.value = "";
+    const box = $("otpBox"); if (box) box.classList.remove("on");
+    sfx("classic");
+    toast("Signed in");
+    // onAuthStateChange restores the tag; render now so it feels instant
+    renderProfile();
+  }catch(e){
+    const msg = (e && e.message) ? String(e.message) : "code rejected";
+    toast("Sign-in failed — " + msg.slice(0, 80));
+  }
+  btn.disabled = false; btn.textContent = "SIGN IN";
 }
 
 /* Pull an existing tag back after sign-in. Without this a returning
@@ -4530,7 +4583,12 @@ function renderProfile(){
       <div class="sechead">Already hunting?</div>
       <p class="pfnote" style="margin:-4px 0 10px">New phone, or a fresh install? Sign in and your tag, Registry count, and streak come back — don't claim a second handle.</p>
       <div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
-      <button class="btn" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>`;
+      <button class="btn" style="width:100%" id="pfMagic">EMAIL ME A CODE</button>
+      <div id="otpBox">
+        <input id="otpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+        <button class="btn hot" style="width:100%;margin-top:9px" id="otpGo">SIGN IN</button>
+        <p class="otpnote">We sent a <b>6-digit code</b> to your email. Type it here — that works even if the link opens in another browser.</p>
+      </div>`;
     $("pfClaim").addEventListener("click", async () => {
       const h = ($("pfHandle").value || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
       if (h.length < 3){ toast("Handle needs 3+ characters"); return; }
@@ -4551,8 +4609,13 @@ function renderProfile(){
     ? (sbSession
         ? ('<p class="pfnote">Signed in — your tag, Registry count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? ("HUNTER'S EDITION · " + CONFIG.premiumDayCap + " verified captures a day") : ("FREE HUNT · " + CONFIG.freeDayCap + " verified captures a day")) + '</p><button class="btn" id="planBtn" style="width:100%;margin-top:11px;' + (sbPremium ? 'color:var(--gold);border-color:rgba(255,194,75,.45)' : '') + '">' + (sbPremium ? "MANAGE HUNTER\'S EDITION" : "SEE HUNTER\'S EDITION") + '</button><p class="pfnote" style="margin-top:10px"><a href="https://tyrehunt.app/privacy.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline">Privacy</a> · <a href="https://tyrehunt.app/terms.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline">Terms</a></p><button class="btn" id="delAcct" style="width:100%;margin-top:12px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE ACCOUNT</button>')
         : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
-           <button class="btn hot" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>
-           <p class="pfnote">One tap in your inbox signs you in. No password, ever.</p>`)
+           <button class="btn hot" style="width:100%" id="pfMagic">EMAIL ME A CODE</button>
+           <div id="otpBox">
+             <input id="otpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+             <button class="btn hot" style="width:100%;margin-top:9px" id="otpGo">SIGN IN</button>
+             <p class="otpnote">We sent a <b>6-digit code</b> to your email. Type it here — that works even if the link opens in another browser.</p>
+           </div>
+           <p class="pfnote">No password, ever.</p>`)
     : (CONFIG.supabaseUrl && CONFIG.supabaseAnon
         ? '<p class="pfnote">Connecting to the server… reopen this in a moment. If it persists, the sign-in library was blocked by your network.</p>'
         : '<p class="pfnote">Playing locally. Drop Supabase keys into CONFIG and this section becomes a one-tap magic-link sign-in with live crew totals.</p>');
