@@ -104,7 +104,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 @keyframes sp{to{transform:rotate(360deg)}}
 
 /* ---------- brackets ---------- */
-#frame{position:absolute;z-index:4;left:8%;right:8%;top:27%;bottom:24%;pointer-events:none;opacity:.5;transition:opacity .3s}
+#frame{position:absolute;z-index:4;left:8%;right:8%;top:calc(env(safe-area-inset-top,0px) + 66px + 6vh);bottom:calc(env(safe-area-inset-bottom,0px) + 186px + 6vh);pointer-events:none;opacity:.5;transition:opacity .3s}
 #frame.hot{opacity:1}
 #frame span{position:absolute;width:34px;height:34px;border:2.5px solid var(--pulse-hi);filter:drop-shadow(0 0 6px rgba(90,150,255,.8))}
 #frame .tl{left:0;top:0;border-right:0;border-bottom:0;border-radius:8px 0 0 0}
@@ -361,6 +361,18 @@ button.bdg[disabled]{cursor:default}
 #reelProg .rbar{height:6px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
 #reelProg .rbar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--ember),var(--gold));transition:width .2s linear}
 
+/* car of the day board */
+#cotdHead{background:linear-gradient(180deg,rgba(255,194,75,.12),rgba(255,194,75,.02));border:1px solid rgba(255,194,75,.4);border-radius:var(--r-md);padding:13px 15px;margin-bottom:12px;display:none}
+#cotdHead.on{display:block}
+#cotdHead .k{font:800 8.5px var(--disp);letter-spacing:.22em;color:var(--gold)}
+#cotdHead .n{font:900 19px var(--disp);letter-spacing:-.01em;margin-top:5px}
+#cotdHead .m{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+.fcard .pos{position:absolute;top:10px;left:10px;z-index:2;font:900 11px var(--disp);letter-spacing:.04em;padding:5px 10px;border-radius:999px;background:rgba(10,11,14,.82);border:1px solid var(--line);color:var(--muted)}
+.fcard .pos.p1{color:#1B0E00;background:linear-gradient(180deg,var(--gold),var(--ember));border-color:transparent}
+.fcard .pos.p2{color:var(--ink);border-color:rgba(255,255,255,.4)}
+.fcard .pos.p3{color:var(--ember);border-color:rgba(255,138,30,.5)}
+.fcard{position:relative}
+
 /* feed */
 .fcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:12px;overflow:hidden}
 .fhead{display:flex;align-items:center;justify-content:space-between;padding:10px 13px}
@@ -450,7 +462,7 @@ button.bdg[disabled]{cursor:default}
   #questMini{justify-self:auto;max-width:112px;align-items:center;text-align:center}
   #questMini .qmn{-webkit-line-clamp:3}
   #shutter{width:74px;height:74px}
-  #frame{left:5%;right:150px;top:16%;bottom:16%}
+  #frame{left:5%;right:150px;top:calc(env(safe-area-inset-top,0px) + 66px + 5vh);bottom:5vh}
   #signal,#utilrow{margin-right:150px}
   #detect{max-width:min(420px, calc(100% - 170px))}
 }
@@ -466,6 +478,16 @@ button.bdg[disabled]{cursor:default}
 .hbrand .thmark{width:24px;height:24px;color:var(--ink);opacity:.92}
 #intro .thmark{width:60px;height:60px;color:var(--ink);display:block;margin:0 auto 12px}
 #intro .thword{display:block;width:min(58%,215px);height:auto;margin:0 auto;color:var(--ink)}
+
+/* viewfinder themes */
+#themeGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:4px}
+.thcard{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:11px 12px;border-radius:var(--r-md);border:1.5px solid var(--line);background:var(--panel);text-align:left}
+.thcard.on{border-color:var(--gold)}
+.thcard.locked{opacity:.42}
+.thcard .sw{width:100%;height:6px;border-radius:3px}
+.thcard .tn{font:800 12px var(--disp);color:var(--ink);letter-spacing:-.01em}
+.thcard .tr{font:700 8.5px var(--mono);letter-spacing:.1em;color:var(--muted);text-transform:uppercase;line-height:1.35}
+.thcard.on .tr{color:var(--gold)}
 
 /* hunter's edition */
 .plancards{display:flex;gap:10px;margin:16px 0 4px}
@@ -624,7 +646,12 @@ input[type=file]{display:none}
     </div>
     <div class="vbody">
       <div id="segFeed" style="display:none">
-        <button class="btn" id="feedRefresh" style="width:100%;margin-bottom:12px">↻ REFRESH THE FEED</button>
+        <div class="seg" id="feedMode" style="margin-bottom:11px">
+          <button data-fm="all" class="on">ALL HUNTS</button>
+          <button data-fm="cotd">CAR OF THE DAY</button>
+        </div>
+        <div id="cotdHead"></div>
+        <button class="btn" id="feedRefresh" style="width:100%;margin-bottom:12px">↻ REFRESH</button>
         <div id="feedList"></div>
       </div>
       <div id="segSpots">
@@ -988,7 +1015,7 @@ let state = {
   boosts: { shield: 0, turboUntil: 0 },
   lastPaidTs: 0, dayPaid: 0,
   bestStreak: 0, cotdStamps: {}, title: "", aiHunt: null, lore: {},
-  sound: true, seenIntro: false, lastFeedSeen: 0,
+  sound: true, seenIntro: false, lastFeedSeen: 0, theme: "standard", themesSeen: [],
   spots: [], redemptions: [], queue: []
 };
 const $ = id => document.getElementById(id);
@@ -1071,6 +1098,8 @@ function ensureDay(){
   if (typeof state.sound !== "boolean") state.sound = true;
   if (typeof state.activeEventCode !== "string") state.activeEventCode = "";
   if (typeof state.lastFeedSeen !== "number") state.lastFeedSeen = 0;
+  if (typeof state.theme !== "string") state.theme = "standard";
+  if (!Array.isArray(state.themesSeen)) state.themesSeen = [];
   if (state.seenIntro === undefined) state.seenIntro = state.spots.length > 0;
   if (!state.boosts) state.boosts = { shield: 0, turboUntil: 0 };
   if (typeof state.dayPaid !== "number") state.dayPaid = 0;
@@ -1979,6 +2008,60 @@ async function makeReel(spots, title, fname){
   }
 }
 
+/* ================= VIEWFINDER THEMES (earned, not bought) ================= */
+const THEMES = [
+  { id:"standard", name:"Standard Issue", req:"Yours from the start",
+    pulse:"#3D7BFF", hi:"#6FA5FF", test:() => true },
+  { id:"barnfind", name:"Barn Find", req:"Find 5 sleeping cars",
+    pulse:"#7E8A9C", hi:"#B6C2D2", test:() => sleepingCount() >= 5 },
+  { id:"archivist", name:"Archivist", req:"File 3 full dossiers",
+    pulse:"#4FB79A", hi:"#7FE0C4", test:() => fullDossierCount() >= 3 },
+  { id:"nightshift", name:"Night Shift", req:"Spot 10 cars after dark",
+    pulse:"#8B5CF6", hi:"#C4A6FF",
+    test:() => state.spots.filter(x => { const h = new Date(x.ts).getHours(); return !x.flagged && (h >= 20 || h < 5); }).length >= 10 },
+  { id:"concours", name:"Concours Lawn", req:"Reach CURATOR",
+    pulse:"#C9A227", hi:"#FFE08A", test:() => { const r = currentRank(hunterStats()); return r.name === "CURATOR" || r.name === "LEGEND"; } },
+  { id:"redmist", name:"Red Mist", req:"Claim 3 bounties",
+    pulse:"#E04B4B", hi:"#FF8A8A", test:() => bountyCount() >= 3 },
+  { id:"legend", name:"Legend", req:"Log 5 legendary cars",
+    pulse:"#FF8A1E", hi:"#FFC24B", test:() => hunterStats().legend >= 5 },
+  { id:"hunters", name:"Hunter's Edition", req:"Hunter's Edition",
+    pulse:"#FFC24B", hi:"#FFF0C2", test:() => !!sbPremium }
+];
+function themeById(id){ return THEMES.find(t => t.id === id) || THEMES[0]; }
+function themeUnlocked(t){ try{ return !!t.test(); }catch(e){ return false; } }
+function applyTheme(){
+  const t = themeById(state.theme);
+  const use = themeUnlocked(t) ? t : THEMES[0];
+  document.documentElement.style.setProperty("--pulse", use.pulse);
+  document.documentElement.style.setProperty("--pulse-hi", use.hi);
+}
+function newlyUnlockedThemes(){
+  const known = state.themesSeen || [];
+  return THEMES.filter(t => t.id !== "standard" && themeUnlocked(t) && known.indexOf(t.id) < 0);
+}
+function checkThemeUnlocks(){
+  const fresh = newlyUnlockedThemes();
+  if (!fresh.length) return;
+  state.themesSeen = (state.themesSeen || []).concat(fresh.map(t => t.id));
+  Store.save();
+  const t = fresh[0];
+  sfx("classic");
+  toast("VIEWFINDER UNLOCKED · " + t.name.toUpperCase());
+}
+function renderThemes(){
+  const box = $("themeGrid");
+  if (!box) return;
+  box.innerHTML = THEMES.map(t => {
+    const open = themeUnlocked(t);
+    const on = (state.theme || "standard") === t.id;
+    return `<button class="thcard ${open ? "" : "locked"} ${on ? "on" : ""}" data-theme="${t.id}" ${open ? "" : "disabled"}>
+      <span class="sw" style="background:linear-gradient(135deg,${t.pulse},${t.hi})"></span>
+      <span class="tn">${esc(t.name)}</span>
+      <span class="tr">${open ? (on ? "EQUIPPED" : "TAP TO EQUIP") : esc(t.req)}</span>
+    </button>`;
+  }).join("");
+}
 /* ================= MOST WANTED (built, then lost) ================= */
 const MOST_WANTED = [
   { key:"atlantic", name:"Bugatti Type 57 SC Atlantic", sub:"chassis 57453 · \u201cLa Voiture Noire\u201d", built:"1936 · one of four",
@@ -2198,6 +2281,15 @@ function openPremium(){
   renderPlanChoice();
 }
 $("premBack").addEventListener("click", () => $("premSheet").classList.remove("on"));
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-theme]");
+  if (!t || t.disabled) return;
+  state.theme = t.dataset.theme;
+  Store.save();
+  applyTheme();
+  renderThemes();
+  sfx("extra");
+});
 document.addEventListener("click", e => { if (e.target.closest("#planBtn")) openPremium(); });
 $("premGo").addEventListener("click", () => {
   if (!sb || !sbSession){ toast("Sign in first so we can attach the upgrade to your tag"); return; }
@@ -2478,11 +2570,14 @@ async function liveCapture(r){
 /* ================= COMMUNITY FEED / LIKES / COMMENTS / HUNTERS ================= */
 const RCHIP = { everyday:"color:#8B93A1;border:1px solid rgba(139,147,161,.4)", classic:"color:var(--ember);border:1px solid rgba(255,138,30,.5)", rare:"color:var(--pulse-hi);border:1px solid rgba(94,151,255,.5)", legendary:"color:var(--gold);border:1px solid rgba(255,194,75,.55)" };
 let feedRows = [], feedLikes = {}, feedMine = new Set(), feedCmts = {}, feedHandles = {};
+let feedMode = "all", feedRank = {};
 function feedCardHtml(r){
   const nm = r.cx_name || ((r.make || "") + " " + (r.model || "")).trim();
   const likes = feedLikes[r.id] || 0, cmts = feedCmts[r.id] || 0;
   const mine = feedMine.has(r.id);
+  const pos = feedRank[r.id];
   return `<div class="fcard">
+    ${pos ? `<span class="pos p${pos <= 3 ? pos : ""}">${pos === 1 ? "TOP SHOT" : "#" + pos}</span>` : ""}
     <div class="fhead"><button class="fh" data-hunter="${r.user_id}">@${esc(feedHandles[r.user_id] || "hunter")}</button><span style="display:flex;align-items:center;gap:6px"><span class="fago">${ago(r.created_at)}</span>${sbSession && r.user_id !== sbSession.user.id ? `<button class="modDots" data-mod="${r.user_id}|${r.id}|">⋯</button>` : ""}</span></div>
     <div class="fimg" style="background-image:url('${thumbUrl(r.img_path)}')"></div>
     <div class="frow">
@@ -2498,12 +2593,29 @@ async function renderFeed2(){
   if (!sb || !sbSession){ box.innerHTML = '<p class="pfnote">Sign in (tap the streak ring) and the community feed lights up here.</p>'; return; }
   box.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading the feed…</p>';
   try{
-    const { data: rows } = await sb.from("captures")
-      .select("id,user_id,make,model,cx_name,rarity,img_path,created_at")
-      .not("img_path", "is", null).is("flagged", null)
-      .order("created_at", { ascending: false }).limit(30);
+    const cd = carOfTheDay();
+    const cotd = feedMode === "cotd";
+    $("cotdHead").classList.toggle("on", cotd);
+    let q = sb.from("captures")
+      .select("id,user_id,make,model,cx_key,cx_name,rarity,img_path,created_at")
+      .not("img_path", "is", null).is("flagged", null);
+    if (cotd){
+      const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+      q = q.eq("cx_key", "n" + cd.n).gte("created_at", midnight.toISOString()).limit(60);
+    } else {
+      q = q.limit(30);
+    }
+    const { data: rows } = await q.order("created_at", { ascending: false });
     feedRows = (rows || []).filter(r => !myBlocks.has(r.user_id));
-    if (!feedRows.length){ box.innerHTML = '<p class="pfnote">Nothing published yet. Your next verified capture lands here for every hunter to see.</p>'; return; }
+    if (!feedRows.length){
+      if (feedMode === "cotd"){
+        $("cotdHead").innerHTML = '<div class="k">CAR OF THE DAY</div><div class="n">' + esc(carOfTheDay().name) + '</div><div class="m">Nobody has landed one yet today. First shot takes the board.</div>';
+        box.innerHTML = '';
+      } else {
+        box.innerHTML = '<p class="pfnote">Nothing published yet. Your next verified capture lands here for every hunter to see.</p>';
+      }
+      return;
+    }
     const ids = feedRows.map(r => r.id);
     const uids = [...new Set(feedRows.map(r => r.user_id))];
     const [likesRes, cmtsRes, profsRes] = await Promise.all([
@@ -2515,9 +2627,28 @@ async function renderFeed2(){
     (likesRes.data || []).forEach(l => { feedLikes[l.capture_id] = (feedLikes[l.capture_id] || 0) + 1; if (l.user_id === sbSession.user.id) feedMine.add(l.capture_id); });
     (cmtsRes.data || []).forEach(c => { feedCmts[c.capture_id] = (feedCmts[c.capture_id] || 0) + 1; });
     (profsRes.data || []).forEach(pp => { feedHandles[pp.id] = pp.handle; });
+    feedRank = {};
+    if (feedMode === "cotd"){
+      feedRows.sort((a, b) => (feedLikes[b.id] || 0) - (feedLikes[a.id] || 0) || new Date(a.created_at) - new Date(b.created_at));
+      feedRows.forEach((r, i) => { feedRank[r.id] = i + 1; });
+      const cd2 = carOfTheDay();
+      const mine = sbSession ? feedRows.some(r => r.user_id === sbSession.user.id) : false;
+      $("cotdHead").innerHTML = '<div class="k">CAR OF THE DAY</div><div class="n">' + esc(cd2.name) + '</div>' +
+        '<div class="m">' + (feedRows.length
+          ? feedRows.length + ' hunter' + (feedRows.length === 1 ? '' : 's') + ' filed one today · most-liked shot leads' +
+            (mine ? '' : '<br>Yours isn\'t on the board yet.')
+          : 'Nobody has landed one yet today. First shot takes the board.') + '</div>';
+    }
     box.innerHTML = feedRows.map(feedCardHtml).join("");
   }catch(e){ box.innerHTML = '<p class="pfnote">Feed didn\'t load — pull refresh in a moment.</p>'; }
 }
+$("feedMode").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  feedMode = b.dataset.fm;
+  document.querySelectorAll("#feedMode button").forEach(x => x.classList.toggle("on", x === b));
+  renderFeed2();
+});
 $("feedRefresh").addEventListener("click", renderFeed2);
 $("feedList").addEventListener("click", async e => {
   const lk = e.target.closest("[data-like]");
@@ -4017,6 +4148,7 @@ function openProfile(){
   if (sb && sbSession) refreshCrew().then(renderProfile);
 }
 function renderProfile(){
+  setTimeout(renderThemes, 0);
   const p = state.profile, body = $("pfBody");
   $("pfMeta").textContent = p ? "@" + p.handle + " · " + p.code : "Claim a tag to hunt with a crew";
   if (!p){
@@ -4063,6 +4195,8 @@ function renderProfile(){
     <div class="sechead">Account</div>
     ${acct}
     <button class="btn" id="pfSound" style="width:100%;margin-top:10px">SOUND: ${state.sound ? "ON" : "OFF"}</button>
+    <div class="sechead">Viewfinder</div>
+    <div id="themeGrid"></div>
     <div class="sechead">Add hunter</div>
     <div style="display:flex;gap:10px;align-items:flex-start">
       <div class="dfield" style="flex:1;margin:0"><input id="pfAdd" placeholder="TH-XXXX-XXXX" autocapitalize="characters"></div>
@@ -4670,6 +4804,7 @@ async function overlayTerritory(ctx, X, Y, minLa, maxLa, minLo, maxLo){
   initSupabase();
   if (state.seenIntro){ startCam(); }
   else { $("intro").classList.add("on"); }
+  applyTheme();
   if (navigator.onLine) processQueue();
 })();
 </script>
