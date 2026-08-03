@@ -4372,11 +4372,12 @@ async function initSupabase(){
     sbSession = (data && data.session) || null;
     sb.auth.onAuthStateChange((_e, s) => {
       sbSession = s;
-      syncProfile();
+      restoreProfile();
       fetchPlan();
       initRealtime();
       if ($("profile").classList.contains("on")) renderProfile();
     });
+    restoreProfile();
     fetchPlan();
     checkOperator();
     initRealtime();
@@ -4392,6 +4393,44 @@ async function fetchPlan(){
     if ($("profile").classList.contains("on")) renderProfile();
   }catch(e){}
 }
+function bindMagic(){
+  const magic = $("pfMagic");
+  if (!magic) return;
+  magic.addEventListener("click", async () => {
+    if (!sb){ toast("Sign-in unavailable right now"); return; }
+    const email = ($("pfEmail").value || "").trim();
+    if (!email.includes("@")){ toast("Enter an email"); return; }
+    try{
+      await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+      toast("Magic link sent — check your inbox");
+    }catch(e){ toast("Couldn't send the link"); }
+  });
+}
+
+/* Pull an existing tag back after sign-in. Without this a returning
+   hunter on a new device is treated as brand new and would claim a
+   second handle against the same account. */
+async function restoreProfile(){
+  if (!sb || !sbSession) return;
+  try{
+    const { data } = await sb.from("profiles")
+      .select("handle,code,title").eq("id", sbSession.user.id).maybeSingle();
+    if (data && data.handle){
+      const before = state.profile && state.profile.handle;
+      state.profile = { handle: data.handle, code: data.code || (state.profile && state.profile.code) || genCode() };
+      if (data.title) state.title = data.title;
+      await Store.save();
+      renderProfile();
+      renderHUD();
+      if (!before) toast("Welcome back, @" + data.handle);
+      else if (before !== data.handle) toast("Signed in as @" + data.handle);
+      syncProfile();
+    } else {
+      syncProfile();   // no server tag yet — push the local one up
+    }
+  }catch(e){}
+}
+
 async function syncProfile(){
   if (!sb || !sbSession || !state.profile) return;
   try{
@@ -4479,14 +4518,19 @@ function openProfile(){
   if (sb && sbSession) refreshCrew().then(renderProfile);
 }
 function renderProfile(){
-  setTimeout(renderThemes, 0);
+  setTimeout(() => { renderThemes(); renderOpEntry(); }, 0);
   const p = state.profile, body = $("pfBody");
   $("pfMeta").textContent = p ? "@" + p.handle + " · " + p.code : "Claim a tag to hunt with a crew";
   if (!p){
     body.innerHTML = `
+      <div class="sechead" style="margin-top:0">New here</div>
       <div class="dfield"><label>Handle</label><input id="pfHandle" placeholder="curatorofspeed" maxlength="20" autocapitalize="none"></div>
       <button class="btn hot" style="width:100%" id="pfClaim">CLAIM TAG</button>
-      <p class="pfnote">Your tag rides on every share card, and your hunter code is how a crew finds you at a meet. Nothing else required.</p>`;
+      <p class="pfnote">Your tag rides on every share card, and your hunter code is how a crew finds you at a meet. Nothing else required.</p>
+      <div class="sechead">Already hunting?</div>
+      <p class="pfnote" style="margin:-4px 0 10px">New phone, or a fresh install? Sign in and your tag, Registry count, and streak come back — don't claim a second handle.</p>
+      <div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
+      <button class="btn" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>`;
     $("pfClaim").addEventListener("click", async () => {
       const h = ($("pfHandle").value || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
       if (h.length < 3){ toast("Handle needs 3+ characters"); return; }
@@ -4496,6 +4540,7 @@ function renderProfile(){
       renderProfile();
       toast("Tag claimed · @" + h);
     });
+    bindMagic();
     return;
   }
   const myStats = hunterStats();
@@ -4563,15 +4608,7 @@ function renderProfile(){
     if (state.sound) sfx("classic");
   });
   $("pfAddBtn").addEventListener("click", addCrew);
-  const magic = $("pfMagic");
-  if (magic) magic.addEventListener("click", async () => {
-    const email = ($("pfEmail").value || "").trim();
-    if (!email.includes("@")){ toast("Enter an email"); return; }
-    try{
-      await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
-      toast("Magic link sent — check your inbox");
-    }catch(e){ toast("Couldn't send the link"); }
-  });
+  bindMagic();
   body.querySelectorAll(".rm").forEach(b => b.addEventListener("click", async () => {
     state.crew = state.crew.filter(c => c.code !== b.dataset.code);
     await Store.save();
