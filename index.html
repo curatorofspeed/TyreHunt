@@ -480,6 +480,25 @@ button.bdg[disabled]{cursor:default}
 #intro .thmark{width:60px;height:60px;color:var(--ink);display:block;margin:0 auto 12px}
 #intro .thword{display:block;width:min(58%,215px);height:auto;margin:0 auto;color:var(--ink)}
 
+/* operator console */
+#opSheet{position:absolute;inset:0;z-index:29;display:none;flex-direction:column;background:var(--carbon)}
+#opSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
+.opstats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+.opstat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:11px}
+.opstat b{display:block;font:900 20px var(--disp);color:var(--ink);line-height:1}
+.opstat span{font:700 8px var(--disp);letter-spacing:.16em;color:var(--muted);text-transform:uppercase;display:block;margin-top:4px}
+.opcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;margin-bottom:11px}
+.opcard.hot{border-color:rgba(255,93,93,.45)}
+.opcard .oimg{width:100%;aspect-ratio:4/3;background:#0E1013 center/cover no-repeat;display:block}
+.opcard .obody{padding:12px 13px}
+.opcard .orsn{font:800 10px var(--disp);letter-spacing:.14em;color:var(--bad);text-transform:uppercase}
+.opcard .ometa{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+.opcard .otext{font-size:12.5px;color:var(--ink);margin-top:7px;line-height:1.5;word-break:break-word}
+.opacts{display:flex;gap:7px;padding:0 13px 13px}
+.opacts button{flex:1;font:800 9.5px var(--disp);letter-spacing:.1em;padding:9px 6px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted)}
+.opacts button.danger{color:var(--bad);border-color:rgba(255,93,93,.4)}
+.opacts button.ok{color:var(--ok,#3ECF8E);border-color:rgba(62,207,142,.4)}
+
 /* leaderboard */
 #lbWrap{margin-top:6px}
 .lbrow{display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;padding:11px 13px;border-bottom:1px solid var(--line)}
@@ -951,6 +970,19 @@ input[type=file]{display:none}
       <div class="dfield"><label>What you saw</label><textarea id="lBody" maxlength="600" placeholder="Under a tarp behind a body shop off Route 9. Riveted spine down the roof, no engine. Owner said it came from an estate in the 70s."></textarea></div>
       <button class="btn hot" id="lSend" style="width:100%;margin-top:8px">SEND LEAD</button>
       <div id="lMine" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+  <!-- ============ OPERATOR CONSOLE ============ -->
+  <section id="opSheet">
+    <div class="sheethead"><h3>Operator</h3><button class="btn" id="opBack" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
+    <div class="sheetbody">
+      <div class="opstats" id="opStats"></div>
+      <div class="seg" id="opSeg" style="margin-bottom:12px">
+        <button data-op="reports" class="on">REPORTS</button>
+        <button data-op="leads">LEADS</button>
+      </div>
+      <div id="opList"></div>
     </div>
   </section>
 
@@ -2049,6 +2081,138 @@ async function makeReel(spots, title, fname){
     toast("Couldn't cut the reel");
   }
 }
+
+/* ================= OPERATOR CONSOLE =================
+   Visible only to accounts flagged is_admin in the database.
+   Every action goes through the normal session — the database
+   decides what is permitted, not the client. */
+let isOperator = false, opMode = "reports";
+async function checkOperator(){
+  isOperator = false;
+  if (!sb || !sbSession) { renderOpEntry(); return; }
+  try{
+    const { data } = await sb.from("profiles").select("is_admin").eq("id", sbSession.user.id).maybeSingle();
+    isOperator = !!(data && data.is_admin);
+  }catch(e){}
+  renderOpEntry();
+}
+function renderOpEntry(){
+  const b = $("opBtn");
+  if (b) b.style.display = isOperator ? "" : "none";
+}
+async function openOperator(){
+  if (!isOperator) return;
+  $("opSheet").classList.add("on");
+  renderOpStats();
+  renderOpList();
+}
+$("opBack").addEventListener("click", () => $("opSheet").classList.remove("on"));
+document.addEventListener("click", e => { if (e.target.closest("#opBtn")) openOperator(); });
+$("opSeg").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  opMode = b.dataset.op;
+  document.querySelectorAll("#opSeg button").forEach(x => x.classList.toggle("on", x === b));
+  renderOpList();
+});
+async function renderOpStats(){
+  const box = $("opStats");
+  box.innerHTML = '<div class="opstat"><b>…</b><span>Hunters</span></div><div class="opstat"><b>…</b><span>Open reports</span></div><div class="opstat"><b>…</b><span>New leads</span></div>';
+  try{
+    const midnight = new Date(); midnight.setHours(0,0,0,0);
+    const [h, r, l] = await Promise.all([
+      sb.from("profiles").select("id", { count: "exact", head: true }),
+      sb.from("reports").select("id", { count: "exact", head: true }).eq("status", "new"),
+      sb.from("leads").select("id", { count: "exact", head: true }).eq("reviewed", false)
+    ]);
+    box.innerHTML =
+      '<div class="opstat"><b>' + (h.count ?? 0) + '</b><span>Hunters</span></div>' +
+      '<div class="opstat"><b>' + (r.count ?? 0) + '</b><span>Open reports</span></div>' +
+      '<div class="opstat"><b>' + (l.count ?? 0) + '</b><span>New leads</span></div>';
+  }catch(e){ box.innerHTML = '<p class="pfnote">Stats unavailable.</p>'; }
+}
+async function renderOpList(){
+  const box = $("opList");
+  box.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading…</p>';
+  try{
+    if (opMode === "reports"){
+      const { data: reps } = await sb.from("reports")
+        .select("id,reporter,reported_user,capture_id,comment_id,reason,created_at")
+        .eq("status", "new").order("created_at", { ascending: false }).limit(40);
+      if (!reps || !reps.length){ box.innerHTML = '<p class="pfnote">Nothing reported. Quiet is good.</p>'; return; }
+      // pull the reported captures so the operator can SEE what was flagged
+      const capIds = reps.map(r => r.capture_id).filter(Boolean);
+      const cmtIds = reps.map(r => r.comment_id).filter(Boolean);
+      const [caps, cmts] = await Promise.all([
+        capIds.length ? sb.from("captures").select("id,img_path,cx_name,make,model,user_id").in("id", capIds) : { data: [] },
+        cmtIds.length ? sb.from("comments").select("id,body,user_id").in("id", cmtIds) : { data: [] }
+      ]);
+      const capBy = {}, cmtBy = {};
+      (caps.data || []).forEach(c => capBy[c.id] = c);
+      (cmts.data || []).forEach(c => cmtBy[c.id] = c);
+      const uids = [...new Set(reps.map(r => r.reported_user).filter(Boolean))];
+      if (uids.length){
+        const { data: profs } = await sb.from("profiles").select("id,handle").in("id", uids);
+        (profs || []).forEach(pp => feedHandles[pp.id] = pp.handle);
+      }
+      box.innerHTML = reps.map(r => {
+        const cap = r.capture_id ? capBy[r.capture_id] : null;
+        const cmt = r.comment_id ? cmtBy[r.comment_id] : null;
+        const who = feedHandles[r.reported_user] || "hunter";
+        return '<div class="opcard hot">' +
+          (cap && cap.img_path ? '<span class="oimg" style="background-image:url(\'' + thumbUrl(cap.img_path) + '\')"></span>' : '') +
+          '<div class="obody">' +
+            '<div class="orsn">' + esc(r.reason || "reported") + '</div>' +
+            '<div class="ometa">@' + esc(who) + ' · ' + ago(r.created_at) +
+              (cap ? ' · ' + esc(cap.cx_name || ((cap.make || "") + " " + (cap.model || "")).trim()) : '') + '</div>' +
+            (cmt ? '<div class="otext">“' + esc(cmt.body) + '”</div>' : '') +
+          '</div>' +
+          '<div class="opacts">' +
+            '<button class="ok" data-opdismiss="' + r.id + '">DISMISS</button>' +
+            (cap ? '<button class="danger" data-opdelcap="' + cap.id + '" data-rep="' + r.id + '">REMOVE SPOT</button>' : '') +
+            (cmt ? '<button class="danger" data-opdelcmt="' + cmt.id + '" data-rep="' + r.id + '">REMOVE COMMENT</button>' : '') +
+          '</div>' +
+        '</div>';
+      }).join("");
+    } else {
+      const { data: leads } = await sb.from("leads")
+        .select("id,hunter,wanted_key,body,created_at")
+        .eq("reviewed", false).order("created_at", { ascending: false }).limit(40);
+      if (!leads || !leads.length){ box.innerHTML = '<p class="pfnote">No new leads.</p>'; return; }
+      box.innerHTML = leads.map(l => {
+        const w = MOST_WANTED.find(x => x.key === l.wanted_key);
+        return '<div class="opcard"><div class="obody">' +
+          '<div class="orsn" style="color:var(--gold)">' + esc(w ? w.name : l.wanted_key) + '</div>' +
+          '<div class="ometa">' + ago(l.created_at) + '</div>' +
+          '<div class="otext">' + esc(l.body) + '</div>' +
+        '</div><div class="opacts"><button class="ok" data-opread="' + l.id + '">MARK REVIEWED</button></div></div>';
+      }).join("");
+    }
+  }catch(e){ box.innerHTML = '<p class="pfnote">Couldn\'t load — check the admin policies are applied.</p>'; }
+}
+$("opList").addEventListener("click", async e => {
+  const d = e.target.closest("[data-opdismiss]");
+  const dc = e.target.closest("[data-opdelcap]");
+  const dm = e.target.closest("[data-opdelcmt]");
+  const rd = e.target.closest("[data-opread]");
+  try{
+    if (d){ await sb.from("reports").update({ status: "dismissed" }).eq("id", +d.dataset.opdismiss); toast("Dismissed"); }
+    else if (dc){
+      await sb.from("captures").delete().eq("id", +dc.dataset.opdelcap);
+      await sb.from("reports").update({ status: "actioned" }).eq("id", +dc.dataset.rep);
+      toast("Spot removed");
+    }
+    else if (dm){
+      await sb.from("comments").delete().eq("id", +dm.dataset.opdelcmt);
+      await sb.from("reports").update({ status: "actioned" }).eq("id", +dm.dataset.rep);
+      toast("Comment removed");
+    }
+    else if (rd){ await sb.from("leads").update({ reviewed: true }).eq("id", +rd.dataset.opread); toast("Lead reviewed"); }
+    else return;
+  }catch(err){ toast("Action failed — check permissions"); return; }
+  renderOpStats();
+  renderOpList();
+});
 
 /* ================= LEADERBOARD ================= */
 let lbSort = "models", lbRows = [], lbLoaded = 0;
@@ -4214,6 +4378,7 @@ async function initSupabase(){
       if ($("profile").classList.contains("on")) renderProfile();
     });
     fetchPlan();
+    checkOperator();
     initRealtime();
     if ($("profile").classList.contains("on")) renderProfile();
   }catch(e){ sb = null; toast("Sign-in unavailable — network blocked the library"); }
@@ -4361,6 +4526,7 @@ function renderProfile(){
     <div class="sechead">Account</div>
     ${acct}
     <button class="btn" id="pfSound" style="width:100%;margin-top:10px">SOUND: ${state.sound ? "ON" : "OFF"}</button>
+    <button class="btn" id="opBtn" style="width:100%;margin-bottom:14px;display:none;color:var(--gold);border-color:rgba(255,194,75,.45)">OPERATOR CONSOLE</button>
     <div class="sechead">Viewfinder</div>
     <div id="themeGrid"></div>
     <div class="sechead">Add hunter</div>
