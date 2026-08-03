@@ -1757,26 +1757,34 @@ async function planHunt(force){
     const missing = CODEX_SEED.filter(e => !agg["n" + e.n]).sort(() => Math.random() - .5).slice(0, 8).map(e => e.name);
     const here = groundsGeo || state.spots.find(s => s.lat != null) || null;
     const openQ = state.dayQ.ids.map(questById).filter(q => q && !state.dayQ.done[q.id]).map(q => q.name + " (" + q.desc + ")");
-    const prompt = 'You are the hunt master for TYRE HUNT, a car-spotting game. Build today\'s custom hunt plan for one player. Respond ONLY with minified JSON, no markdown fences: {"title":string,"brief":string,"targets":[{"name":string,"why":string}]}. Rules: 4-5 targets, realistically spottable in a normal day (one easy, mostly medium, one stretch), enthusiast voice, each why under 12 words, no emoji, title under 5 words. Context — local time: ' + new Date().toString() + '; approx location: ' + (here ? here.lat + "," + here.lng : "unknown") + '; active event: ' + (state.activeEvent || "none") + '; registry gaps worth weighing: ' + (missing.join(", ") || "none") + '; open daily hunts: ' + (openQ.join("; ") || "none") + '.';
-    const headers = { "Content-Type": "application/json" };
-    if (CONFIG.apiKey){
-      headers["x-api-key"] = CONFIG.apiKey;
-      headers["anthropic-version"] = "2023-06-01";
-      headers["anthropic-dangerous-direct-browser-access"] = "true";
+    const context = 'local time: ' + new Date().toString()
+      + '; approx location: ' + (here ? here.lat + "," + here.lng : "unknown")
+      + '; active event: ' + (state.activeEvent || "none")
+      + '; registry gaps worth weighing: ' + (missing.join(", ") || "none")
+      + '; open daily hunts: ' + (openQ.join("; ") || "none") + '.';
+
+    if (!sb || !sbSession){ toast("Sign in to have a hunt planned for you"); return; }
+    const r = await withTimeout(fetch(CONFIG.supabaseUrl + "/functions/v1/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sbSession.access_token },
+      body: JSON.stringify({ mode: "plan", context })
+    }), 45000, "hunt plan");
+    if (!r.ok){
+      let detail = "";
+      try{ const j = await r.json(); detail = j.error || ""; }catch(_e){}
+      throw new Error("plan " + r.status + (detail ? " · " + detail : ""));
     }
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST", headers,
-      body: JSON.stringify({ model: CONFIG.model, max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
-    });
-    if (!r.ok) throw new Error("api " + r.status);
-    const data = await r.json();
-    const text = (data.content || []).map(b => b.type === "text" ? b.text : "").join("").replace(/```json|```/g, "").trim();
-    const plan = JSON.parse(text);
+    const out = await r.json();
+    if (!out || !out.plan) throw new Error("empty plan");
+    const plan = out.plan;
     state.aiHunt = { day: state.day, plan };
     await Store.save();
     renderQuests();
     toast("Hunt planned · " + (plan.title || ""));
-  }catch(e){ toast("Couldn't plan the hunt — try again"); }
+  }catch(e){
+    const msg = (e && e.message) ? String(e.message) : "unknown";
+    toast("Couldn't plan the hunt — " + msg.slice(0, 60));
+  }
 }
 $("huntPlanBtn").addEventListener("click", () => planHunt(true));
 
