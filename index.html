@@ -480,6 +480,33 @@ button.bdg[disabled]{cursor:default}
 #intro .thmark{width:60px;height:60px;color:var(--ink);display:block;margin:0 auto 12px}
 #intro .thword{display:block;width:min(58%,215px);height:auto;margin:0 auto;color:var(--ink)}
 
+/* leaderboard */
+#lbWrap{margin-top:6px}
+.lbrow{display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;padding:11px 13px;border-bottom:1px solid var(--line)}
+.lbrow:last-child{border-bottom:0}
+.lbrow.me{background:linear-gradient(90deg,rgba(255,138,30,.12),transparent);border-radius:var(--r-sm)}
+.lbrow .rk{font:900 13px var(--mono);color:var(--muted);text-align:center}
+.lbrow.p1 .rk{color:var(--gold)} .lbrow.p2 .rk{color:var(--ink)} .lbrow.p3 .rk{color:var(--ember)}
+.lbrow .who{min-width:0}
+.lbrow .hd{font:700 13px var(--mono);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lbrow .ti{font:700 8.5px var(--disp);letter-spacing:.14em;color:var(--gold);text-transform:uppercase;margin-top:2px}
+.lbrow .sc{text-align:right;flex:0 0 auto}
+.lbrow .sc b{display:block;font:900 15px var(--disp);color:var(--ink);line-height:1}
+.lbrow .sc span{font:700 8px var(--disp);letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+#lbNote{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5}
+
+/* first-run coach */
+#coach{position:absolute;z-index:22;display:none;pointer-events:none}
+#coach.on{display:block;animation:sheetIn .28s cubic-bezier(.2,.8,.3,1)}
+#coach .bub{position:relative;pointer-events:auto;max-width:230px;background:linear-gradient(180deg,var(--gold),var(--ember));color:#1B0E00;border-radius:14px;padding:11px 14px;box-shadow:0 12px 30px -8px rgba(0,0,0,.8)}
+#coach .bub b{display:block;font:900 12px var(--disp);letter-spacing:-.01em;margin-bottom:3px}
+#coach .bub span{display:block;font-size:11.5px;line-height:1.45;font-weight:600;opacity:.86}
+#coach .bub i{position:absolute;width:12px;height:12px;background:var(--ember);transform:rotate(45deg);left:50%;margin-left:-6px;bottom:-5px;border-radius:2px}
+#coach .bub.below i{bottom:auto;top:-5px;background:var(--gold)}
+.coachpulse{position:relative}
+.coachpulse::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--gold);opacity:0;animation:coachring 1.8s ease-out infinite;pointer-events:none}
+@keyframes coachring{0%{opacity:.9;transform:scale(.92)}70%{opacity:0;transform:scale(1.18)}100%{opacity:0}}
+
 /* viewfinder themes */
 #themeGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:4px}
 .thcard{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:11px 12px;border-radius:var(--r-md);border:1.5px solid var(--line);background:var(--panel);text-align:left}
@@ -737,6 +764,14 @@ input[type=file]{display:none}
       </div>
       <div class="sechead">Season</div>
       <div id="seasonCard"></div>
+      <div class="sechead">Leaderboard</div>
+      <div class="seg" id="lbSeg" style="margin-bottom:10px">
+        <button data-lb="models" class="on">REGISTRY</button>
+        <button data-lb="legends">LEGENDARY</button>
+        <button data-lb="streak">STREAK</button>
+      </div>
+      <div id="lbWrap"><p class="pfnote">Sign in to see where you stand.</p></div>
+      <p id="lbNote"></p>
       <div class="sechead">Records</div>
       <div id="recordList"></div>
       <div class="sechead">Titles</div>
@@ -974,6 +1009,8 @@ input[type=file]{display:none}
 
   <div id="reelProg"><div class="box"><div class="rt">CUTTING YOUR REEL</div><div class="rs">Rendering in real time — keep the app open</div><div class="rbar"><i id="reelBar"></i></div></div></div>
 
+  <div id="coach"><div class="bub" id="coachBub"><b id="coachTitle"></b><span id="coachBody"></span><i></i></div></div>
+
   <div id="flash"></div>
   <div id="toast"></div>
   <input type="file" id="fileCam" accept="image/*" capture="environment">
@@ -1016,7 +1053,7 @@ let state = {
   boosts: { shield: 0, turboUntil: 0 },
   lastPaidTs: 0, dayPaid: 0,
   bestStreak: 0, cotdStamps: {}, title: "", aiHunt: null, lore: {},
-  sound: true, seenIntro: false, lastFeedSeen: 0, theme: "standard", themesSeen: [],
+  sound: true, seenIntro: false, lastFeedSeen: 0, theme: "standard", themesSeen: [], coach: {},
   spots: [], redemptions: [], queue: []
 };
 const $ = id => document.getElementById(id);
@@ -1101,6 +1138,9 @@ function ensureDay(){
   if (typeof state.lastFeedSeen !== "number") state.lastFeedSeen = 0;
   if (typeof state.theme !== "string") state.theme = "standard";
   if (!Array.isArray(state.themesSeen)) state.themesSeen = [];
+  if (!state.coach || typeof state.coach !== "object") state.coach = {};
+  // anyone with spots already knows the basics
+  if (state.spots.length > 0 && !state.coach.shutter){ state.coach = { shutter:1, garage:1, document:1 }; }
   if (state.seenIntro === undefined) state.seenIntro = state.spots.length > 0;
   if (!state.boosts) state.boosts = { shield: 0, turboUntil: 0 };
   if (typeof state.dayPaid !== "number") state.dayPaid = 0;
@@ -1733,6 +1773,7 @@ $("installPill").addEventListener("click", async () => {
 });
 $("introGo").addEventListener("click", async () => {
   state.seenIntro = true;
+  setTimeout(coachFirstShutter, 400);
   await Store.save();
   $("intro").classList.remove("on");
   startCam();
@@ -2007,6 +2048,122 @@ async function makeReel(spots, title, fname){
     prog.classList.remove("on");
     toast("Couldn't cut the reel");
   }
+}
+
+/* ================= LEADERBOARD ================= */
+let lbSort = "models", lbRows = [], lbLoaded = 0;
+const LB_LABEL = { models: "MODELS", legends: "LEGENDARY", streak: "DAY STREAK" };
+async function renderLeaderboard(force){
+  const box = $("lbWrap");
+  if (!box) return;
+  if (!sb || !sbSession){ box.innerHTML = '<p class="pfnote">Sign in to see where you stand.</p>'; $("lbNote").textContent = ""; return; }
+  if (!force && Date.now() - lbLoaded < 60000 && lbRows.length){ paintLeaderboard(); return; }
+  box.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading the board…</p>';
+  try{
+    const { data } = await sb.from("leaderboard")
+      .select("handle,title,models,legends,streak,spots")
+      .order(lbSort, { ascending: false })
+      .limit(25);
+    lbRows = data || [];   // the board is a public ranking; blocks apply to feed content, not standings
+    lbLoaded = Date.now();
+    paintLeaderboard();
+  }catch(e){
+    box.innerHTML = '<p class="pfnote">Board didn\'t load — pull again in a moment.</p>';
+  }
+}
+function paintLeaderboard(){
+  const box = $("lbWrap");
+  const meHandle = state.profile && state.profile.handle;
+  if (!lbRows.length){ box.innerHTML = '<p class="pfnote">Nobody on the board yet. Be first.</p>'; return; }
+  box.innerHTML = lbRows.map((r, i) => {
+    const me = meHandle && r.handle === meHandle;
+    const val = r[lbSort] || 0;
+    return `<div class="lbrow ${i < 3 ? "p" + (i + 1) : ""} ${me ? "me" : ""}">
+      <span class="rk">${i + 1}</span>
+      <span class="who"><span class="hd">@${esc(r.handle)}</span>${r.title ? `<span class="ti">${esc(r.title)}</span>` : ""}</span>
+      <span class="sc"><b>${val}</b><span>${LB_LABEL[lbSort]}</span></span>
+    </div>`;
+  }).join("");
+  const mine = lbRows.findIndex(r => meHandle && r.handle === meHandle);
+  $("lbNote").textContent = mine >= 0
+    ? "You're " + (mine + 1) + " of the top " + lbRows.length + "."
+    : "Top 25 shown. Keep filing and you'll appear here.";
+}
+$("lbSeg").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  lbSort = b.dataset.lb;
+  document.querySelectorAll("#lbSeg button").forEach(x => x.classList.toggle("on", x === b));
+  renderLeaderboard(true);
+});
+
+/* ================= FIRST-RUN COACHING =================
+   Two or three beats, each fired when it is actually relevant.
+   Never a carousel — the camera is the product, not a tour. */
+let coachKey = null, coachTimer = null;
+function coachSeen(k){ return !!(state.coach && state.coach[k]); }
+function coachHide(){
+  if (coachTimer){ clearTimeout(coachTimer); coachTimer = null; }
+  const c = $("coach");
+  c.classList.remove("on");
+  document.querySelectorAll(".coachpulse").forEach(e => e.classList.remove("coachpulse"));
+  coachKey = null;
+}
+function coachDismiss(){
+  if (coachKey){
+    state.coach[coachKey] = 1;
+    Store.save();
+  }
+  coachHide();
+}
+function coachPoint(key, targetId, title, body, opts){
+  if (coachSeen(key)) return;
+  const t = $(targetId);
+  if (!t) return;
+  const camOn = document.querySelector(".tab.cam") && document.querySelector(".tab.cam").classList.contains("on");
+  if (opts && opts.huntOnly && !camOn) return;
+  coachKey = key;
+  $("coachTitle").textContent = title;
+  $("coachBody").textContent = body;
+  const c = $("coach"), bub = $("coachBub");
+  c.classList.add("on");
+  t.classList.add("coachpulse");
+  // measure, then place above the target (or below if there is no room)
+  const tr = t.getBoundingClientRect();
+  const br = bub.getBoundingClientRect();
+  const below = tr.top < br.height + 24;
+  bub.classList.toggle("below", below);
+  let left = tr.left + tr.width / 2 - br.width / 2;
+  left = Math.max(12, Math.min(left, window.innerWidth - br.width - 12));
+  c.style.left = left + "px";
+  c.style.top = (below ? tr.bottom + 12 : tr.top - br.height - 12) + "px";
+  bub.querySelector("i").style.left = (tr.left + tr.width / 2 - left) + "px";
+  coachTimer = setTimeout(coachDismiss, 9000);
+}
+$("coachBub").addEventListener("click", coachDismiss);
+
+function coachFirstShutter(){
+  if (state.spots.length || coachSeen("shutter")) return;
+  setTimeout(() => {
+    if (state.spots.length) return;
+    coachPoint("shutter", "shutter", "Point at any car",
+      "Tap here. It doesn't have to be exotic — the app names whatever you find.", { huntOnly: true });
+  }, 3200);
+}
+function coachAfterFirst(){
+  if (coachSeen("garage")) return;
+  setTimeout(() => {
+    const tab = document.querySelector('[data-view="garage"]');
+    if (!tab) return;
+    tab.id = tab.id || "garageTab";
+    coachPoint("garage", tab.id, "That's entry No. 1",
+      "Your Registry lives in the Garage — every model you find fills a numbered slot.");
+  }, 2200);
+}
+function coachAfterThird(){
+  if (coachSeen("document") || state.spots.length < 3) return;
+  coachPoint("questMini", "questMini", "Today's target",
+    "Land the Car of the Day and your shot joins the daily board.", { huntOnly: true });
 }
 
 /* ================= VIEWFINDER THEMES (earned, not bought) ================= */
@@ -2846,6 +3003,7 @@ function bumpBalance(){
 /* ================= TABS ================= */
 const views = ["garage","map","quests","rewards"];
 function show(view){
+  coachHide();
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.view === view));
   views.forEach(v => $("view-"+v).classList.toggle("on", v === view));
   if (view === "garage") renderGarage();
@@ -3229,6 +3387,12 @@ async function processResult(res, canvas, source, ctx){
   }
   await Store.save();
   syncCapture(spot);
+  if (counts){
+    checkBounty(spot);
+    checkThemeUnlocks();
+    if (state.spots.length === 1) coachAfterFirst();
+    else if (state.spots.length === 3) coachAfterThird();
+  }
   renderHUD();
   if (spot.cxNew) bumpBalance();
   syncProfile();
@@ -3787,6 +3951,7 @@ function renderQuests(){
 
 /* ================= HALL ================= */
 function renderRewards(){
+  renderLeaderboard();
   const st = hunterStats();
   const r = currentRank(st);
   $("rankName").textContent = r.name;
@@ -4174,7 +4339,7 @@ function renderProfile(){
     .sort((a, b) => ((b.models == null ? -1 : b.models) - (a.models == null ? -1 : a.models)));
   const acct = sb
     ? (sbSession
-        ? ('<p class="pfnote">Signed in — your tag, Registry count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? ("HUNTER'S EDITION · " + CONFIG.premiumDayCap + " verified captures a day") : ("FREE HUNT · " + CONFIG.freeDayCap + " verified captures a day")) + '</p><button class="btn" id="planBtn" style="width:100%;margin-top:11px;' + (sbPremium ? 'color:var(--gold);border-color:rgba(255,194,75,.45)' : '') + '">' + (sbPremium ? "MANAGE HUNTER\'S EDITION" : "SEE HUNTER\'S EDITION") + '</button><p class="pfnote" style="margin-top:10px"><a href="privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline">Privacy</a> · <a href="terms.html" target="_blank" style="color:var(--muted);text-decoration:underline">Terms</a></p><button class="btn" id="delAcct" style="width:100%;margin-top:12px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE ACCOUNT</button>')
+        ? ('<p class="pfnote">Signed in — your tag, Registry count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? ("HUNTER'S EDITION · " + CONFIG.premiumDayCap + " verified captures a day") : ("FREE HUNT · " + CONFIG.freeDayCap + " verified captures a day")) + '</p><button class="btn" id="planBtn" style="width:100%;margin-top:11px;' + (sbPremium ? 'color:var(--gold);border-color:rgba(255,194,75,.45)' : '') + '">' + (sbPremium ? "MANAGE HUNTER\'S EDITION" : "SEE HUNTER\'S EDITION") + '</button><p class="pfnote" style="margin-top:10px"><a href="https://tyrehunt.app/privacy.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline">Privacy</a> · <a href="https://tyrehunt.app/terms.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline">Terms</a></p><button class="btn" id="delAcct" style="width:100%;margin-top:12px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE ACCOUNT</button>')
         : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
            <button class="btn hot" style="width:100%" id="pfMagic">SEND MAGIC LINK</button>
            <p class="pfnote">One tap in your inbox signs you in. No password, ever.</p>`)
@@ -4803,7 +4968,7 @@ async function overlayTerritory(ctx, X, Y, minLa, maxLa, minLo, maxLo){
   renderInstallPill();
   await Store.save();
   initSupabase();
-  if (state.seenIntro){ startCam(); }
+  if (state.seenIntro){ startCam(); coachFirstShutter(); }
   else { $("intro").classList.add("on"); }
   applyTheme();
   if (navigator.onLine) processQueue();
