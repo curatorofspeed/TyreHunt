@@ -2539,8 +2539,12 @@ async function checkOperator(){
   isOperator = false;
   if (!sb || !sbSession) { renderOpEntry(); return; }
   try{
-    const { data } = await sb.from("profiles").select("is_admin").eq("id", sbSession.user.id).maybeSingle();
-    isOperator = !!(data && data.is_admin);
+    // profiles.is_admin is no longer readable over the table API — anyone who
+    // could read it could also write it. my_account() is SECURITY DEFINER and
+    // scoped to auth.uid(), so it only ever answers about the caller.
+    const { data } = await sb.rpc("my_account");
+    const me = Array.isArray(data) ? data[0] : data;
+    isOperator = !!(me && me.is_admin);
   }catch(e){}
   renderOpEntry();
 }
@@ -4237,9 +4241,12 @@ async function processResult(res, canvas, source, ctx){
     if (rn !== rankBefore){ lastRankUp = rn; toast("Rank up · " + rn); }
   }
   await Store.save();
-  syncCapture(spot);
+  const syncing = syncCapture(spot);
   if (counts){
-    checkBounty(spot);
+    // A bounty claim is now validated against a real capture row server-side,
+    // so the insert has to land before we try to claim. Everything else below
+    // stays off the critical path — we only chain the claim itself.
+    syncing.then(() => checkBounty(spot)).catch(() => {});
     checkThemeUnlocks();
     maybeOfferPush();
     if (state.spots.length === 1) coachAfterFirst();
@@ -5096,8 +5103,11 @@ async function fetchPlan(){
   sbPremium = false;
   if (!sb || !sbSession) return;
   try{
-    const { data } = await sb.from("profiles").select("premium").eq("id", sbSession.user.id).maybeSingle();
-    sbPremium = !!(data && data.premium);
+    // Billing columns are service-role-only now, so premium can't be self-granted
+    // and can't be read off anyone else's row. my_account() returns just yours.
+    const { data } = await sb.rpc("my_account");
+    const me = Array.isArray(data) ? data[0] : data;
+    sbPremium = !!(me && me.premium);
     if ($("profile").classList.contains("on")) renderProfile();
   }catch(e){}
 }
@@ -5191,16 +5201,15 @@ async function restoreProfile(){
 async function syncProfile(){
   if (!sb || !sbSession || !state.profile) return;
   try{
-    const st = hunterStats();
+    // models / legends / streak / spots are no longer sent. The database
+    // derives them from the capture log on every insert and delete, so they
+    // can't be spoofed from here and can't drift out of date either.
+    // Sending them now fails the whole upsert on a column grant.
     await sb.from("profiles").upsert({
       id: sbSession.user.id,
       handle: state.profile.handle,
       code: state.profile.code,
-      models: st.models,
-      legends: st.legend,
       title: state.title || null,
-      streak: state.streak,
-      spots: state.spots.length,
       updated_at: new Date().toISOString()
     });
   }catch(e){}
