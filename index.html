@@ -608,6 +608,22 @@ button.bdg[disabled]{cursor:default}
 .premnote{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.6;margin-top:12px}
 .plantag{display:inline-flex;align-items:center;gap:6px;font:800 9px var(--disp);letter-spacing:.16em;padding:4px 10px;border-radius:999px;color:var(--gold);border:1px solid rgba(255,194,75,.5)}
 
+/* scheduled hunts */
+.hcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 15px;margin-bottom:10px;position:relative}
+.hcard.mine{border-color:rgba(94,151,255,.45)}
+.hcard.soon{border-color:rgba(255,138,30,.55);background:linear-gradient(180deg,rgba(255,138,30,.09),transparent)}
+.hcard .hn{font:800 15px var(--disp);letter-spacing:-.01em;color:var(--ink)}
+.hcard .hw{font:700 10.5px var(--mono);letter-spacing:.1em;color:var(--gold);margin-top:5px;text-transform:uppercase}
+.hcard .hp{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
+.hcard .hg{font:700 10px var(--mono);letter-spacing:.08em;color:var(--muted);margin-top:8px}
+.hcard .hacts{display:flex;gap:8px;margin-top:12px}
+.hcard .hacts .btn{flex:1;min-height:40px;font-size:11px}
+.hcard .going{color:var(--ok,#3ECF8E);border-color:rgba(62,207,142,.45)}
+#huntSheet{position:absolute;inset:0;z-index:26;display:none;flex-direction:column;background:var(--carbon)}
+#huntSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
+.whenrow{display:flex;gap:9px}
+.whenrow .dfield{flex:1;margin:0}
+
 /* bounty + most wanted */
 .bcard{background:var(--panel);border:1px solid rgba(255,194,75,.4);border-radius:var(--r-md);padding:13px 15px;margin-bottom:10px}
 .bcard.mine{border-color:rgba(94,151,255,.45)}
@@ -804,6 +820,10 @@ input[type=file]{display:none}
     </div>
     <div class="vbody" id="questList"></div>
     <div class="vbody" id="boardBody" style="padding-top:0">
+      <div class="sechead">Scheduled hunts</div>
+      <p class="pfnote" style="margin:-4px 0 10px">Pick a time and place, share the link, and everyone lands in the same lobby when it starts.</p>
+      <button class="btn hot" id="huntNewBtn" style="width:100%;margin-bottom:12px">SCHEDULE A HUNT</button>
+      <div id="huntList"></div>
       <div class="sechead">Bounty board · owners want to be found</div>
       <div id="bountyList"></div>
       <div class="sechead">Most wanted · built, then lost</div>
@@ -984,6 +1004,22 @@ input[type=file]{display:none}
       <button class="btn hot" id="premGo" style="width:100%;margin-top:10px;padding:15px;font-size:13px">UPGRADE ON THE WEB</button>
       <button class="btn" id="premCheck" style="width:100%;margin-top:9px">I ALREADY UPGRADED — REFRESH</button>
       <p class="premnote">Checkout is handled by Stripe — the charge shows on your statement as Link, their payment service. Cancel any time from the receipt email. Verification limits are what the subscription pays for — nobody can buy their way past the judge.</p>
+    </div>
+  </section>
+
+  <!-- ============ SCHEDULE A HUNT ============ -->
+  <section id="huntSheet">
+    <div class="sheethead"><h3>Schedule a hunt</h3><button class="btn" id="huntBack" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
+    <div class="sheetbody">
+      <p class="pfnote" style="margin-top:0">Anyone with the link can say they're coming. When it starts, everyone who's in gets a notification and drops into the same lobby.</p>
+      <div class="dfield"><label>What is it</label><input id="huntName" maxlength="60" placeholder="Cars &amp; Coffee · Cle Elum"></div>
+      <div class="dfield"><label>Where</label><input id="huntPlace" maxlength="60" placeholder="Pebble Beach · the lawn"></div>
+      <div class="whenrow">
+        <div class="dfield"><label>Date</label><input id="huntDate" type="date"></div>
+        <div class="dfield"><label>Start</label><input id="huntTime" type="time"></div>
+      </div>
+      <div class="dfield"><label>Note for hunters (optional)</label><input id="huntNote" maxlength="200" placeholder="Meet by the gate. Bring a wide lens."></div>
+      <button class="btn hot" id="huntCreate" style="width:100%;margin-top:12px">SCHEDULE IT</button>
     </div>
   </section>
 
@@ -2336,11 +2372,25 @@ async function routeDeepLink(){
   let q;
   try{ q = new URLSearchParams(location.search); }catch(e){ return; }
   if (!q || ![...q.keys()].length) return;
-  const crew = q.get("crew"), h = q.get("h"), c = q.get("c"), lobby = q.get("lobby");
+  const crew = q.get("crew"), h = q.get("h"), c = q.get("c"), lobby = q.get("lobby"), hunt = q.get("hunt");
   try{ history.replaceState(null, "", location.origin + location.pathname); }catch(e){}
 
   // give the app a beat to finish booting and (maybe) restore a session
   setTimeout(async () => {
+    if (hunt){
+      show("quests");
+      if (!sb || !sbSession){ toast("Sign in to join this hunt"); return; }
+      await renderHunts();
+      const row = huntRows.find(x => String(x.id) === String(hunt));
+      if (!row){ toast("That hunt has finished or was cancelled"); return; }
+      const mins = (new Date(row.starts_at).getTime() - Date.now()) / 60000;
+      if (mins <= 60){ joinHuntLobby(row.id); return; }
+      if (!huntMine.has(row.id)) await rsvpHunt(row.id, true);
+      else toast(row.name + " · " + huntWhen(row.starts_at));
+      const card = document.querySelector('[data-huntrsvp="' + row.id + '"]');
+      if (card) card.closest(".hcard").scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
     if (crew){
       if (!sb || !sbSession){ toast("Sign in and we'll add " + crew + " to your crew"); state.pendingCrew = crew; Store.save(); return; }
       await addCrewByCode(crew);
@@ -2865,6 +2915,165 @@ $("lSend").addEventListener("click", async () => {
     toast("Lead filed — the operator reviews every one");
     $("leadSheet").classList.remove("on");
   }catch(e){ toast("Lead didn't send — try again"); }
+});
+
+/* ================= SCHEDULED HUNTS =================
+   The mechanic that turns a lobby from a coincidence into a meeting. */
+let huntRows = [], huntGoing = {}, huntMine = new Set();
+
+function huntWhen(iso){
+  const d = new Date(iso), now = Date.now();
+  const mins = Math.round((d.getTime() - now) / 60000);
+  if (mins < -90) return "finished";
+  if (mins <= 0) return "happening now";
+  if (mins < 60) return "in " + mins + " min";
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return "in " + hrs + (hrs === 1 ? " hour" : " hours");
+  const days = Math.round(hrs / 24);
+  const t = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const dayName = d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+  return days === 1 ? "tomorrow · " + t : dayName + " · " + t;
+}
+
+async function renderHunts(){
+  const box = $("huntList");
+  if (!box) return;
+  if (!sb || !sbSession){ box.innerHTML = '<p class="pfnote">Sign in to see hunts other people have scheduled.</p>'; return; }
+  box.innerHTML = skeletonCards(1);
+  try{
+    const cutoff = new Date(Date.now() - 90 * 60000).toISOString();
+    const { data } = await sb.from("hunts")
+      .select("id,host,name,place,note,starts_at,lobby_code")
+      .gte("starts_at", cutoff).order("starts_at", { ascending: true }).limit(25);
+    huntRows = (data || []).filter(h => !myBlocks.has(h.host));
+    if (!huntRows.length){
+      box.innerHTML = '<p class="pfnote">Nothing on the calendar. Schedule one and share the link — that\'s how a lobby fills up.</p>';
+      return;
+    }
+    const ids = huntRows.map(h => h.id);
+    huntGoing = {}; huntMine = new Set();
+    try{
+      const { data: r } = await sb.from("hunt_rsvps").select("hunt_id,user_id").in("hunt_id", ids);
+      (r || []).forEach(x => {
+        huntGoing[x.hunt_id] = (huntGoing[x.hunt_id] || 0) + 1;
+        if (x.user_id === sbSession.user.id) huntMine.add(x.hunt_id);
+      });
+    }catch(e){}
+    const hosts = [...new Set(huntRows.map(h => h.host))];
+    try{
+      const { data: profs } = await sb.from("profiles").select("id,handle").in("id", hosts);
+      (profs || []).forEach(pp => feedHandles[pp.id] = pp.handle);
+    }catch(e){}
+    box.innerHTML = huntRows.map(h => {
+      const mine = h.host === sbSession.user.id;
+      const going = huntMine.has(h.id);
+      const mins = (new Date(h.starts_at).getTime() - Date.now()) / 60000;
+      const soon = mins <= 60 && mins > -90;
+      const n = huntGoing[h.id] || 0;
+      return `<div class="hcard ${mine ? "mine" : ""} ${soon ? "soon" : ""}">
+        <div class="hn">${esc(h.name)}</div>
+        <div class="hw">${esc(huntWhen(h.starts_at))}</div>
+        <div class="hp">${h.place ? esc(h.place) + " · " : ""}@${esc(feedHandles[h.host] || "hunter")}${h.note ? "<br>" + esc(h.note) : ""}</div>
+        <div class="hg">${n} ${n === 1 ? "hunter" : "hunters"} in${mine ? " · you're hosting" : ""}</div>
+        <div class="hacts">
+          ${soon
+            ? `<button class="btn hot" data-huntjoin="${h.id}">JOIN THE LOBBY</button>`
+            : `<button class="btn ${going ? "going" : ""}" data-huntrsvp="${h.id}">${going ? "YOU'RE IN ✓" : "I'M IN"}</button>`}
+          <button class="btn" data-huntshare="${h.id}">SHARE</button>
+        </div>
+      </div>`;
+    }).join("");
+  }catch(e){
+    box.innerHTML = '<p class="pfnote">Couldn\'t load hunts — pull again in a moment.</p>';
+  }
+}
+
+function openHuntSheet(){
+  if (!sb || !sbSession){ toast("Sign in to schedule a hunt"); return; }
+  const d = new Date(Date.now() + 24 * 3600 * 1000);
+  $("huntDate").value = d.toISOString().slice(0, 10);
+  $("huntTime").value = "09:00";
+  $("huntName").value = ""; $("huntPlace").value = ""; $("huntNote").value = "";
+  $("huntSheet").classList.add("on");
+}
+$("huntNewBtn").addEventListener("click", openHuntSheet);
+$("huntBack").addEventListener("click", () => $("huntSheet").classList.remove("on"));
+
+$("huntCreate").addEventListener("click", async () => {
+  const name = ($("huntName").value || "").trim();
+  const place = ($("huntPlace").value || "").trim();
+  const date = $("huntDate").value, time = $("huntTime").value;
+  if (name.length < 2){ toast("Give the hunt a name"); return; }
+  if (!date || !time){ toast("Pick a date and a start time"); return; }
+  const starts = new Date(date + "T" + time);
+  if (isNaN(starts.getTime())){ toast("That date didn't parse"); return; }
+  if (starts.getTime() < Date.now() - 60000){ toast("That's in the past"); return; }
+  const code = Array.from({ length: 4 }, () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 31)]).join("");
+  try{
+    const { data, error } = await sb.from("hunts").insert({
+      host: sbSession.user.id, name, place: place || null,
+      note: ($("huntNote").value || "").trim() || null,
+      starts_at: starts.toISOString(), lobby_code: code
+    }).select("id").single();
+    if (error) throw error;
+    await sb.from("hunt_rsvps").insert({ hunt_id: data.id, user_id: sbSession.user.id });
+    $("huntSheet").classList.remove("on");
+    sfx("classic");
+    toast("Scheduled · share the link so people come");
+    renderHunts();
+    setTimeout(() => shareHunt(data.id, name, place, starts.toISOString()), 500);
+  }catch(e){
+    toast("Couldn't schedule — " + ((e && e.message) ? e.message.slice(0, 50) : "try again"));
+  }
+});
+
+async function shareHunt(id, name, place, iso){
+  const url = deepLink({ hunt: id });
+  const when = iso ? huntWhen(iso) : "";
+  const text = name + (place ? " · " + place : "") + (when ? " · " + when : "") + " — join me on TYRE HUNT";
+  if (navigator.share){
+    try{ await navigator.share({ title: "TYRE HUNT", text, url }); return; }catch(e){}
+  }
+  try{ await navigator.clipboard.writeText(url); toast("Hunt link copied"); }
+  catch(e){ toast(url); }
+}
+
+async function rsvpHunt(id, on){
+  if (!sb || !sbSession){ toast("Sign in to join"); return; }
+  try{
+    if (on) await sb.from("hunt_rsvps").insert({ hunt_id: id, user_id: sbSession.user.id });
+    else await sb.from("hunt_rsvps").delete().eq("hunt_id", id).eq("user_id", sbSession.user.id);
+    sfx("extra"); buzz(10);
+    if (on){
+      toast("You're in — we'll nudge you when it starts");
+      maybeOfferPush();
+    }
+    renderHunts();
+  }catch(e){ toast("Couldn't update that"); }
+}
+
+async function joinHuntLobby(id){
+  const h = huntRows.find(x => x.id === id);
+  if (!h) return;
+  state.activeEvent = h.name;
+  state.activeEventCode = h.lobby_code;
+  await Store.save();
+  renderEventPill();
+  show("quests");
+  toast("In the lobby · " + h.name);
+  if (typeof fillLobby === "function") fillLobby();
+}
+
+$("huntList").addEventListener("click", e => {
+  const r = e.target.closest("[data-huntrsvp]");
+  if (r){ const id = +r.dataset.huntrsvp; rsvpHunt(id, !huntMine.has(id)); return; }
+  const j = e.target.closest("[data-huntjoin]");
+  if (j){ joinHuntLobby(+j.dataset.huntjoin); return; }
+  const sh = e.target.closest("[data-huntshare]");
+  if (sh){
+    const h = huntRows.find(x => x.id === +sh.dataset.huntshare);
+    if (h) shareHunt(h.id, h.name, h.place, h.starts_at);
+  }
 });
 
 /* ================= BOUNTIES (owner-declared, self only) ================= */
@@ -4516,6 +4725,7 @@ window.addEventListener("resize", () => { if ($("view-map").classList.contains("
 function renderQuests(){
   renderWanted();
   renderBounties();
+  renderHunts();
   ensureDay();
   const check = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 12.5l4.6 4.6L19.5 6.7"/></svg>';
   const target = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg>';
