@@ -748,24 +748,34 @@ input[type=file]{display:none}
       <div class="meta" id="garageMeta">0 spots</div>
       <div class="seg" id="gSeg">
         <button data-seg="spots" class="on">SPOTS</button>
-        <button data-seg="feed">FEED</button>
         <button data-seg="codex">REGISTRY</button>
       </div>
     </div>
     <div class="vbody">
-      <div id="segFeed" style="display:none">
-        <div class="seg" id="feedMode" style="margin-bottom:11px">
-          <button data-fm="all" class="on">ALL HUNTS</button>
-          <button data-fm="cotd">CAR OF THE DAY</button>
-        </div>
-        <div id="cotdHead"></div>
-        <button class="btn" id="feedRefresh" style="width:100%;margin-bottom:12px">↻ REFRESH</button>
-        <div id="feedList"></div>
-      </div>
       <div id="segSpots">
         <div style="display:flex;gap:9px;margin-bottom:12px">
           <button class="btn hot" id="top8Btn" style="flex:1;display:none">SHARE MY TOP 8</button>
           <button class="btn" id="reelBtn" style="flex:1;display:none;border-color:rgba(255,138,30,.45);color:var(--ember)">▶ COLLECTION REEL</button>
+        </div>
+        <!-- Find things again. A garage with 300 captures and no way to
+             sort or search is a wall, not a collection. -->
+        <div id="gTools" style="display:none">
+          <input id="gSearch" type="search" placeholder="Search make, model, event…" autocomplete="off"
+                 style="width:100%;padding:11px 12px;margin-bottom:9px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);color:var(--ink);font:600 13px var(--sans)">
+          <div class="seg" id="gSort" style="margin-bottom:9px">
+            <button data-sort="new" class="on">NEWEST</button>
+            <button data-sort="rare">RAREST</button>
+            <button data-sort="shot">BEST SHOT</button>
+          </div>
+          <div id="gFilter" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px">
+            <button class="chip on" data-filter="all">ALL</button>
+            <button class="chip legendary" data-filter="legendary">LEGENDARY</button>
+            <button class="chip rare" data-filter="rare">RARE</button>
+            <button class="chip classic" data-filter="classic">CLASSIC</button>
+            <button class="chip everyday" data-filter="everyday">EVERYDAY</button>
+            <button class="chip" data-filter="fav">★ FAVES</button>
+          </div>
+          <div id="gCount" class="pfnote" style="margin:0 0 10px"></div>
         </div>
         <div id="ggrid"></div>
         <div class="rowbtns">
@@ -835,11 +845,16 @@ input[type=file]{display:none}
   <!-- ============ REWARDS ============ -->
   <section class="view" id="view-rewards">
     <div class="vhead">
-      <div class="eyebrow">Standing</div>
+      <div class="eyebrow">Community</div>
       <h2>Hall</h2>
-      <div class="meta">What you've spotted speaks for itself</div>
+      <div class="meta">What everyone's finding — and where you stand</div>
+      <div class="seg" id="hallSeg">
+        <button data-hall="feed" class="on">FEED</button>
+        <button data-hall="standing">STANDING</button>
+      </div>
     </div>
     <div class="vbody">
+      <div id="hallStanding" style="display:none">
       <div id="balhero">
         <div class="rname" id="rankName">ROOKIE</div>
         <div class="bl">Hunter rank</div>
@@ -862,6 +877,20 @@ input[type=file]{display:none}
       <div id="titleGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
       <div class="sechead">Badges</div>
       <div id="badgeGrid"></div>
+      </div><!-- /hallStanding -->
+
+      <!-- The community feed. It used to live inside Garage, which framed
+           other people's captures as part of your own collection. It's the
+           most social surface in the app, so it leads the Hall now. -->
+      <div id="segFeed">
+        <div class="seg" id="feedMode" style="margin-bottom:11px">
+          <button data-fm="all" class="on">ALL HUNTS</button>
+          <button data-fm="cotd">CAR OF THE DAY</button>
+        </div>
+        <div id="cotdHead"></div>
+        <button class="btn" id="feedRefresh" style="width:100%;margin-bottom:12px">↻ REFRESH</button>
+        <div id="feedList"></div>
+      </div>
     </div>
   </section>
 
@@ -870,7 +899,6 @@ input[type=file]{display:none}
     <button class="tab" data-view="garage" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 10l9-6 9 6v10a1 1 0 0 1-1 1h-3v-7H7v7H4a1 1 0 0 1-1-1V10z"/><path d="M7 17h10M7 19.5h10"/></svg>
       <span class="tl">GARAGE</span>
-      <span id="feedBadge"></span>
     </button>
     <button class="tab" data-view="map">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-6.5-5.4-6.5-10A6.5 6.5 0 0 1 12 4.5 6.5 6.5 0 0 1 18.5 11c0 4.6-6.5 10-6.5 10z"/><circle cx="12" cy="11" r="2.3"/></svg>
@@ -885,9 +913,10 @@ input[type=file]{display:none}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8.5l1.3 1.3 2.4-2.6M8.5 14l1.3 1.3 2.4-2.6M15 9h1.5M15 14.5h1.5"/></svg>
       <span class="tl">QUESTS</span>
     </button>
-    <button class="tab" data-view="rewards">
+    <button class="tab" data-view="rewards" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H4.5v1.5A3.5 3.5 0 0 0 8 10M17 5h2.5v1.5A3.5 3.5 0 0 1 16 10"/><path d="M12 14v3M8.5 20h7M9.5 17h5"/></svg>
       <span class="tl">HALL</span>
+      <span id="feedBadge"></span>
     </button>
   </nav>
 
@@ -2662,9 +2691,9 @@ function armPullToRefresh(){
     sfx("tick");
     const seg = document.querySelector("#gSeg button.on");
     const which = seg ? seg.dataset.seg : "spots";
-    if (which === "feed") renderFeed2();
-    else if (which === "codex") renderCodex();
-    else renderGarage();
+    if (which === "codex") renderCodex(); else renderGarage();
+    // the feed now lives in Hall and refreshes itself when that tab is open
+    if ($("segFeed").style.display !== "none" && $("view-rewards").classList.contains("on")) renderFeed2();
   });
 }
 
@@ -3557,7 +3586,6 @@ $("modActs").addEventListener("click", async e => {
 });
 function refreshAfterBlock(){
   const seg = $("segFeed");
-  if (seg && seg.style.display !== "none" && $("view-garage") === null){ /* base-layer guard no-op */ }
   if (seg && seg.style.display !== "none") renderFeed2();
   if ($("cmtSheet").classList.contains("on")) loadComments();
   if ($("hunterSheet").classList.contains("on") && modCtx) openHunter(modCtx.uid);
@@ -3674,7 +3702,7 @@ async function liveCapture(r){
   }
   // feed open → new capture slides in at the top
   const seg = $("segFeed");
-  if (seg && seg.style.display !== "none" && $("view-garage").classList.contains("on")){
+  if (seg && seg.style.display !== "none" && $("view-rewards").classList.contains("on")){
     feedRows.unshift(r);
     if (feedLikes[r.id] == null) feedLikes[r.id] = 0;
     if (feedCmts[r.id] == null) feedCmts[r.id] = 0;
@@ -4030,7 +4058,12 @@ function show(view){
   if (view === "garage") renderGarage();
   if (view === "map"){ renderMap(); renderExpeditions(); renderGrounds(); }
   if (view === "quests") renderQuests();
-  if (view === "rewards") renderRewards();
+  if (view === "rewards"){
+    renderRewards();
+    // Hall opens on the feed by default — it's the reason to come here.
+    const on = document.querySelector("#hallSeg button.on");
+    if (!on || on.dataset.hall === "feed"){ renderFeed2(); clearFeedBadge(); }
+  }
 }
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => show(t.dataset.view)));
 
@@ -4567,13 +4600,27 @@ function renderGarage(){
   const models = lanes.reduce((n, l) => n + hunterStats(l).models, 0);
   const legend = lanes.reduce((n, l) => n + hunterStats(l).legend, 0);
   $("garageMeta").textContent = mine.length + " spot" + (mine.length===1?"":"s") + " · " + models + " models · " + legend + " legendary";
-  $("top8Btn").style.display = state.spots.some(s => s.fav) ? "" : "none";
-  $("reelBtn").style.display = state.spots.filter(s => !s.flagged).length >= 2 ? "" : "none";
-  if (!state.spots.length){
-    g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="e1">Empty garage</div><p>Every verified capture parks here with its make, rarity, and story. Hit the shutter.</p></div>';
+  $("top8Btn").style.display = mine.some(s => s.fav) ? "" : "none";
+  $("reelBtn").style.display = mine.filter(s => !s.flagged).length >= 2 ? "" : "none";
+  // The tools only appear once there's enough in here to need them.
+  $("gTools").style.display = mine.length >= 6 ? "" : "none";
+  if (!mine.length){
+    g.innerHTML = state.spots.length
+      ? '<div class="empty" style="grid-column:1/-1"><div class="e1">Nothing in this lane yet</div><p>You\'re hunting ' + laneLabel(primaryLane()).toLowerCase() + '. Switch lanes in your profile to see the rest of your garage.</p></div>'
+      : '<div class="empty" style="grid-column:1/-1"><div class="e1">Empty garage</div><p>Every verified capture parks here with its make, rarity, and story. Hit the shutter.</p></div>';
     return;
   }
-  g.innerHTML = state.spots.map(s => `
+  const shown = garageView(mine);
+  const gc = $("gCount");
+  if (gc) gc.textContent = shown.length === mine.length
+    ? "" : shown.length + " of " + mine.length + " shown";
+  if (!shown.length){
+    g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="e1">Nothing matches</div><p>'
+      + (gQuery ? 'No capture matches “' + esc(gQuery) + '”.' : 'No captures in that filter yet.')
+      + '</p></div>';
+    return;
+  }
+  g.innerHTML = shown.map(s => `
     <button class="gcard" data-id="${s.id}">
       <div class="ph" style="background-image:url('${s.img}')"></div>
       <div class="in">
@@ -4594,11 +4641,55 @@ $("gSeg").addEventListener("click", e => {
   document.querySelectorAll("#gSeg button").forEach(x => x.classList.toggle("on", x === b));
   const seg = b.dataset.seg;
   $("segSpots").style.display = seg === "spots" ? "" : "none";
-  $("segFeed").style.display = seg === "feed" ? "" : "none";
   $("segCodex").style.display = seg === "codex" ? "" : "none";
   if (seg === "codex") renderCodex();
-  if (seg === "feed"){ renderFeed2(); clearFeedBadge(); }
 });
+
+/* ================= HALL: FEED / STANDING ================= */
+$("hallSeg").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  document.querySelectorAll("#hallSeg button").forEach(x => x.classList.toggle("on", x === b));
+  const on = b.dataset.hall;
+  $("segFeed").style.display = on === "feed" ? "" : "none";
+  $("hallStanding").style.display = on === "standing" ? "" : "none";
+  if (on === "feed"){ renderFeed2(); clearFeedBadge(); }
+  else { renderLeaderboard(); }
+});
+
+/* ================= GARAGE: SEARCH / SORT / FILTER ================= */
+let gSort = "new", gFilter = "all", gQuery = "";
+const RARITY_ORDER = { legendary: 4, rare: 3, classic: 2, everyday: 1 };
+function garageView(spots){
+  let out = spots.slice();
+  if (gFilter === "fav") out = out.filter(s => s.fav);
+  else if (gFilter !== "all") out = out.filter(s => s.rarity === gFilter);
+  const q = gQuery.trim().toLowerCase();
+  if (q) out = out.filter(s =>
+    (s.make + " " + s.model + " " + (s.year || "") + " " + (s.event || "")).toLowerCase().includes(q));
+  // s.ts is an ISO string, not a number — subtracting them yields NaN and
+  // silently disables the tiebreaker.
+  const newest = (a, b) => new Date(b.ts) - new Date(a.ts);
+  if (gSort === "rare") out.sort((a, b) =>
+    (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0) || newest(a, b));
+  else if (gSort === "shot") out.sort((a, b) =>
+    ((b.shot && b.shot.score) || 0) - ((a.shot && a.shot.score) || 0) || newest(a, b));
+  // "new" is the natural order — spots are unshifted on capture.
+  return out;
+}
+$("gSort").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  gSort = b.dataset.sort;
+  document.querySelectorAll("#gSort button").forEach(x => x.classList.toggle("on", x === b));
+  renderGarage();
+});
+$("gFilter").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  gFilter = b.dataset.filter;
+  document.querySelectorAll("#gFilter button").forEach(x => x.classList.toggle("on", x === b));
+  renderGarage();
+});
+$("gSearch").addEventListener("input", e => { gQuery = e.target.value; renderGarage(); });
 $("codexPill").addEventListener("click", () => {
   show("garage");
   const cb = document.querySelector('#gSeg [data-seg="codex"]');
