@@ -1173,6 +1173,9 @@ let state = {
   lastPaidTs: 0, dayPaid: 0,
   bestStreak: 0, cotdStamps: {}, title: "", aiHunt: null, lore: {},
   sound: true, seenIntro: false, lastFeedSeen: 0, theme: "standard", themesSeen: [], coach: {}, pushAsked: false,
+  // "car" | "moto" | "both" — which lanes this hunter wants served to them.
+  // "both" is the default and runs the 90/10 split.
+  lane: "both",
   spots: [], redemptions: [], queue: []
 };
 const $ = id => document.getElementById(id);
@@ -1250,6 +1253,8 @@ function ensureDay(){
   if (!state.badges) state.badges = {};
   if (!Array.isArray(state.queue)) state.queue = [];
   if (!state.cotdStamps) state.cotdStamps = {};
+  // Hunters who were here before the bike lane existed keep the mixed feed.
+  if (!["car", "moto", "both"].includes(state.lane)) state.lane = "both";
   if (typeof state.bestStreak !== "number") state.bestStreak = 0;
   if (!state.lore) state.lore = {};
   if (typeof state.sound !== "boolean") state.sound = true;
@@ -1270,55 +1275,92 @@ const MAKESETS = {
   jdm: ["toyota","nissan","honda","mazda","subaru","mitsubishi","lexus","acura","infiniti","datsun","suzuki","isuzu"],
   italian: ["ferrari","lamborghini","maserati","alfa","fiat","lancia","pagani","abarth","de tomaso"],
   british: ["aston","jaguar","land rover","range rover","bentley","rolls","lotus","mclaren","mini","mg ","triumph","morgan","tvr","austin","caterham"],
-  american: ["ford","chevrolet","chevy","dodge","plymouth","pontiac","buick","cadillac","oldsmobile","amc","shelby","chrysler","gmc","lincoln","mercury","jeep","ram"]
+  american: ["ford","chevrolet","chevy","dodge","plymouth","pontiac","buick","cadillac","oldsmobile","amc","shelby","chrysler","gmc","lincoln","mercury","jeep","ram"],
+  motoJapan: ["honda","yamaha","suzuki","kawasaki"],
+  motoBritish: ["triumph","norton","bsa","royal enfield","brough","vincent","ariel","matchless"],
+  motoItalian: ["ducati","mv agusta","moto guzzi","aprilia","benelli","laverda","bimota","vespa","lambretta"]
 };
 const inSet = (a, list) => list.some(m => a.make.includes(m));
+/* Quest args carry the verifier's tags, so this is the same signal the
+   registry and the database trigger use. */
+const isMoto = a => (a.tags || []).includes("motorcycle");
 const QUEST_POOL = [
   // marque hunts
-  { id:"ferrari",  cat:"M", name:"Prancing Horse", desc:"Capture any Ferrari", pay:200, match:a=>a.make.includes("ferrari") },
-  { id:"porsche",  cat:"M", name:"Stuttgart Crest", desc:"Capture any Porsche", pay:150, match:a=>a.make.includes("porsche") },
-  { id:"lambo",    cat:"M", name:"Raging Bull", desc:"Capture any Lamborghini", pay:200, match:a=>a.make.includes("lamborghini") },
-  { id:"bmw",      cat:"M", name:"The Roundel", desc:"Capture any BMW", pay:50, match:a=>a.make.includes("bmw") },
-  { id:"merc",     cat:"M", name:"Three-Pointed Star", desc:"Capture any Mercedes", pay:50, match:a=>a.make.includes("mercedes") },
-  { id:"jdm",      cat:"M", name:"Rising Sun", desc:"Capture any Japanese marque", pay:50, match:a=>inSet(a, MAKESETS.jdm) },
-  { id:"italian",  cat:"M", name:"The Italian Job", desc:"Capture any Italian marque", pay:100, match:a=>inSet(a, MAKESETS.italian) },
-  { id:"british",  cat:"M", name:"British Steel", desc:"Capture any British marque", pay:75, match:a=>inSet(a, MAKESETS.british) },
-  { id:"mustang",  cat:"M", name:"Pony Up", desc:"Capture a Ford Mustang", pay:75, match:a=>a.make.includes("ford") && a.model.includes("mustang") },
-  { id:"corvette", cat:"M", name:"America's Sports Car", desc:"Capture a Corvette", pay:75, match:a=>a.model.includes("corvette") },
+  { id:"ferrari",  cat:"M", lane:"car", name:"Prancing Horse", desc:"Capture any Ferrari", pay:200, match:a=>a.make.includes("ferrari") },
+  { id:"porsche",  cat:"M", lane:"car", name:"Stuttgart Crest", desc:"Capture any Porsche", pay:150, match:a=>a.make.includes("porsche") },
+  { id:"lambo",    cat:"M", lane:"car", name:"Raging Bull", desc:"Capture any Lamborghini", pay:200, match:a=>a.make.includes("lamborghini") },
+  { id:"bmw",      cat:"M", lane:"car", name:"The Roundel", desc:"Capture any BMW", pay:50, match:a=>a.make.includes("bmw") },
+  { id:"merc",     cat:"M", lane:"car", name:"Three-Pointed Star", desc:"Capture any Mercedes", pay:50, match:a=>a.make.includes("mercedes") },
+  { id:"jdm",      cat:"M", lane:"car", name:"Rising Sun", desc:"Capture any Japanese marque", pay:50, match:a=>inSet(a, MAKESETS.jdm) },
+  { id:"italian",  cat:"M", lane:"car", name:"The Italian Job", desc:"Capture any Italian marque", pay:100, match:a=>inSet(a, MAKESETS.italian) },
+  { id:"british",  cat:"M", lane:"car", name:"British Steel", desc:"Capture any British marque", pay:75, match:a=>inSet(a, MAKESETS.british) },
+  { id:"mustang",  cat:"M", lane:"car", name:"Pony Up", desc:"Capture a Ford Mustang", pay:75, match:a=>a.make.includes("ford") && a.model.includes("mustang") },
+  { id:"corvette", cat:"M", lane:"car", name:"America's Sports Car", desc:"Capture a Corvette", pay:75, match:a=>a.model.includes("corvette") },
   // body & build
-  { id:"racecar",  cat:"B", name:"The Race Car", desc:"Livery, numbers, full race prep", pay:250, match:a=>a.tags.includes("race_car") },
-  { id:"droptop",  cat:"B", name:"Drop Top", desc:"Capture a convertible", pay:50, match:a=>a.tags.includes("convertible") },
-  { id:"longroof", cat:"B", name:"Longroof Society", desc:"Capture a wagon", pay:75, match:a=>a.tags.includes("wagon") },
-  { id:"pickup",   cat:"B", name:"Work Horse", desc:"Capture a pickup", pay:30, match:a=>a.tags.includes("pickup") },
-  { id:"moto",     cat:"B", name:"Two Wheels", desc:"Capture a motorcycle", pay:50, match:a=>a.tags.includes("motorcycle") },
-  { id:"wing",     cat:"B", name:"Cleared for Takeoff", desc:"Capture a big rear wing", pay:75, match:a=>a.tags.includes("big_wing") },
-  { id:"wide",     cat:"B", name:"Widebody", desc:"Flares and stance", pay:100, match:a=>a.tags.includes("widebody") },
-  { id:"mud",      cat:"B", name:"Mud Plugger", desc:"Lifted 4x4 or overland rig", pay:50, match:a=>a.tags.includes("lifted_4x4") },
+  { id:"racecar",  cat:"B", lane:"car", name:"The Race Car", desc:"Livery, numbers, full race prep", pay:250, match:a=>a.tags.includes("race_car") },
+  { id:"droptop",  cat:"B", lane:"car", name:"Drop Top", desc:"Capture a convertible", pay:50, match:a=>a.tags.includes("convertible") },
+  { id:"longroof", cat:"B", lane:"car", name:"Longroof Society", desc:"Capture a wagon", pay:75, match:a=>a.tags.includes("wagon") },
+  { id:"pickup",   cat:"B", lane:"car", name:"Work Horse", desc:"Capture a pickup", pay:30, match:a=>a.tags.includes("pickup") },
+  { id:"moto",     cat:"B", lane:"moto", name:"Two Wheels", desc:"Capture a motorcycle", pay:50, match:a=>a.tags.includes("motorcycle") },
+  { id:"wing",     cat:"B", lane:"car", name:"Cleared for Takeoff", desc:"Capture a big rear wing", pay:75, match:a=>a.tags.includes("big_wing") },
+  { id:"wide",     cat:"B", lane:"car", name:"Widebody", desc:"Flares and stance", pay:100, match:a=>a.tags.includes("widebody") },
+  { id:"mud",      cat:"B", lane:"car", name:"Mud Plugger", desc:"Lifted 4x4 or overland rig", pay:50, match:a=>a.tags.includes("lifted_4x4") },
   // eras
-  { id:"prewar",   cat:"E", name:"Pre-War Iron", desc:"Capture anything pre-1946", pay:400, match:a=>a.decade==="pre-1946" },
-  { id:"fifties",  cat:"E", name:"Fins & Chrome", desc:"Capture a 1950s machine", pay:250, match:a=>a.decade==="1950s" },
-  { id:"muscle",   cat:"E", name:"Muscle Era", desc:"American muscle, '60s–'70s", pay:150, match:a=>a.tags.includes("american_muscle") || (inSet(a, MAKESETS.american) && (a.decade==="1960s" || a.decade==="1970s")) },
-  { id:"radwood",  cat:"E", name:"Radwood Hero", desc:"Capture an '80s or '90s hero", pay:100, match:a=>a.decade==="1980s" || a.decade==="1990s" },
-  { id:"aircool",  cat:"E", name:"Air-Cooled", desc:"No radiator, all character", pay:150, match:a=>a.tags.includes("air_cooled") },
-  { id:"y2k",      cat:"E", name:"New Millennium", desc:"Capture a 2000s car", pay:40, match:a=>a.decade==="2000s" },
+  { id:"prewar",   cat:"E", lane:"any", name:"Pre-War Iron", desc:"Capture anything pre-1946", pay:400, match:a=>a.decade==="pre-1946" },
+  { id:"fifties",  cat:"E", lane:"any", name:"Fins & Chrome", desc:"Capture a 1950s machine", pay:250, match:a=>a.decade==="1950s" },
+  { id:"muscle",   cat:"E", lane:"car", name:"Muscle Era", desc:"American muscle, '60s–'70s", pay:150, match:a=>a.tags.includes("american_muscle") || (inSet(a, MAKESETS.american) && (a.decade==="1960s" || a.decade==="1970s")) },
+  { id:"radwood",  cat:"E", lane:"any", name:"Radwood Hero", desc:"Capture an '80s or '90s hero", pay:100, match:a=>a.decade==="1980s" || a.decade==="1990s" },
+  { id:"aircool",  cat:"E", lane:"any", name:"Air-Cooled", desc:"No radiator, all character", pay:150, match:a=>a.tags.includes("air_cooled") },
+  { id:"y2k",      cat:"E", lane:"any", name:"New Millennium", desc:"Capture a 2000s car", pay:40, match:a=>a.decade==="2000s" },
   // wildcards
-  { id:"rosso",    cat:"W", name:"Rosso Corsa", desc:"Capture a red car", pay:40, match:a=>a.color==="red" },
-  { id:"green",    cat:"W", name:"Racing Green", desc:"Capture a green car", pay:50, match:a=>a.color==="green" },
-  { id:"loud",     cat:"W", name:"Highlighter Pack", desc:"Yellow or orange paint", pay:50, match:a=>a.color==="yellow" || a.color==="orange" },
-  { id:"murdered", cat:"W", name:"Murdered Out", desc:"Capture a black car", pay:30, match:a=>a.color==="black" },
-  { id:"unicorn",  cat:"W", name:"The Unicorn", desc:"Land a legendary", pay:400, match:a=>a.rarity==="legendary" },
-  { id:"badges",   cat:"W", name:"Badge Collector", desc:"Three different makes today", pay:100, match:a=>a.dayMakesCount>=3, prog:()=>Math.min((state.dayMakes||[]).length,3)+" / 3" },
-  { id:"afterdark", cat:"W", name:"After Dark", desc:"Capture anything at night", match:a=>a.conds.includes("night") },
-  { id:"storm",    cat:"W", name:"Storm Chaser", desc:"A capture in rain or snow", match:a=>a.conds.includes("rain")||a.conds.includes("snow") }
+  { id:"rosso",    cat:"W", lane:"any", name:"Rosso Corsa", desc:"Capture a red car", pay:40, match:a=>a.color==="red" },
+  { id:"green",    cat:"W", lane:"any", name:"Racing Green", desc:"Capture a green car", pay:50, match:a=>a.color==="green" },
+  { id:"loud",     cat:"W", lane:"any", name:"Highlighter Pack", desc:"Yellow or orange paint", pay:50, match:a=>a.color==="yellow" || a.color==="orange" },
+  { id:"murdered", cat:"W", lane:"any", name:"Murdered Out", desc:"Capture a black car", pay:30, match:a=>a.color==="black" },
+  { id:"unicorn",  cat:"W", lane:"any", name:"The Unicorn", desc:"Land a legendary", pay:400, match:a=>a.rarity==="legendary" },
+  { id:"badges",   cat:"W", lane:"any", name:"Badge Collector", desc:"Three different makes today", pay:100, match:a=>a.dayMakesCount>=3, prog:()=>Math.min((state.dayMakes||[]).length,3)+" / 3" },
+  { id:"afterdark", cat:"W", lane:"any", name:"After Dark", desc:"Capture anything at night", match:a=>a.conds.includes("night") },
+  { id:"storm",    cat:"W", lane:"any", name:"Storm Chaser", desc:"A capture in rain or snow", match:a=>a.conds.includes("rain")||a.conds.includes("snow") },
+  /* ===== the bike lane =====
+     Every one of these requires the motorcycle tag, so a car capture can
+     never accidentally close a bike quest. Colour and weather quests above
+     are lane:"any" and stay shared — a red bike is still a red machine. */
+  { id:"m-duc",    cat:"M", lane:"moto", name:"Borgo Panigale", desc:"Capture any Ducati", pay:200, match:a=>isMoto(a) && a.make.includes("ducati") },
+  { id:"m-hd",     cat:"M", lane:"moto", name:"Milwaukee Iron", desc:"Capture any Harley-Davidson", pay:50, match:a=>isMoto(a) && (a.make.includes("harley")||a.model.includes("sportster")) },
+  { id:"m-brit",   cat:"M", lane:"moto", name:"Meriden Twin", desc:"Capture a British bike", pay:150, match:a=>isMoto(a) && inSet(a, MAKESETS.motoBritish) },
+  { id:"m-jap",    cat:"M", lane:"moto", name:"The Big Four", desc:"Honda, Yamaha, Suzuki or Kawasaki", pay:50, match:a=>isMoto(a) && inSet(a, MAKESETS.motoJapan) },
+  { id:"m-ital",   cat:"M", lane:"moto", name:"Italian Twins", desc:"Ducati, MV Agusta or Moto Guzzi", pay:150, match:a=>isMoto(a) && inSet(a, MAKESETS.motoItalian) },
+  { id:"m-any",    cat:"B", lane:"moto", name:"Two Wheels Good", desc:"Capture any motorcycle", pay:40, match:a=>isMoto(a) },
+  { id:"m-chop",   cat:"B", lane:"moto", name:"Custom Culture", desc:"A chopper, bobber or custom build", pay:100, match:a=>isMoto(a) && (a.model.includes("chopper")||a.model.includes("bobber")||a.make.includes("custom")) },
+  { id:"m-dirt",   cat:"B", lane:"moto", name:"Off The Tarmac", desc:"An enduro, motocross or adventure bike", pay:75, match:a=>isMoto(a) && (a.make.includes("ktm")||a.model.includes("enduro")||a.model.includes("exc")||a.model.includes("gs")) },
+  { id:"m-scoot",  cat:"B", lane:"moto", name:"Dolce Vita", desc:"Capture a scooter", pay:40, match:a=>isMoto(a) && (a.make.includes("vespa")||a.make.includes("lambretta")||a.model.includes("cub")) },
+  { id:"m-classic",cat:"E", lane:"moto", name:"Kickstart Era", desc:"A bike from the 1970s or earlier", pay:200, match:a=>isMoto(a) && ["pre-1946","1950s","1960s","1970s"].includes(a.decade) },
+  { id:"m-superbike", cat:"E", lane:"moto", name:"Superbike Era", desc:"An '80s or '90s sportbike", pay:150, match:a=>isMoto(a) && (a.decade==="1980s"||a.decade==="1990s") }
 ];
 const questById = id => QUEST_POOL.find(q => q.id === id);
+/* One in ten. The number that keeps a car hunter from being sent after
+   bikes, and a bike hunter from being sent after cars. */
+const MOTO_SHARE = 0.10;
+/* A quest is eligible if its lane is one the hunter wants. "any" quests
+   (colour, weather, night) work on anything with wheels and always qualify. */
+function questFitsLane(q, lane){
+  const l = q.lane || "car";
+  return l === "any" || l === lane;
+}
 function dailyQuests(){
   const s = state.day || dayKey();
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   const rnd = () => { h = (h * 1664525 + 1013904223) >>> 0; return h / 4294967296; };
-  return ["M","B","E","W"].map(c => {
-    const opts = QUEST_POOL.filter(q => q.cat === c);
+  const pref = (state && state.lane) || "both";
+  return ["M", "B", "E", "W"].map(c => {
+    // Each slot draws its own lane so a "both" hunter gets a genuine 90/10
+    // spread across the day's four quests rather than an all-or-nothing day.
+    const lane = pref === "both" ? (rnd() < MOTO_SHARE ? "moto" : "car") : pref;
+    let opts = QUEST_POOL.filter(q => q.cat === c && questFitsLane(q, lane));
+    // Bikes have a thinner pool; fall back rather than leave a slot empty.
+    if (!opts.length) opts = QUEST_POOL.filter(q => q.cat === c && questFitsLane(q, "car"));
+    if (!opts.length) opts = QUEST_POOL.filter(q => q.cat === c);
     return opts[Math.floor(rnd() * opts.length)].id;
   });
 }
@@ -1326,7 +1368,7 @@ function renderFeaturedQuest(){
   const el = $("questTitle"), lb = $("questLabel");
   if (!el || !lb) return;
   const cd = carOfTheDay();
-  if (cd && !(state.cotdStamps || {})["n" + cd.n]){
+  if (cd && !(state.cotdStamps || {})[cxKeyOf(cd)]){
     lb.textContent = "CAR OF THE DAY";
     el.textContent = cd.name;
     return;
@@ -1591,7 +1633,34 @@ function unlockedVolumes(){
   for (let i = 0; i <= last; i++) out.push(...seasonMeta(i).volume);
   return out;
 }
-const CODEX_SEED = CODEX_BASE.concat(unlockedVolumes()).map((e, i) => ({ ...e, n: i + 1 }));
+const CODEX_SEED = CODEX_BASE.concat(unlockedVolumes()).map((e, i) => ({ ...e, n: i + 1, type: "car" }));
+/* Bikes get their own key space. Car keys are n1..nN and the list grows at
+   the end every time a season unlocks a volume — if bikes shared that space
+   they'd be renumbered on every season launch and orphan the cx_key on every
+   bike already captured. m1..m30 can never collide with that. */
+const MOTO_SEED = MOTO_BASE.map((e, i) => ({ ...e, n: i + 1, type: "moto" }));
+
+const LANES = ["car", "moto"];
+const laneLabel = l => l === "moto" ? "Bikes" : "Vehicles";
+const cxKeyOf = en => (en.type === "moto" ? "m" : "n") + en.n;
+/* The verifier's own tag decides the lane — same signal the database trigger
+   uses, so client and server can never disagree about what a capture is. */
+const spotLane = s => ((s && s.tags) || []).includes("motorcycle") ? "moto" : "car";
+const registryFor = lane => lane === "moto" ? MOTO_SEED : CODEX_SEED;
+/* Always search within the capture's own lane. Without this a Pontiac Le Mans
+   would match the Moto Guzzi Le Mans entry, and a Kawasaki Ninja would be
+   hunted for by someone who only cares about cars. */
+const findEntry = s => registryFor(spotLane(s)).find(e => entryMatches(e, s));
+const spotKey = s => { const en = findEntry(s); return en ? cxKeyOf(en) : spotStr(s).trim(); };
+
+/* Which lanes the hunter actually wants. "both" is the default and runs the
+   90/10 split; the other two are for people who only came for one thing. */
+function activeLanes(){
+  const p = (state && state.lane) || "both";
+  return p === "both" ? LANES : [p];
+}
+const wantsLane = l => activeLanes().includes(l);
+const primaryLane = () => (state && state.lane === "moto") ? "moto" : "car";
 
 const RANKS = [
   { name:"ROOKIE",  req:"", need: () => true },
@@ -1600,21 +1669,34 @@ const RANKS = [
   { name:"CURATOR", req:"30 models · 8 rare · 1 legendary", need: s => s.models >= 30 && s.rare >= 8 && s.legend >= 1 },
   { name:"LEGEND",  req:"45 models · 5 legendary", need: s => s.models >= 45 && s.legend >= 5 }
 ];
-function hunterStats(){
+/* Scaled to a 30-entry registry so the bike ladder is a real climb rather
+   than something you finish in an afternoon. */
+const MOTO_RANKS = [
+  { name:"ROOKIE",  req:"", need: () => true },
+  { name:"SPOTTER", req:"3 models", need: s => s.models >= 3 },
+  { name:"HUNTER",  req:"8 models · 2 rare", need: s => s.models >= 8 && s.rare >= 2 },
+  { name:"CURATOR", req:"15 models · 5 rare · 1 legendary", need: s => s.models >= 15 && s.rare >= 5 && s.legend >= 1 },
+  { name:"LEGEND",  req:"24 models · 4 legendary", need: s => s.models >= 24 && s.legend >= 4 }
+];
+const ranksFor = lane => lane === "moto" ? MOTO_RANKS : RANKS;
+
+function hunterStats(lane){
+  const only = lane || primaryLane();
   const models = new Set(), rare = new Set(), legend = new Set();
   state.spots.forEach(s => {
     if (s.flagged) return;
-    const en = CODEX_SEED.find(e => entryMatches(e, s));
-    const key = en ? "n" + en.n : spotStr(s).trim();
+    if (spotLane(s) !== only) return;
+    const key = spotKey(s);
     models.add(key);
     if (s.rarity === "rare" || s.rarity === "legendary") rare.add(key);
     if (s.rarity === "legendary") legend.add(key);
   });
-  return { models: models.size, rare: rare.size, legend: legend.size };
+  return { models: models.size, rare: rare.size, legend: legend.size, lane: only };
 }
-function currentRank(st){
-  let r = RANKS[0];
-  RANKS.forEach(x => { if (x.need(st)) r = x; });
+function currentRank(st, lane){
+  const list = ranksFor(lane || (st && st.lane) || primaryLane());
+  let r = list[0];
+  list.forEach(x => { if (x.need(st)) r = x; });
   return r;
 }
 /* Only claims a promotion is N models away if N more models genuinely
@@ -1735,11 +1817,11 @@ function codexAgg(){
   const caught = {};
   state.spots.forEach(s => {
     if (s.flagged) return;
-    const en = CODEX_SEED.find(e => entryMatches(e, s));
-    const key = en ? "n" + en.n : "x:" + spotStr(s).trim();
+    const en = findEntry(s);
+    const key = en ? cxKeyOf(en) : "x:" + spotStr(s).trim();
     const sc = s.shot ? s.shot.score : -1;
     if (!caught[key]){
-      caught[key] = { count: 0, img: s.img, bestScore: sc, bestId: s.id, name: en ? en.name : (s.make + " " + s.model).trim(), tier: en ? en.tier : s.rarity, tags: new Set(), colors: new Set() };
+      caught[key] = { count: 0, img: s.img, bestScore: sc, bestId: s.id, lane: spotLane(s), name: en ? en.name : (s.make + " " + s.model).trim(), tier: en ? en.tier : s.rarity, tags: new Set(), colors: new Set() };
     } else if (sc > caught[key].bestScore){
       caught[key].img = s.img;
       caught[key].bestScore = sc;
@@ -1763,8 +1845,8 @@ function jdmModels(){
   state.spots.forEach(s => {
     if (s.flagged) return;
     if (MAKESETS.jdm.some(m => spotStr(s).includes(m))){
-      const en = CODEX_SEED.find(e => entryMatches(e, s));
-      set.add(en ? "n" + en.n : spotStr(s).trim());
+      const en = findEntry(s);
+      set.add(en ? cxKeyOf(en) : spotStr(s).trim());
     }
   });
   return set.size;
@@ -1773,8 +1855,8 @@ function prewarModels(){
   const set = new Set();
   state.spots.forEach(s => {
     if (s.flagged || s.decade !== "pre-1946") return;
-    const en = CODEX_SEED.find(e => entryMatches(e, s));
-    set.add(en ? "n" + en.n : spotStr(s).trim());
+    const en = findEntry(s);
+    set.add(en ? cxKeyOf(en) : spotStr(s).trim());
   });
   return set.size;
 }
@@ -1782,8 +1864,8 @@ function modelsWhere(pred){
   const set = new Set();
   state.spots.forEach(s => {
     if (s.flagged || !pred(s)) return;
-    const en = CODEX_SEED.find(e => entryMatches(e, s));
-    set.add(en ? "n" + en.n : spotStr(s).trim());
+    const en = findEntry(s);
+    set.add(en ? cxKeyOf(en) : spotStr(s).trim());
   });
   return set.size;
 }
@@ -1816,11 +1898,23 @@ function recordsData(){
     legends: st.legend
   };
 }
+/* Car of the Day respects the hunter's lane. On "both" it rolls 90/10 —
+   roughly one day in ten features a bike, which is the whole point: a car
+   hunter is never sent after something they don't care about, and a bike
+   hunter is never sent after a car. Same day seed for everyone in a lane,
+   so "did you get today's?" still works between friends. */
 function carOfTheDay(){
   const s = state.day || dayKey();
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) >>> 0;
-  return CODEX_SEED[h % CODEX_SEED.length];
+  let lane = primaryLane();
+  if ((state.lane || "both") === "both"){
+    // a second, independent draw from the same seed picks the lane
+    const roll = ((h * 1664525 + 1013904223) >>> 0) / 4294967296;
+    lane = roll < MOTO_SHARE ? "moto" : "car";
+  }
+  const list = registryFor(lane);
+  return list[h % list.length];
 }
 const TITLES = [
   { id:"rookie-no-more", title:"Rookie No More", req:"5 Registry models", test:st => st.models >= 5 },
@@ -1849,7 +1943,7 @@ async function planHunt(force){
   toast("Planning your hunt…");
   try{
     const agg = codexAgg();
-    const missing = CODEX_SEED.filter(e => !agg["n" + e.n]).sort(() => Math.random() - .5).slice(0, 8).map(e => e.name);
+    const missing = activeLanes().flatMap(l => registryFor(l)).filter(e => !agg[cxKeyOf(e)]).sort(() => Math.random() - .5).slice(0, 8).map(e => e.name);
     const here = groundsGeo || state.spots.find(s => s.lat != null) || null;
     const openQ = state.dayQ.ids.map(questById).filter(q => q && !state.dayQ.done[q.id]).map(q => q.name + " (" + q.desc + ")");
     const context = 'local time: ' + new Date().toString()
@@ -2725,17 +2819,25 @@ $("opList").addEventListener("click", async e => {
 });
 
 /* ================= LEADERBOARD ================= */
-let lbSort = "models", lbRows = [], lbLoaded = 0;
+let lbSort = "models", lbRows = [], lbLoaded = 0, lbLane = null;
 const LB_LABEL = { models: "MODELS", legends: "LEGENDARY", streak: "DAY STREAK" };
+/* Two boards, not one. A bike hunter with 12 machines shouldn't be buried
+   under car hunters with 60 — they're not playing the same game. */
+function leaderboardLane(){
+  if (lbLane) return lbLane;
+  return primaryLane();
+}
 async function renderLeaderboard(force){
   const box = $("lbWrap");
   if (!box) return;
+  renderLaneSwitch();
   if (!sb || !sbSession){ box.innerHTML = '<p class="pfnote">Sign in to see where you stand.</p>'; $("lbNote").textContent = ""; return; }
   if (!force && Date.now() - lbLoaded < 60000 && lbRows.length){ paintLeaderboard(); return; }
   box.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading the board…</p>';
   try{
-    const { data } = await sb.from("leaderboard")
+    const { data } = await sb.from("leaderboard_lanes")
       .select("handle,title,models,legends,streak,spots")
+      .eq("lane", leaderboardLane())
       .order(lbSort, { ascending: false })
       .limit(25);
     lbRows = data || [];   // the board is a public ranking; blocks apply to feed content, not standings
@@ -2766,10 +2868,35 @@ function paintLeaderboard(){
 $("lbSeg").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
-  lbSort = b.dataset.lb;
-  document.querySelectorAll("#lbSeg button").forEach(x => x.classList.toggle("on", x === b));
+  if (b.dataset.lbLane){                       // lane switch
+    lbLane = b.dataset.lbLane;
+    document.querySelectorAll("#lbSeg button[data-lb-lane]").forEach(x => x.classList.toggle("on", x === b));
+  } else {                                     // sort switch
+    lbSort = b.dataset.lb;
+    document.querySelectorAll("#lbSeg button[data-lb]").forEach(x => x.classList.toggle("on", x === b));
+  }
+  lbRows = []; lbLoaded = 0;
   renderLeaderboard(true);
 });
+/* Only a hunter running both lanes needs the switch; everyone else just
+   sees their own board and never learns the other exists. */
+function renderLaneSwitch(){
+  const seg = $("lbSeg");
+  if (!seg) return;
+  const existing = seg.querySelectorAll("button[data-lb-lane]");
+  const want = (state.lane || "both") === "both";
+  if (!want){ existing.forEach(b => b.remove()); lbLane = null; return; }
+  if (existing.length) return;
+  const cur = leaderboardLane();
+  LANES.forEach(l => {
+    const b = document.createElement("button");
+    b.dataset.lbLane = l;
+    b.textContent = laneLabel(l).toUpperCase();
+    if (l === cur) b.classList.add("on");
+    seg.appendChild(b);
+  });
+  lbLane = cur;
+}
 
 /* ================= FIRST-RUN COACHING =================
    Two or three beats, each fired when it is actually relevant.
@@ -3596,7 +3723,7 @@ async function renderFeed2(){
       .not("img_path", "is", null).is("flagged", null);
     if (cotd){
       const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
-      q = q.eq("cx_key", "n" + cd.n).gte("created_at", midnight.toISOString()).limit(60);
+      q = q.eq("cx_key", cxKeyOf(cd)).gte("created_at", midnight.toISOString()).limit(60);
     } else {
       q = q.limit(30);
     }
@@ -3811,8 +3938,10 @@ function fmt(n){ return n.toLocaleString("en-US"); }
 
 function renderHUD(){
   ensureDay();
+  // The HUD tracks the hunter's primary lane — a bike hunter's counter
+  // shouldn't be a fraction of a car registry they'll never fill.
   const st = hunterStats();
-  $("cxTop").textContent = st.models + "/" + CODEX_SEED.length;
+  $("cxTop").textContent = st.models + "/" + registryFor(st.lane).length;
   $("rankTop").textContent = currentRank(st).name;
   $("streakNum").textContent = state.streak;
   const C = 138.2, p = Math.min(state.streak/30, 1);
@@ -4159,7 +4288,7 @@ async function processResult(res, canvas, source, ctx){
 
   // codex placement
   const pseudo = { make: res.make || "", model: res.model || "" };
-  const en = CODEX_SEED.find(e => entryMatches(e, pseudo));
+  const en = findEntry(pseudo);
   const keyStr = spotStr(pseudo).trim();
   const priorSpots = state.spots.filter(sp => !sp.flagged && (en ? entryMatches(en, sp) : spotStr(sp).trim() === keyStr));
   const prior = priorSpots.length;
@@ -4239,7 +4368,7 @@ async function processResult(res, canvas, source, ctx){
     make: res.make || "Unknown", model: res.model || "", year: res.year_range || "",
     cls: res.classification, rarity, confidence: Math.round(res.confidence ?? 0),
     nth: prior + 1, cxNew: counts && prior === 0, cxNo: en ? en.n : null,
-    cxKey: en ? "n" + en.n : "x:" + keyStr,
+    cxKey: en ? cxKeyOf(en) : "x:" + keyStr,
     cxName: en ? en.name : ((res.make || "") + " " + (res.model || "")).trim(),
     blurb: res.blurb || "", condition: res.condition || "active",
     phash, source: source || "camera", flagged: flags.join("; "),
@@ -4259,8 +4388,8 @@ async function processResult(res, canvas, source, ctx){
       lastQuestHits.push({ label: "RECORD", name: "NEW BEST SHOT · " + spot.shot.score });
     }
     const cd = carOfTheDay();
-    if (en && cd && en.n === cd.n && !state.cotdStamps["n" + en.n]){
-      state.cotdStamps["n" + en.n] = state.day;
+    if (en && cd && cxKeyOf(en) === cxKeyOf(cd) && !state.cotdStamps[cxKeyOf(en)]){
+      state.cotdStamps[cxKeyOf(en)] = state.day;
       lastQuestHits.push({ label: "CAR OF THE DAY", name: en.name });
       toast("Car of the Day stamped · " + en.name);
     }
@@ -4429,8 +4558,15 @@ $("verdict").addEventListener("click", e => { if (e.target === $("verdict")) { $
 /* ================= GARAGE ================= */
 function renderGarage(){
   const g = $("ggrid");
+  // Count spots in the same lanes the model/legendary figures come from,
+  // otherwise a "both" hunter reads "14 spots · 10 models" and the two
+  // numbers are quietly measuring different things.
   const st = hunterStats();
-  $("garageMeta").textContent = state.spots.length + " spot" + (state.spots.length===1?"":"s") + " · " + st.models + " models · " + st.legend + " legendary";
+  const lanes = activeLanes();
+  const mine = state.spots.filter(s => lanes.includes(spotLane(s)));
+  const models = lanes.reduce((n, l) => n + hunterStats(l).models, 0);
+  const legend = lanes.reduce((n, l) => n + hunterStats(l).legend, 0);
+  $("garageMeta").textContent = mine.length + " spot" + (mine.length===1?"":"s") + " · " + models + " models · " + legend + " legendary";
   $("top8Btn").style.display = state.spots.some(s => s.fav) ? "" : "none";
   $("reelBtn").style.display = state.spots.filter(s => !s.flagged).length >= 2 ? "" : "none";
   if (!state.spots.length){
@@ -4482,7 +4618,7 @@ function entryInfo(key){
   const c = agg[key] || null;
   let name, tier, n = null;
   if (key.startsWith("n")){
-    const en = CODEX_SEED.find(e => "n" + e.n === key);
+    const en = CODEX_SEED.concat(MOTO_SEED).find(e => cxKeyOf(e) === key);
     if (!en) return null;
     name = en.name; tier = en.tier; n = en.n;
   } else {
@@ -4491,8 +4627,8 @@ function entryInfo(key){
   }
   const spots = state.spots.filter(sp => {
     if (sp.flagged) return false;
-    const en2 = CODEX_SEED.find(e => entryMatches(e, sp));
-    return (en2 ? "n" + en2.n : "x:" + spotStr(sp).trim()) === key;
+    const en2 = findEntry(sp);
+    return (en2 ? cxKeyOf(en2) : "x:" + spotStr(sp).trim()) === key;
   });
   return { c, name, tier, n, spots };
 }
@@ -4513,7 +4649,7 @@ function renderEntry(){
     $("ceQ").style.display = "";
   }
   const no = info.n ? "No. " + String(info.n).padStart(3, "0") : "FIELD ENTRY";
-  const stamp = info.n && (state.cotdStamps || {})["n" + info.n];
+  const stamp = info.n && (state.cotdStamps || {})[ceKey];
   const lore = state.lore[ceKey];
   const loreHtml = lore ? `
     <div class="lore"><div class="lh">WHY IT MATTERS</div><p>${esc(lore.matters || "")}</p></div>
@@ -4641,20 +4777,37 @@ function cxCard(n, name, tier, c, key){
   if (!c) return `<button class="cxcard lk" data-key="${key}"><div class="cph">?</div><div class="cin"><div class="cno">${no}</div><div class="cnm">${esc(name)}</div><div class="cpop">UNSPOTTED</div></div></button>`;
   const m = masteryOf(c);
   const mCol = m === "MASTERED" ? "var(--gold)" : (m === "TRACKED" ? "var(--pulse-hi)" : "var(--muted)");
-  const stamp = (state.cotdStamps || {})["n" + n] ? " · ★" : "";
+  const stamp = (state.cotdStamps || {})[key] ? " · ★" : "";
   return `<button class="cxcard" data-key="${key}"><div class="cph" style="background-image:url('${c.img}')"></div><div class="cin"><div class="cno">${no} · ${tier.toUpperCase()}</div><div class="cnm">${esc(name)}</div><div class="cpop" style="color:${mCol}">×${c.count} · ${m}${stamp}</div></div></button>`;
 }
+/* The Registry only ever shows the lanes the hunter asked for. A car-only
+   hunter never sees a bike here, and the completion percentage stays honest
+   because the denominator is their lanes, not everything that exists. */
 function renderCodex(){
   const caught = codexAgg();
-  const got = CODEX_SEED.filter(en => caught["n" + en.n]).length;
-  $("cxPct").textContent = Math.round(got / CODEX_SEED.length * 100) + "%";
-  $("cxCount").textContent = got + " / " + CODEX_SEED.length + " SPOTTED";
-  const seedCards = CODEX_SEED.map(en => {
-    const c = caught["n" + en.n];
-    return cxCard(en.n, en.name, en.tier, c || null, "n" + en.n);
+  const lanes = activeLanes();
+  let got = 0, total = 0, html = "";
+  lanes.forEach(lane => {
+    const list = registryFor(lane);
+    const mine = list.filter(en => caught[cxKeyOf(en)]).length;
+    got += mine; total += list.length;
+    if (lanes.length > 1){
+      html += `<div style="grid-column:1/-1;padding:14px 2px 6px;font:700 11px var(--mono);letter-spacing:.14em;color:var(--muted)">`
+            + `${laneLabel(lane).toUpperCase()} · ${mine} / ${list.length}</div>`;
+    }
+    html += list.map(en => {
+      const k = cxKeyOf(en);
+      return cxCard(en.n, en.name, en.tier, caught[k] || null, k);
+    }).join("");
   });
-  const extras = Object.keys(caught).filter(k => k.startsWith("x:")).map((k, i) => cxCard(CODEX_SEED.length + i + 1, caught[k].name, caught[k].tier, caught[k], k));
-  $("cxGrid").innerHTML = seedCards.join("") + extras.join("");
+  // Off-registry finds keep their own section at the end, regardless of lane.
+  const extras = Object.keys(caught)
+    .filter(k => k.startsWith("x:"))
+    .filter(k => lanes.includes(caught[k].lane || "car"))
+    .map((k, i) => cxCard(total + i + 1, caught[k].name, caught[k].tier, caught[k], k));
+  $("cxPct").textContent = total ? Math.round(got / total * 100) + "%" : "0%";
+  $("cxCount").textContent = got + " / " + total + " SPOTTED";
+  $("cxGrid").innerHTML = html + extras.join("");
 }
 
 $("exportBtn").addEventListener("click", () => {
@@ -4833,7 +4986,7 @@ function renderQuests(){
       </div>`;
   }
   const cd = carOfTheDay();
-  const stamped = cd && !!(state.cotdStamps || {})["n" + cd.n];
+  const stamped = cd && !!(state.cotdStamps || {})[cxKeyOf(cd)];
   const cotdCard = cd ? `<div class="sechead"${aiCard ? "" : ' style="margin-top:2px"'}>Car of the day</div>
     <div class="qcard want ${stamped ? "done" : ""}">
       <div class="qic">${stamped ? check : target}</div>
@@ -5072,7 +5225,7 @@ function shareCard(s){
     x.fillStyle = "#98A0AC"; x.font = "600 30px 'JetBrains Mono', monospace";
     x.fillText((s.year ? s.year + "  ·  " : "") + new Date(s.ts).toLocaleDateString(), 64, ph + 286);
     x.fillStyle = "#FFC24B"; x.font = "700 40px 'JetBrains Mono', monospace";
-    const cxe = CODEX_SEED.find(e => entryMatches(e, s));
+    const cxe = findEntry(s);
     x.fillText(cxe ? "REGISTRY No. " + String(cxe.n).padStart(3, "0") : "FIELD ENTRY", 64, ph + 344);
     x.fillStyle = "#FF8A1E"; x.font = "800 27px 'Archivo', sans-serif";
     drawMark(x, 78, H - 74, 30, "#FF8A1E");
@@ -5275,6 +5428,9 @@ async function syncCapture(s){
       make: s.make, model: s.model, year_range: s.year,
       rarity: s.rarity, classification: s.cls, confidence: s.confidence,
       decade: s.decade || "", tags: s.tags || [],
+      // The server derives this from the motorcycle tag too, so this is
+      // belt-and-braces rather than the source of truth.
+      vehicle_type: spotLane(s),
       cx_key: s.cxKey || null, cx_name: s.cxName || null,
       phash: s.phash || null, source: s.source || null, flagged: s.flagged || null,
       event: s.event || "", event_code: s.eventCode || null, lat: s.lat, lng: s.lng, taken_at: s.ts,
@@ -5413,6 +5569,17 @@ function renderProfile(){
       <button class="btn hot" id="pfShareTag">SHARE TAG</button>
       <button class="btn" id="pfCopy">COPY CODE</button>
     </div>
+    <div class="sechead">What you hunt</div>
+    <div class="seg" id="laneSeg" style="margin-bottom:8px">
+      <button data-lane="car"${state.lane === "car" ? ' class="on"' : ""}>VEHICLES</button>
+      <button data-lane="moto"${state.lane === "moto" ? ' class="on"' : ""}>BIKES</button>
+      <button data-lane="both"${(state.lane || "both") === "both" ? ' class="on"' : ""}>BOTH</button>
+    </div>
+    <p class="pfnote" style="margin:0 0 14px">${
+      state.lane === "car"  ? "Cars and trucks only. No bikes in your quests or Registry." :
+      state.lane === "moto" ? "Bikes only. No cars in your quests or Registry." :
+                              "Mostly cars, with about one bike in ten."
+    }</p>
     <div class="sechead">Account</div>
     ${acct}
     <button class="btn" id="pfSound" style="width:100%;margin-top:10px">SOUND: ${state.sound ? "ON" : "OFF"}</button>
@@ -5454,6 +5621,20 @@ function renderProfile(){
     await Store.save();
     renderProfile();
     if (state.sound) sfx("classic");
+  });
+  const laneSeg = $("laneSeg");
+  if (laneSeg) laneSeg.addEventListener("click", async e => {
+    const b = e.target.closest("button");
+    if (!b || !b.dataset.lane || b.dataset.lane === state.lane) return;
+    state.lane = b.dataset.lane;
+    // Today's quests were drawn for the old lane; redraw so the change is
+    // visible immediately rather than at midnight.
+    state.dayQ = { ids: dailyQuests(), done: {} };
+    await Store.save();
+    lbLane = null; lbRows = []; lbLoaded = 0;
+    renderProfile(); renderHUD(); renderCodex(); renderQuests();
+    toast(state.lane === "both" ? "Hunting both — about one bike in ten"
+        : "Hunting " + laneLabel(state.lane).toLowerCase() + " only");
   });
   $("pfAddBtn").addEventListener("click", addCrew);
   bindMagic();
