@@ -1455,6 +1455,50 @@ const CODEX_BASE = [
   { name:"Toyota Tacoma", tier:"everyday", m:["tacoma"] }
 ];
 
+/* ================= THE BIKE REGISTRY =================
+   A separate track, not a subsection. Discovery runs 90/10 in favour of
+   four wheels — a hunter who only cares about cars will see roughly one
+   bike quest in ten and never opens this list. But someone who came for
+   the bikes needs a collection deep enough to live in, so this is sized
+   for its own rank ladder rather than as 10% of the car count.
+   Tier mix mirrors CODEX_BASE: legendary is genuinely rare metal. */
+const MOTO_BASE = [
+  // legendary — the machines that stop a room
+  { name:"Vincent Black Shadow", tier:"legendary", m:[["black shadow"],["vincent","rapide"]] },
+  { name:"Brough Superior SS100", tier:"legendary", m:[["brough"]] },
+  { name:"Ducati 916", tier:"legendary", m:[["ducati","916"],["ducati","996"],["ducati","998"]] },
+  { name:"Honda RC30", tier:"legendary", m:[["rc30"],["vfr750r"]] },
+  { name:"MV Agusta F4 Serie Oro", tier:"legendary", m:[["serie oro"],["mv agusta","f4"]] },
+  { name:"Britten V1000", tier:"legendary", m:[["britten"]] },
+  { name:"Crocker Big Tank", tier:"legendary", m:[["crocker"]] },
+  { name:"Honda NR750", tier:"legendary", m:[["nr750"]] },
+  // rare — the ones enthusiasts chase
+  { name:"Ducati Desmosedici RR", tier:"rare", m:[["desmosedici"]] },
+  { name:"Yamaha RD350 / RZ350", tier:"rare", m:[["rd350"],["rz350"],["rd400"]] },
+  { name:"Kawasaki H2 Mach IV", tier:"rare", m:[["mach iv"],["kawasaki","h2"],["kawasaki","triple"]] },
+  { name:"Suzuki GSX-R750 Slabside", tier:"rare", m:[["gsx-r750"],["gsxr750"],["gsx-r","slabside"]] },
+  { name:"BMW R90S", tier:"rare", m:[["r90s"],["r 90 s"]] },
+  { name:"Norton Commando", tier:"rare", m:[["commando"]] },
+  { name:"Bimota", tier:"rare", m:[["bimota"]] },
+  { name:"Laverda Jota", tier:"rare", m:[["jota"],["laverda"]] },
+  // classic — the backbone of the registry
+  { name:"Honda CB750", tier:"classic", m:[["cb750"],["cb 750"]] },
+  { name:"Triumph Bonneville", tier:"classic", m:[["bonneville"]] },
+  { name:"Harley-Davidson Sportster", tier:"classic", m:[["sportster"],["harley","xl"]] },
+  { name:"BSA Gold Star", tier:"classic", m:[["gold star"],["bsa"]] },
+  { name:"Moto Guzzi Le Mans", tier:"classic", m:[["moto guzzi","le mans"],["moto guzzi","v7"]] },
+  { name:"Kawasaki Z1 / Z900", tier:"classic", m:[["kawasaki","z1"],["z900"],["kz900"]] },
+  { name:"Yamaha SR400 / SR500", tier:"classic", m:[["sr400"],["sr500"]] },
+  { name:"Royal Enfield Bullet", tier:"classic", m:[["royal enfield"]] },
+  { name:"Honda Super Cub", tier:"classic", m:[["super cub"],["honda","c90"]] },
+  { name:"Vespa", tier:"classic", m:[["vespa"],["lambretta"]] },
+  // everyday — the bikes actually parked on your street
+  { name:"Harley-Davidson Street Glide", tier:"everyday", m:[["street glide"],["road glide"]] },
+  { name:"KTM Enduro", tier:"everyday", m:[["ktm"]] },
+  { name:"Kawasaki Ninja", tier:"everyday", m:[["ninja"]] },
+  { name:"Custom Chopper", tier:"everyday", m:[["chopper"],["bobber"]] }
+];
+
 /* ================= SEASONS (procedural — infinite from CONFIG.launch) ================= */
 const LAUNCH = new Date(CONFIG.launch + "T00:00:00");
 const WEEK_MS = 6048e5, SEASON_WEEKS = 8, SEASON_MS = SEASON_WEEKS * WEEK_MS;
