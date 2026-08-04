@@ -3315,6 +3315,7 @@ async function renderBounties(){
     const { data } = await sb.from("profiles").select("id,handle").in("id", uids);
     (data || []).forEach(pp => { feedHandles[pp.id] = pp.handle; });
   }catch(e){}
+  await loadMyDisputes();
   box.innerHTML = liveBounties.map(b => {
     const mine = sbSession && b.owner === sbSession.user.id;
     const found = hits["me" + b.id];
@@ -3326,9 +3327,52 @@ async function renderBounties(){
       </div>
       <div class="bmeta">@${esc(feedHandles[b.owner] || "hunter")} · ${esc(b.region || "anywhere")} · ${ends}d left${b.note ? "<br>" + esc(b.note) : ""}</div>
       <div class="bmeta" style="color:var(--gold)">${hits[b.id] || 0} hunter${(hits[b.id] || 0) === 1 ? "" : "s"} found it</div>
+      ${mine ? "" : `<button class="btn" data-dispute="${b.id}" style="width:100%;margin-top:9px;font-size:10px;padding:8px;color:var(--muted)">${myDisputes.has(b.id) ? "REPORTED ✓" : "NOT THEIR CAR"}</button>`}
     </div>`;
   }).join("");
 }
+
+/* Ownership is self-declared, and a bounty asks strangers to report where a
+   specific vehicle is — so it needs a check that doesn't wait for an operator.
+   The count is deliberately never shown: a public tally invites pile-ons and
+   tells a bad actor exactly how close they are to the line. */
+let myDisputes = new Set();
+async function loadMyDisputes(){
+  if (!sb || !sbSession) return;
+  try{
+    const { data } = await sb.from("bounty_disputes").select("bounty_id").eq("disputer", sbSession.user.id);
+    myDisputes = new Set((data || []).map(d => d.bounty_id));
+  }catch(e){}
+}
+/* Two taps to arm, matching the delete pattern — no prompt()/confirm(),
+   which block the page and read badly on a phone. */
+let disputeArmed = null;
+async function disputeBounty(id, btn){
+  if (!sb || !sbSession){ toast("Sign in to report a bounty"); return; }
+  if (myDisputes.has(id)){ toast("You've already reported this one"); return; }
+  if (disputeArmed !== id){
+    disputeArmed = id;
+    if (btn) btn.textContent = "TAP AGAIN TO REPORT";
+    setTimeout(() => {
+      if (disputeArmed === id){ disputeArmed = null; if (btn) btn.textContent = "NOT THEIR CAR"; }
+    }, 4000);
+    return;
+  }
+  disputeArmed = null;
+  try{
+    const { error } = await sb.from("bounty_disputes")
+      .insert({ bounty_id: id, disputer: sbSession.user.id });
+    if (error) throw error;
+    myDisputes.add(id);
+    // Never confirm whether this crossed the threshold — that would leak the tally.
+    toast("Reported — thanks. An operator will take a look.");
+    renderBounties();
+  }catch(e){ toast("Couldn't file that report"); }
+}
+document.addEventListener("click", e => {
+  const d = e.target.closest("[data-dispute]");
+  if (d) disputeBounty(+d.dataset.dispute, d);
+});
 function openBounty(spotId){
   const sp = state.spots.find(x => x.id === spotId);
   if (!sp) return;
