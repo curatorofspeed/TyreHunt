@@ -748,6 +748,7 @@ input[type=file]{display:none}
       <div class="meta" id="garageMeta">0 spots</div>
       <div class="seg" id="gSeg">
         <button data-seg="spots" class="on">SPOTS</button>
+        <button data-seg="stable">STABLE</button>
         <button data-seg="codex">REGISTRY</button>
       </div>
     </div>
@@ -778,6 +779,13 @@ input[type=file]{display:none}
           <div id="gCount" class="pfnote" style="margin:0 0 10px"></div>
         </div>
         <div id="ggrid"></div>
+      </div>
+      <!-- Cars the hunter owns. Deliberately outside the Registry: this is
+           a display case, not a scoreboard. It's also the only place a
+           bounty can come from. -->
+      <div id="segStable" style="display:none">
+        <p class="pfnote" style="margin:0 0 12px">Cars you own. These stay out of your Registry and rank — and they're the only ones you can put a bounty on.</p>
+        <div id="stableGrid"></div>
       </div>
       <div id="segCodex" style="display:none">
         <div id="cxHead">
@@ -993,6 +1001,8 @@ input[type=file]{display:none}
         <button class="btn" id="dShare">SHARE CARD</button>
         <button class="btn" id="dLink" aria-label="Copy a link to this spot">LINK</button>
       </div>
+      <button class="btn" id="dOwn" style="width:100%;margin-top:10px">THIS ONE'S MINE</button>
+      <p class="pfnote" id="dOwnNote" style="margin:6px 0 0"></p>
       <button class="btn" id="dDelete" style="width:100%;margin-top:10px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE SPOT</button>
     </div>
   </section>
@@ -1709,7 +1719,7 @@ function hunterStats(lane){
   const only = lane || primaryLane();
   const models = new Set(), rare = new Set(), legend = new Set();
   state.spots.forEach(s => {
-    if (s.flagged) return;
+    if (s.flagged || s.owned) return;   // the Stable is not the scoreboard
     if (spotLane(s) !== only) return;
     const key = spotKey(s);
     models.add(key);
@@ -1841,7 +1851,7 @@ function pickWanted(wk){
 function codexAgg(){
   const caught = {};
   state.spots.forEach(s => {
-    if (s.flagged) return;
+    if (s.flagged || s.owned) return;   // owning a car is not spotting one
     const en = findEntry(s);
     const key = en ? cxKeyOf(en) : "x:" + spotStr(s).trim();
     const sc = s.shot ? s.shot.score : -1;
@@ -3322,7 +3332,8 @@ async function renderBounties(){
 function openBounty(spotId){
   const sp = state.spots.find(x => x.id === spotId);
   if (!sp) return;
-  if (!isFullDossier(sp)){ toast("Document three verified angles first — that's how we know it's your car"); return; }
+  if (!sp.owned){ toast("Add this to your Stable first — bounties are for cars you own"); return; }
+  if (!isFullDossier(sp)){ toast("Document three verified angles so hunters know what they're looking for"); return; }
   if (!sbPremium){
     activeBountyCount().then(n => {
       if (n >= 1){ toast("Free hunters run one bounty at a time — Hunter's Edition lifts that"); openPremium(); }
@@ -4592,7 +4603,8 @@ function renderGarage(){
   // numbers are quietly measuring different things.
   const st = hunterStats();
   const lanes = activeLanes();
-  const mine = state.spots.filter(s => lanes.includes(spotLane(s)));
+  const mine = state.spots.filter(s => lanes.includes(spotLane(s)) && !s.owned);
+  const stable = state.spots.filter(s => s.owned);
   const models = lanes.reduce((n, l) => n + hunterStats(l).models, 0);
   const legend = lanes.reduce((n, l) => n + hunterStats(l).legend, 0);
   $("garageMeta").textContent = mine.length + " spot" + (mine.length===1?"":"s") + " · " + models + " models · " + legend + " legendary";
@@ -4616,7 +4628,10 @@ function renderGarage(){
       + '</p></div>';
     return;
   }
-  g.innerHTML = shown.map(s => `
+  g.innerHTML = shown.map(gcardHtml).join("");
+}
+function gcardHtml(s){
+  return `
     <button class="gcard" data-id="${s.id}">
       <div class="ph" style="background-image:url('${s.img}')"></div>
       <div class="in">
@@ -4624,10 +4639,10 @@ function renderGarage(){
         <div class="yr">${esc(s.year)}${s.year ? " · " : ""}${s.event ? esc(s.event) : new Date(s.ts).toLocaleDateString()}</div>
         <div class="row">
           <span class="chip ${s.rarity}">${s.rarity.toUpperCase()}</span>
-          <span class="gtyres">#${s.seq || "—"}</span>
+          <span class="gtyres">${s.owned ? "MINE" : "#" + (s.seq || "—")}</span>
         </div>
       </div>
-    </button>`).join("");
+    </button>`;
 }
 function esc(x){ return String(x ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
@@ -4636,10 +4651,26 @@ $("gSeg").addEventListener("click", e => {
   if (!b) return;
   document.querySelectorAll("#gSeg button").forEach(x => x.classList.toggle("on", x === b));
   const seg = b.dataset.seg;
-  $("segSpots").style.display = seg === "spots" ? "" : "none";
-  $("segCodex").style.display = seg === "codex" ? "" : "none";
+  $("segSpots").style.display  = seg === "spots"  ? "" : "none";
+  $("segStable").style.display = seg === "stable" ? "" : "none";
+  $("segCodex").style.display  = seg === "codex"  ? "" : "none";
   if (seg === "codex") renderCodex();
+  if (seg === "stable") renderStable();
 });
+
+/* The Stable reuses the garage card so an owned car looks like what it is —
+   the same machine, just filed somewhere that doesn't score it. */
+function renderStable(){
+  const g = $("stableGrid");
+  if (!g) return;
+  const stable = state.spots.filter(s => s.owned);
+  if (!stable.length){
+    g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="e1">Nothing in the Stable</div>'
+      + '<p>Shot a car you own? Open it from your Spots and tap "This one\'s mine". It leaves your Registry and becomes bountyable.</p></div>';
+    return;
+  }
+  g.innerHTML = stable.map(gcardHtml).join("");
+}
 
 /* ================= HALL: FEED / STANDING ================= */
 $("hallSeg").addEventListener("click", e => {
@@ -5252,14 +5283,37 @@ function openDossier(id){
   $("dMake").value = s.make || ""; $("dModel").value = s.model || ""; $("dYear").value = s.year || "";
   $("dEvent").value = s.event || ""; $("dPlace").value = s.place || "";
   renderDossierAngles();
-  $("dBounty").style.display = isFullDossier(s) ? "" : "none";
+  $("dBounty").style.display = (s.owned && isFullDossier(s)) ? "" : "none";
   $("dStory").value = s.story || ""; $("dColor").value = s.color || ""; $("dOwner").value = s.owner || "";
   $("dMetaChip").className = "chip " + s.rarity;
   $("dMetaChip").textContent = s.rarity.toUpperCase();
   $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + (s.shot ? " · SHOT " + s.shot.score : "") + (isFullDossier(s) ? ' · <span style="color:var(--gold)">FULL DOSSIER</span>' : "") + (isSleeping(s) ? ' · <span class="sleepchip">' + (s.condition === "sleeping" ? "SLEEPING" : s.condition === "project" ? "PROJECT" : "WRECK") + '</span>' : "") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
+  $("dOwn").textContent = s.owned ? "IN YOUR STABLE ✓" : "THIS ONE'S MINE";
+  $("dOwn").style.color = s.owned ? "var(--gold)" : "";
+  $("dOwn").style.borderColor = s.owned ? "rgba(255,194,75,.45)" : "";
+  $("dOwnNote").textContent = s.owned
+    ? "Out of your Registry and rank. You can post a bounty on it."
+    : "Own this car? Move it to your Stable — it leaves your Registry and rank, and becomes bountyable.";
   $("dossier").classList.add("on");
 }
 $("dBack").addEventListener("click", () => { $("dossier").classList.remove("on"); renderGarage(); });
+/* Marking a car as owned takes it out of the scoreboard, so say so plainly
+   rather than letting someone discover their rank moved on its own. */
+$("dOwn").addEventListener("click", async () => {
+  const s = state.spots.find(x => x.id === dId); if (!s) return;
+  s.owned = !s.owned;
+  await Store.save();
+  if (sb && sbSession && s.rid){
+    try{
+      await sb.from("captures").update({ owned: s.owned })
+        .eq("id", s.rid).eq("user_id", sbSession.user.id);
+    }catch(e){}
+  }
+  toast(s.owned ? "Moved to your Stable — it no longer counts toward your Registry"
+                : "Back in your Spots — it counts toward your Registry again");
+  openDossier(dId);
+  renderGarage(); renderHUD();
+});
 $("dStar").addEventListener("click", async () => {
   const s = state.spots.find(x => x.id === dId); if (!s) return;
   s.fav = !s.fav;
@@ -5524,10 +5578,16 @@ async function syncCapture(s){
       // The server derives this from the motorcycle tag too, so this is
       // belt-and-braces rather than the source of truth.
       vehicle_type: spotLane(s),
+      owned: !!s.owned,
       cx_key: s.cxKey || null, cx_name: s.cxName || null,
       phash: s.phash || null, source: s.source || null, flagged: s.flagged || null,
       event: s.event || "", event_code: s.eventCode || null, lat: s.lat, lng: s.lng, taken_at: s.ts,
       img_path: imgPath
+    }).select("id").single().then(r => {
+      // Remember the server row id — matching on phash later is unreliable
+      // because phash can be null, and make/model isn't unique.
+      if (r && r.data && r.data.id){ s.rid = r.data.id; Store.save(); }
+      return r;
     });
   }catch(e){}
 }
