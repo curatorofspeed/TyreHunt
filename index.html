@@ -1188,7 +1188,10 @@ const CONFIG = {
   stripeMonthly: "https://buy.stripe.com/test_5kQ8wR2Q0ficgjV5Jz4F200",  // $4.99/mo (TEST)
   stripeYearly:  "https://buy.stripe.com/test_3cIeVf1LW5HCd7J0pf4F201",  // $39/yr (TEST)
   appUrl: "https://hunt.tyrehunt.app",
-  vapidPublic: "",       // paste your VAPID public key — blank keeps notifications switched off
+  // Public half of the VAPID pair. Safe to ship — it's sent to every browser
+  // as the applicationServerKey. The private half lives only in the Supabase
+  // Edge Function secrets. Blank here keeps notifications switched off.
+  vapidPublic: "BO9t_5KCL6cdM2Xk9hCQvQ16pfJ5_N88QTnyC3iP5Wkb1Amgai32ARJ5pJTlOzqHC5VjIuWc6SSU3Ky30LCZ0t4",
    // burned onto every share, so a reel can be followed home
   freeDayCap: 30,        // verified captures per day, free hunters
   premiumDayCap: 150,    // verified captures per day, Hunter's Edition
