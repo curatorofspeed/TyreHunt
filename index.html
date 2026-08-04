@@ -778,10 +778,6 @@ input[type=file]{display:none}
           <div id="gCount" class="pfnote" style="margin:0 0 10px"></div>
         </div>
         <div id="ggrid"></div>
-        <div class="rowbtns">
-          <button class="btn" id="exportBtn">EXPORT DATA</button>
-          <button class="btn" id="importBtn">IMPORT DATA</button>
-        </div>
       </div>
       <div id="segCodex" style="display:none">
         <div id="cxHead">
@@ -4901,15 +4897,21 @@ function renderCodex(){
   $("cxGrid").innerHTML = html + extras.join("");
 }
 
-$("exportBtn").addEventListener("click", () => {
+/* These buttons live inside the profile panel, which re-renders its own
+   innerHTML — so bind by delegation rather than to the elements, which
+   would not exist at load and would lose their handler on every render. */
+function exportData(){
   const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "tyre-hunt-" + dayKey() + ".json";
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+$("pfBody").addEventListener("click", e => {
+  if (e.target.closest("#exportBtn")) exportData();
+  else if (e.target.closest("#importBtn")) $("fileImport").click();
 });
-$("importBtn").addEventListener("click", () => $("fileImport").click());
 $("fileImport").addEventListener("change", e => {
   const f = e.target.files[0]; if (!f) return;
   const rd = new FileReader();
@@ -5678,6 +5680,12 @@ function renderProfile(){
     <button class="btn" id="opBtn" style="width:100%;margin-bottom:14px;display:none;color:var(--gold);border-color:rgba(255,194,75,.45)">OPERATOR CONSOLE</button>
     <div class="sechead">Viewfinder</div>
     <div id="themeGrid"></div>
+    <div class="sechead">Your data</div>
+    <p class="pfnote" style="margin:-4px 0 9px">A full copy of your garage, as a file you keep. Import restores it on a new phone.</p>
+    <div class="rowbtns">
+      <button class="btn" id="exportBtn">EXPORT DATA</button>
+      <button class="btn" id="importBtn">IMPORT DATA</button>
+    </div>
     <div class="sechead">Add hunter</div>
     <div style="display:flex;gap:10px;align-items:flex-start">
       <div class="dfield" style="flex:1;margin:0"><input id="pfAdd" placeholder="@handle or TH-XXXX-XXXX" autocapitalize="none"></div>
