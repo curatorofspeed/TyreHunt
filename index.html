@@ -132,7 +132,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #quest .pay .u{font-size:8.5px;letter-spacing:.2em;color:var(--muted)}
 #controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:12px 18px 2px}
 #controls .ctlstack{justify-self:end;display:flex;flex-direction:column;align-items:center;gap:7px}
-#controls #eventPill{position:relative;font:700 8.5px var(--mono);letter-spacing:.12em;color:var(--muted);background:transparent;border:1px dashed rgba(255,255,255,.2);border-radius:999px;padding:5px 10px;white-space:nowrap}
+#controls #eventPill{position:relative;display:inline-flex;align-items:center;font:700 8.5px var(--mono);letter-spacing:.12em;color:var(--muted);background:transparent;border:1px dashed rgba(255,255,255,.2);border-radius:999px;padding:5px 10px;white-space:nowrap}
 #controls #eventPill:active{border-color:var(--ember);color:var(--ember)}
 #questMini{justify-self:start;display:flex;flex-direction:column;align-items:flex-start;gap:2px;max-width:132px;text-align:left;background:var(--glass);border:1px solid rgba(255,138,30,.45);border-radius:var(--r-md);padding:8px 11px}
 #questMini .qml{font:800 8px var(--disp);letter-spacing:.22em;color:var(--ember)}
@@ -187,6 +187,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .chip.rare{color:var(--r-rare);border-color:rgba(94,151,255,.5)}
 .chip.legendary{color:var(--r-legend);border-color:rgba(255,194,75,.55);background:rgba(255,194,75,.08)}
 .gtyres{font:700 12px var(--mono);color:var(--gold)}
+#gFilter .chip{display:inline-flex;align-items:center;min-height:44px}
 .empty{border:1px dashed rgba(255,255,255,.15);border-radius:var(--r-lg);padding:38px 24px;text-align:center;color:var(--muted)}
 .empty .e1{font-weight:800;letter-spacing:.1em;color:var(--ink);font-size:13px;text-transform:uppercase;margin-bottom:6px}
 .empty p{font-size:12.5px;line-height:1.55}
@@ -253,7 +254,6 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 /* event pill */
 #utilrow{position:relative;z-index:5;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:7px;margin:7px 14px 0}
 #utilrow:empty{display:none}
-#eventPill{display:inline-flex;align-items:center;font:700 9.5px var(--mono);letter-spacing:.12em;color:var(--muted);border:1px dashed rgba(255,255,255,.22);border-radius:999px;padding:6px 12px;background:rgba(12,14,19,.6)}
 #eventPill.on{color:var(--ember);border:1px solid rgba(255,138,30,.55);box-shadow:0 0 10px rgba(255,138,30,.15)}
 
 /* dossier */
@@ -358,11 +358,17 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #flash{position:absolute;inset:0;z-index:40;pointer-events:none;background:radial-gradient(circle at 50% 42%,rgba(255,235,190,.95),rgba(255,180,60,.5) 40%,transparent 75%);opacity:0}
 #flash.on{animation:flashout .55s ease}
 @keyframes flashout{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+/* Rare pulls earn a distinct middle tier: a cooler shimmer + softer flash than
+   legendary's warm gold, so the reveal crescendos everyday -> rare -> legendary
+   instead of jumping straight from plain flip to full gold. */
+#vcard .vph.holo.holo-cool::after{background:linear-gradient(115deg,transparent 42%,rgba(150,190,255,.42) 50%,rgba(190,215,255,.22) 56%,transparent 66%)}
+#flash.soft{background:radial-gradient(circle at 50% 42%,rgba(180,205,255,.6),rgba(120,160,255,.3) 40%,transparent 75%)}
 .chip.cond{color:var(--pulse-hi);border-color:rgba(110,160,255,.45)}
 .ptitle{font:800 11px var(--disp);letter-spacing:.22em;color:var(--gold);margin-top:6px;text-transform:uppercase}
 .bdg.eq{border-color:var(--pulse-hi);box-shadow:0 0 12px rgba(110,160,255,.22)}
 button.bdg[disabled]{cursor:default}
 @media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard .vph.holo::after,#flash.on,.view.on,#verdict.on,#verdict.on #vcard,#dossier.on,#profile.on,#cxSheet.on,#scanline.on,.tick{animation:none}button{transition:none}}
+@media (prefers-reduced-motion:reduce){#signal.live .dot,.coachpulse::after,.shim{animation:none}}
 
 /* reel render progress */
 #reelProg{position:absolute;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(10,11,14,.88);backdrop-filter:blur(4px)}
@@ -700,7 +706,7 @@ input[type=file]{display:none}
     </div>
   </header>
 
-  <button id="signal"> aria-label="Nearby activity"
+  <button id="signal" aria-label="Nearby activity">
     <span class="dot"></span>
     <span class="tx" id="sigText"></span>
     <span class="sub" id="sigSub"></span>
@@ -762,7 +768,7 @@ input[type=file]{display:none}
              sort or search is a wall, not a collection. -->
         <div id="gTools" style="display:none">
           <input id="gSearch" type="search" placeholder="Search make, model, event…" autocomplete="off"
-                 style="width:100%;padding:11px 12px;margin-bottom:9px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);color:var(--ink);font:600 13px var(--sans)">
+                 style="width:100%;padding:11px 12px;margin-bottom:9px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);color:var(--ink);font:600 13px var(--disp)">
           <div class="seg" id="gSort" style="margin-bottom:9px">
             <button data-sort="new" class="on">NEWEST</button>
             <button data-sort="rare">RAREST</button>
@@ -2858,7 +2864,7 @@ $("opList").addEventListener("click", async e => {
 
 /* ================= LEADERBOARD ================= */
 let lbSort = "models", lbRows = [], lbLoaded = 0, lbLane = null;
-const LB_LABEL = { models: "MODELS", legends: "LEGENDARY", streak: "DAY STREAK" };
+const LB_LABEL = { models: "REGISTRY", legends: "LEGENDARY", streak: "DAY STREAK" };
 /* Two boards, not one. A bike hunter with 12 machines shouldn't be buried
    under car hunters with 60 — they're not playing the same game. */
 function leaderboardLane(){
@@ -4579,15 +4585,20 @@ function openVerdict(spot, canvas, raw){
   }
   const vc = $("vcard"), ph = $("vPhoto");
   vc.classList.remove("reveal");
-  ph.classList.remove("holo");
+  ph.classList.remove("holo","holo-cool");
   if (spot && !spot.flagged){
     void vc.offsetWidth;
     vc.classList.add("reveal");
     sfx(spot.rarity);
     if (lastRankUp || lastQuestHits.length) setTimeout(() => sfx("extra"), 320);
+    const f = $("flash");
+    f.classList.remove("soft");
     if (spot.rarity === "legendary"){
-      ph.classList.add("holo");
-      const f = $("flash");
+      ph.classList.add("holo");                 // warm gold foil
+      f.classList.remove("on"); void f.offsetWidth; f.classList.add("on");
+    } else if (spot.rarity === "rare"){
+      ph.classList.add("holo","holo-cool");     // cooler, subtler shimmer
+      f.classList.add("soft");
       f.classList.remove("on"); void f.offsetWidth; f.classList.add("on");
     }
     try{
@@ -5317,14 +5328,14 @@ function renderEventPill(){
   renderSignal();
 }
 
-let dId = null, delArm = false;
+let dId = null, delArm = false, delTimer = null;
 $("ggrid").addEventListener("click", e => {
   const b = e.target.closest(".gcard");
   if (b && b.dataset.id) openDossier(+b.dataset.id);
 });
 function openDossier(id){
   const s = state.spots.find(x => x.id === id); if (!s) return;
-  dId = id; delArm = false; $("dDelete").textContent = "DELETE SPOT";
+  dId = id; delArm = false; clearTimeout(delTimer); $("dDelete").textContent = "DELETE SPOT";
   $("dHero").style.backgroundImage = "url(" + s.img + ")";
   $("dStar").classList.toggle("on", !!s.fav);
   $("dMake").value = s.make || ""; $("dModel").value = s.model || ""; $("dYear").value = s.year || "";
@@ -5384,7 +5395,13 @@ $("dSave").addEventListener("click", async () => {
   openDossier(dId);
 });
 $("dDelete").addEventListener("click", async () => {
-  if (!delArm){ delArm = true; $("dDelete").textContent = "TAP AGAIN TO DELETE"; return; }
+  if (!delArm){
+    delArm = true; $("dDelete").textContent = "TAP AGAIN TO DELETE";
+    clearTimeout(delTimer);
+    delTimer = setTimeout(() => { delArm = false; if ($("dDelete")) $("dDelete").textContent = "DELETE SPOT"; }, 3500);
+    return;
+  }
+  clearTimeout(delTimer);
   state.spots = state.spots.filter(x => x.id !== dId);
   await Store.save();
   $("dossier").classList.remove("on");
