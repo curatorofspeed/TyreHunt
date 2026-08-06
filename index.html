@@ -171,7 +171,11 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .vhead .eyebrow{font-size:9.5px;font-weight:700;letter-spacing:.34em;color:var(--ember);text-transform:uppercase}
 .vhead h2{font-size:24px;font-weight:900;letter-spacing:.04em;margin-top:3px}
 .vhead .meta{font-size:12px;color:var(--muted);margin-top:4px}
-.vbody{flex:1;overflow-y:auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+/* overflow-y:auto alone makes the x-axis compute to `auto` too, so any wide
+   child (a long segmented control, a stray grid) turns the whole view into a
+   sideways-scrolling page. Lock x explicitly and stop the scroll chaining that
+   causes the rubber-band bounce at the ends. */
+.vbody{flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
 
 /* garage */
 #ggrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -291,7 +295,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .streak{cursor:pointer}
 
 /* segmented control */
-.seg{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;width:max-content;max-width:100%;margin-top:10px}
+/* wraps rather than overflows — the leaderboard pill grows to 5 buttons once the
+   lane switch appears, which is wider than a phone. */
+.seg{display:flex;flex-wrap:wrap;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;width:max-content;max-width:100%;margin-top:10px}
 .seg button{font:800 10px var(--disp);letter-spacing:.16em;color:var(--muted);padding:0 15px;border-radius:999px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 .seg button.on{background:rgba(255,138,30,.14);color:var(--ember)}
 
@@ -882,6 +888,7 @@ input[type=file]{display:none}
       <div class="sechead">Season</div>
       <div id="seasonCard"></div>
       <div class="sechead">Leaderboard</div>
+      <div class="seg" id="lbLane" style="margin-bottom:8px;display:none"></div>
       <div class="seg" id="lbSeg" style="margin-bottom:10px">
         <button data-lb="models" class="on">REGISTRY</button>
         <button data-lb="legends">LEGENDARY</button>
@@ -2919,26 +2926,24 @@ function paintLeaderboard(){
 }
 $("lbSeg").addEventListener("click", e => {
   const b = e.target.closest("button");
-  if (!b) return;
-  if (b.dataset.lbLane){                       // lane switch
-    lbLane = b.dataset.lbLane;
-    document.querySelectorAll("#lbSeg button[data-lb-lane]").forEach(x => x.classList.toggle("on", x === b));
-  } else {                                     // sort switch
-    lbSort = b.dataset.lb;
-    document.querySelectorAll("#lbSeg button[data-lb]").forEach(x => x.classList.toggle("on", x === b));
-  }
+  if (!b || !b.dataset.lb) return;             // sort switch only; lanes live in #lbLane
+  lbSort = b.dataset.lb;
+  document.querySelectorAll("#lbSeg button[data-lb]").forEach(x => x.classList.toggle("on", x === b));
   lbRows = []; lbLoaded = 0;
   renderLeaderboard(true);
 });
 /* Only a hunter running both lanes needs the switch; everyone else just
    sees their own board and never learns the other exists. */
+/* The lane switch lives in its own pill, not inside the sort pill — they are
+   two different questions ("which board" vs "ranked by what"), and sharing one
+   container both overflowed the phone and made two lit buttons look like one
+   confused control. */
 function renderLaneSwitch(){
-  const seg = $("lbSeg");
+  const seg = $("lbLane");
   if (!seg) return;
-  const existing = seg.querySelectorAll("button[data-lb-lane]");
   const want = (state.lane || "both") === "both";
-  if (!want){ existing.forEach(b => b.remove()); lbLane = null; return; }
-  if (existing.length) return;
+  if (!want){ seg.innerHTML = ""; seg.style.display = "none"; lbLane = null; return; }
+  if (seg.querySelector("button")){ seg.style.display = ""; return; }
   const cur = leaderboardLane();
   LANES.forEach(l => {
     const b = document.createElement("button");
@@ -2947,8 +2952,18 @@ function renderLaneSwitch(){
     if (l === cur) b.classList.add("on");
     seg.appendChild(b);
   });
+  seg.style.display = "";
   lbLane = cur;
 }
+/* lane clicks now originate from #lbLane */
+$("lbLane").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b || !b.dataset.lbLane) return;
+  lbLane = b.dataset.lbLane;
+  document.querySelectorAll("#lbLane button").forEach(x => x.classList.toggle("on", x === b));
+  lbRows = []; lbLoaded = 0;
+  renderLeaderboard(true);
+});
 
 /* ================= FIRST-RUN COACHING =================
    Two or three beats, each fired when it is actually relevant.
