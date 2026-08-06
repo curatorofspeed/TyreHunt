@@ -4137,20 +4137,46 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
 
 /* ================= CAMERA ================= */
 let stream = null, track = null, torch = false, torchOK = false;
+/* The OS can end or mute the camera at any time — backgrounding the app, a call,
+   screen lock, another app grabbing it. When that happens the <video> keeps its
+   last decoded frame (videoWidth stays non-zero), so anything that trusts
+   videoWidth alone would silently re-capture that one stale frame forever.
+   camLive() is the real liveness test, and every path re-checks it. */
+let camStarting = false;
+function camLive(){
+  return !!(stream && track && track.readyState === "live" && !track.muted && $("cam").readyState >= 2);
+}
 async function startCam(){
+  if (camStarting) return;
+  camStarting = true;
   try{
+    // tear down any dead stream first so we never leak tracks on restart
+    if (stream){ try{ stream.getTracks().forEach(t => t.stop()); }catch(_){} }
+    stream = null; track = null;
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width:{ideal:1920} }, audio:false });
     $("cam").srcObject = stream;
+    try{ await $("cam").play(); }catch(_){}
     $("nocam").style.display = "none";
     track = stream.getVideoTracks()[0];
-    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    if (track) track.addEventListener("ended", () => {
+      if (document.visibilityState === "visible" && !busy) startCam();
+    });
+    torch = false; $("flashState").textContent = "OFF"; $("flashBtn").classList.remove("active");
+    const caps = track && track.getCapabilities ? track.getCapabilities() : {};
     torchOK = !!caps.torch;
-    if (!torchOK) $("flashBtn").style.opacity = .45;
+    $("flashBtn").style.opacity = torchOK ? "" : .45;
   }catch(e){
+    stream = null; track = null;
     $("nocam").style.display = "flex";
     $("flashBtn").style.opacity = .45;
+  }finally{
+    camStarting = false;
   }
 }
+// coming back from the background is the most common way the camera dies
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && !busy && !camLive()) startCam();
+});
 $("flashBtn").addEventListener("click", async () => {
   if (!torchOK || !track){ toast("Flash isn't available on this camera"); return; }
   torch = !torch;
@@ -4163,8 +4189,9 @@ $("flashBtn").addEventListener("click", async () => {
 let busy = false, lastQuestHits = [], lastVerdictSpot = null, lastRankUp = "";
 $("shutter").addEventListener("click", () => {
   if (busy) return;
-  if (stream){ captureFromVideo(); }
-  else { $("fileCam").click(); }
+  if (camLive()){ captureFromVideo(); }
+  else if (stream || camStarting){ captureFromVideo(); }   // dead or starting → the guard restarts it
+  else { $("fileCam").click(); }                            // no camera at all → file picker
 });
 $("questMini").addEventListener("click", () => show("quests"));
 $("importPill").addEventListener("click", () => { if (!busy) $("fileGal").click(); });
@@ -4174,7 +4201,13 @@ $("fileGal").addEventListener("change", e => handleFile(e.target.files[0], e.tar
 
 function captureFromVideo(){
   const v = $("cam");
-  if (!v.videoWidth){ toast("Camera is still warming up"); return; }
+  // never shoot a stale frame from a dead track — that's how you end up
+  // re-filing the same photo over and over
+  if (!camLive() || !v.videoWidth){
+    toast("Camera reconnecting — give it a second");
+    startCam();
+    return;
+  }
   const c = $("work"), s = Math.min(1, CONFIG.sendEdge / Math.max(v.videoWidth, v.videoHeight));
   c.width = Math.round(v.videoWidth * s); c.height = Math.round(v.videoHeight * s);
   c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
