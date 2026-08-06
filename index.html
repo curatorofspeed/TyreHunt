@@ -5826,6 +5826,10 @@ async function syncCapture(s){
       cx_key: s.cxKey || null, cx_name: s.cxName || null,
       phash: s.phash || null, source: s.source || null, flagged: s.flagged || null,
       event: s.event || "", event_code: s.eventCode || null, lat: s.lat, lng: s.lng, taken_at: s.ts,
+      // the judge's framing grade — kept so the best shot of a model can be
+      // found later, and so photo quality can be tracked over time
+      shot_score: s.shot ? s.shot.score : null,
+      shot_note:  s.shot ? (s.shot.note || null) : null,
       img_path: imgPath
     }).select("id").single().then(r => {
       // Remember the server row id — matching on phash later is unreliable
