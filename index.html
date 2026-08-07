@@ -681,12 +681,12 @@ input[type=file]{display:none}
 </style>
 </head>
 <body>
-<div id="app">
+<div id="app" role="main">
 
   <!-- ============ HUNT (camera) ============ -->
   <div id="camwrap">
     <video id="cam" autoplay playsinline muted></video>
-    <div id="freeze"></div>
+    <div id="freeze" aria-hidden="true"></div>
     <div id="scanline"></div>
     <div id="nocam">
       <div class="big">Camera standing by</div>
@@ -950,7 +950,7 @@ input[type=file]{display:none}
   <div id="verdict">
     <div id="vcard">
       <div class="grab"></div>
-      <div class="vph" id="vPhoto"></div>
+      <div class="vph" id="vPhoto" aria-hidden="true"></div>
       <div class="vmk" id="vMake">—</div>
       <div class="vyr" id="vYear"></div>
       <div class="vrow">
@@ -3842,7 +3842,7 @@ function feedCardHtml(r){
   return `<div class="fcard">
     ${pos ? `<span class="pos p${pos <= 3 ? pos : ""}">${pos === 1 ? "TOP SHOT" : "#" + pos}</span>` : ""}
     <div class="fhead"><button class="fh" data-hunter="${r.user_id}">@${esc(feedHandles[r.user_id] || "hunter")}</button><span style="display:flex;align-items:center;gap:6px"><span class="fago">${ago(r.created_at)}</span>${sbSession && r.user_id !== sbSession.user.id ? `<button class="modDots" data-mod="${r.user_id}|${r.id}|">⋯</button>` : ""}</span></div>
-    <div class="fimg loading" data-src="${thumbUrl(r.img_path)}"></div>
+    <div class="fimg loading" role="img" aria-label="Photo of ${esc(nm)}" data-src="${thumbUrl(r.img_path)}"></div>
     <div class="frow">
       <button class="flike ${mine ? "on" : ""}" data-like="${r.id}">♥ <span>${likes}</span></button>
       <button class="fcmt" data-cmt="${r.id}">💬 <span>${cmts}</span></button>
@@ -4780,7 +4780,7 @@ function renderGarage(){
 function gcardHtml(s){
   return `
     <button class="gcard" data-id="${s.id}">
-      <div class="ph" style="background-image:url('${s.img}')"></div>
+      <div class="ph" aria-hidden="true" style="background-image:url('${s.img}')"></div>
       <div class="in">
         <div class="mk">${s.fav ? '<span style="color:var(--gold)">★</span> ' : ""}${esc(s.make)} ${esc(s.model)}</div>
         <div class="yr">${esc(s.year)}${s.year ? " · " : ""}${s.event ? esc(s.event) : new Date(s.ts).toLocaleDateString()}</div>
