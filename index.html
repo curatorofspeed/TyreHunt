@@ -720,7 +720,6 @@ input[type=file]{display:none}
 
   <div id="utilrow">
     <button id="queuePill">● 0 QUEUED</button>
-    <button id="installPill">⤓ INSTALL</button>
     <button id="importPill">⇪ IMPORT</button>
   </div>
 
@@ -747,7 +746,6 @@ input[type=file]{display:none}
           <span class="cl">FLASH</span>
           <span class="cs" id="flashState">OFF</span>
         </button>
-        <button id="eventPill" aria-label="Set the current event">SET EVENT</button>
       </div>
     </div>
   </div>
@@ -2085,7 +2083,10 @@ window.addEventListener("beforeinstallprompt", e => {
   renderInstallPill();
 });
 window.addEventListener("appinstalled", () => { deferredPrompt = null; renderInstallPill(); toast("Installed — hunt from your home screen"); });
-$("installPill").addEventListener("click", async () => {
+/* Delegated: the button lives in the profile panel, which is rendered on demand,
+   so it isn't in the DOM when this script runs. */
+document.addEventListener("click", async (ev) => {
+  if (!ev.target.closest("#installPill")) return;
   if (deferredPrompt){
     deferredPrompt.prompt();
     try{ await deferredPrompt.userChoice; }catch(e){}
@@ -4052,7 +4053,9 @@ function renderHUD(){
   // The HUD tracks the hunter's primary lane — a bike hunter's counter
   // shouldn't be a fraction of a car registry they'll never fill.
   const st = hunterStats();
-  $("cxTop").textContent = st.models + "/" + registryFor(st.lane).length;
+  /* Just the count: st.models includes off-registry finds, so pairing it with the
+     codex length as a denominator can read "140/132" once a hunter gets going. */
+  $("cxTop").textContent = st.models;
   $("rankTop").textContent = currentRank(st).name;
   $("streakNum").textContent = state.streak;
   const C = 138.2, p = Math.min(state.streak/30, 1);
@@ -5037,8 +5040,13 @@ function renderCodex(){
     .filter(k => k.startsWith("x:"))
     .filter(k => lanes.includes(caught[k].lane || "car"))
     .map((k, i) => cxCard(total + i + 1, caught[k].name, caught[k].tier, caught[k], k));
-  $("cxPct").textContent = total ? Math.round(got / total * 100) + "%" : "0%";
-  $("cxCount").textContent = got + " / " + total + " SPOTTED";
+  /* Lead with the number that moves. Codex icons are a curated list of famous
+     metal, so a normal hunter can log dozens of models and still sit at 0% —
+     a headline metric that never budges just reads as "you're getting nowhere".
+     Models logged is the real progress; icons found is the trophy shelf. */
+  const logged = got + extras.length;
+  $("cxPct").textContent = logged;
+  $("cxCount").textContent = "MODELS LOGGED · " + got + " OF " + total + " ICONS FOUND";
   $("cxGrid").innerHTML = html + extras.join("");
 }
 
@@ -5479,7 +5487,9 @@ function renderRewards(){
 }
 
 /* ================= DOSSIER / EVENT MODE ================= */
-$("eventPill").addEventListener("click", async () => {
+/* Delegated: lives in the profile panel, which renders on demand. */
+document.addEventListener("click", async (ev) => {
+  if (!ev.target.closest("#eventPill")) return;
   const v = prompt("Event mode — name a new event to host, or enter a 4-character lobby code to join. Blank clears.", "");
   if (v === null) return;
   const input = v.trim();
@@ -5515,11 +5525,14 @@ $("eventPill").addEventListener("click", async () => {
   await Store.save();
 });
 function renderEventPill(){
+  // Lives in the profile panel now, so it only exists while that panel is open.
   const p = $("eventPill");
-  // when an event is active the signal line carries it — don't say it twice
-  p.style.display = state.activeEvent ? "none" : "";
-  p.textContent = "SET EVENT";
-  p.classList.remove("on");
+  if (p){
+    // when an event is active the signal line carries it — don't say it twice
+    p.style.display = state.activeEvent ? "none" : "";
+    p.textContent = "SET EVENT";
+    p.classList.remove("on");
+  }
   renderSignal();
 }
 
@@ -5998,6 +6011,8 @@ function renderProfile(){
     }</p>
     <div class="sechead">Account</div>
     ${acct}
+    <button class="btn" id="eventPill" style="width:100%;margin-top:10px">SET EVENT</button>
+    <button class="btn" id="installPill" style="width:100%;margin-top:10px;display:none">⤓ INSTALL APP</button>
     <button class="btn" id="pfSound" style="width:100%;margin-top:10px">SOUND: ${state.sound ? "ON" : "OFF"}</button>
     <button class="btn" id="pushBtn" style="width:100%;margin-bottom:10px;display:none">NOTIFICATIONS</button>
     <button class="btn" id="opBtn" style="width:100%;margin-bottom:14px;display:none;color:var(--gold);border-color:rgba(255,194,75,.45)">OPERATOR CONSOLE</button>
