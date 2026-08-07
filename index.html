@@ -1719,21 +1719,47 @@ function activeLanes(){
 const wantsLane = l => activeLanes().includes(l);
 const primaryLane = () => (state && state.lane === "moto") ? "moto" : "car";
 
+/* Two ways up every gated rank: rarity OR volume. Whether a hunter finds
+   legendary metal is mostly an accident of geography — someone documenting a
+   rural town for years deserves a ladder too. Adding an OR can only ever
+   promote, never demote, so no existing hunter loses a rank. */
 const RANKS = [
-  { name:"ROOKIE",  req:"", need: () => true },
-  { name:"SPOTTER", req:"5 models", need: s => s.models >= 5 },
-  { name:"HUNTER",  req:"15 models · 2 rare", need: s => s.models >= 15 && s.rare >= 2 },
-  { name:"CURATOR", req:"30 models · 8 rare · 1 legendary", need: s => s.models >= 30 && s.rare >= 8 && s.legend >= 1 },
-  { name:"LEGEND",  req:"45 models · 5 legendary", need: s => s.models >= 45 && s.legend >= 5 }
+  { name:"ROOKIE",     req:"", need: () => true },
+  { name:"SPOTTER",    req:"5 models", need: s => s.models >= 5 },
+  { name:"HUNTER",     req:"15 models · 2 rare — or 40 models",
+    need: s => (s.models >= 15 && s.rare >= 2) || s.models >= 40 },
+  { name:"CURATOR",    req:"30 models · 8 rare · 1 legendary — or 90 models",
+    need: s => (s.models >= 30 && s.rare >= 8 && s.legend >= 1) || s.models >= 90 },
+  { name:"LEGEND",     req:"45 models · 5 legendary — or 160 models",
+    need: s => (s.models >= 45 && s.legend >= 5) || s.models >= 160 },
+  { name:"REGISTRAR",  req:"100 models · 10 legendary — or 250 models",
+    need: s => (s.models >= 100 && s.legend >= 10) || s.models >= 250 },
+  { name:"CHRONICLER", req:"175 models · 20 legendary — or 450 models",
+    need: s => (s.models >= 175 && s.legend >= 20) || s.models >= 450 },
+  { name:"CUSTODIAN",  req:"300 models · 35 legendary — or 750 models",
+    need: s => (s.models >= 300 && s.legend >= 35) || s.models >= 750 },
+  { name:"IMMORTAL",   req:"500 models · 60 legendary — or 1200 models",
+    need: s => (s.models >= 500 && s.legend >= 60) || s.models >= 1200 }
 ];
 /* Scaled to a 30-entry registry so the bike ladder is a real climb rather
    than something you finish in an afternoon. */
 const MOTO_RANKS = [
-  { name:"ROOKIE",  req:"", need: () => true },
-  { name:"SPOTTER", req:"3 models", need: s => s.models >= 3 },
-  { name:"HUNTER",  req:"8 models · 2 rare", need: s => s.models >= 8 && s.rare >= 2 },
-  { name:"CURATOR", req:"15 models · 5 rare · 1 legendary", need: s => s.models >= 15 && s.rare >= 5 && s.legend >= 1 },
-  { name:"LEGEND",  req:"24 models · 4 legendary", need: s => s.models >= 24 && s.legend >= 4 }
+  { name:"ROOKIE",     req:"", need: () => true },
+  { name:"SPOTTER",    req:"3 models", need: s => s.models >= 3 },
+  { name:"HUNTER",     req:"8 models · 2 rare — or 22 models",
+    need: s => (s.models >= 8 && s.rare >= 2) || s.models >= 22 },
+  { name:"CURATOR",    req:"15 models · 5 rare · 1 legendary — or 50 models",
+    need: s => (s.models >= 15 && s.rare >= 5 && s.legend >= 1) || s.models >= 50 },
+  { name:"LEGEND",     req:"24 models · 4 legendary — or 90 models",
+    need: s => (s.models >= 24 && s.legend >= 4) || s.models >= 90 },
+  { name:"REGISTRAR",  req:"55 models · 8 legendary — or 140 models",
+    need: s => (s.models >= 55 && s.legend >= 8) || s.models >= 140 },
+  { name:"CHRONICLER", req:"95 models · 15 legendary — or 250 models",
+    need: s => (s.models >= 95 && s.legend >= 15) || s.models >= 250 },
+  { name:"CUSTODIAN",  req:"160 models · 25 legendary — or 420 models",
+    need: s => (s.models >= 160 && s.legend >= 25) || s.models >= 420 },
+  { name:"IMMORTAL",   req:"270 models · 40 legendary — or 650 models",
+    need: s => (s.models >= 270 && s.legend >= 40) || s.models >= 650 }
 ];
 const ranksFor = lane => lane === "moto" ? MOTO_RANKS : RANKS;
 
