@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>TYRE HUNT — Spot & Collect</title>
 <meta name="theme-color" content="#0A0B0E">
 <meta property="og:type" content="website">
@@ -273,7 +273,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #dBody{flex:1;overflow-y:auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 24px);-webkit-overflow-scrolling:touch}
 .dfield{margin-bottom:11px}
 .dfield label{display:block;font-size:9.5px;font-weight:800;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
-.dfield input,.dfield textarea{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--ink);font:500 14px var(--disp);padding:11px 12px;-webkit-appearance:none}
+.dfield input,.dfield textarea{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--ink);font:500 16px var(--disp);padding:11px 12px;-webkit-appearance:none}
 .dfield textarea{min-height:86px;resize:vertical;line-height:1.5}
 .dfield input:focus,.dfield textarea:focus{outline:none;border-color:var(--pulse)}
 .dgrid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -377,6 +377,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .bdg.eq{border-color:var(--pulse-hi);box-shadow:0 0 12px rgba(110,160,255,.22)}
 button.bdg[disabled]{cursor:default}
 @media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard .vph.holo::after,#flash.on,.view.on,#verdict.on,#verdict.on #vcard,#dossier.on,#profile.on,#cxSheet.on,#scanline.on,.tick{animation:none}button{transition:none}}
+/* iOS zooms the page on focusing any input under 16px — every field stays at 16 */
+#app input,#app textarea,#app select{font-size:16px}
 @media (prefers-reduced-motion:reduce){#signal.live .dot,.coachpulse::after,.shim{animation:none}}
 
 /* reel render progress */
@@ -422,8 +424,8 @@ button.bdg[disabled]{cursor:default}
 .cmt .ch{font:700 11.5px var(--mono);color:var(--ember);flex:0 0 auto}
 .cmt .cb{font-size:13px;line-height:1.5;color:var(--ink);min-width:0}
 .cmt .cx{margin-left:auto;color:var(--muted);font-size:12px;padding:2px 6px}
-#cmtBar{display:flex;gap:9px;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 14px);border-top:1px solid var(--line)}
-#cmtBar input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:11px 15px;color:var(--ink);font-size:13px}
+#cmtBar{display:flex;gap:9px;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 14px + var(--kb,0px));border-top:1px solid var(--line)}
+#cmtBar input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:11px 15px;color:var(--ink);font-size:16px}
 #cmtBar button{flex:0 0 auto;padding:0 18px;border-radius:999px;font:800 11px var(--disp);letter-spacing:.1em;color:#04222A;background:linear-gradient(180deg,var(--gold),var(--ember))}
 .hstats{display:flex;gap:16px;margin:12px 0 4px}
 .hstats div{text-align:center}
@@ -775,7 +777,7 @@ input[type=file]{display:none}
              sort or search is a wall, not a collection. -->
         <div id="gTools" style="display:none">
           <input id="gSearch" type="search" placeholder="Search make, model, event…" autocomplete="off"
-                 style="width:100%;padding:11px 12px;margin-bottom:9px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);color:var(--ink);font:600 13px var(--disp)">
+                 style="width:100%;padding:11px 12px;margin-bottom:9px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);color:var(--ink);font:600 16px var(--disp)">
           <div class="seg" id="gSort" style="margin-bottom:9px">
             <button data-sort="new" class="on">NEWEST</button>
             <button data-sort="rare">RAREST</button>
@@ -2424,6 +2426,21 @@ function announce(msg){
   if (!el || !msg) return;
   el.textContent = "";
   setTimeout(() => { el.textContent = msg; }, 40);
+}
+
+/* iOS keyboards overlay the layout viewport rather than resizing it, so a
+   bottom-anchored input bar ends up underneath. Track the real visible height
+   and pad the bar up by the difference. Android resizes the layout instead
+   (interactive-widget), so kb computes to ~0 there — no double lift. */
+if (window.visualViewport){
+  const vvKb = () => {
+    const vv = window.visualViewport;
+    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    document.documentElement.style.setProperty("--kb", Math.round(kb) + "px");
+  };
+  window.visualViewport.addEventListener("resize", vvKb);
+  window.visualViewport.addEventListener("scroll", vvKb);
+  vvKb();
 }
 function buzz(ms){
   try{ if (navigator.vibrate) navigator.vibrate(ms); }catch(e){}
