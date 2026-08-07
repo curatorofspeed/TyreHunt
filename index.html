@@ -149,7 +149,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #shutter[disabled]{opacity:.5}
 
 /* ---------- tab bar ---------- */
-#tabs{position:relative;z-index:8;display:flex;background:rgba(10,11,14,.94);border-top:1px solid var(--line);padding:6px 4px calc(env(safe-area-inset-bottom,0px) + 6px)}
+/* Frosted rather than merely translucent: at .94 the list behind stayed legible
+   through the bar. The blur also keeps the depth, so it doesn't read as a slab. */
+#tabs{position:relative;z-index:8;display:flex;background:rgba(10,11,14,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 4px calc(env(safe-area-inset-bottom,0px) + 6px)}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;color:var(--muted)}
 .tab svg{width:22px;height:22px}
 .tab .tl{font-size:9.5px;font-weight:700;letter-spacing:.14em}
@@ -844,9 +846,9 @@ input[type=file]{display:none}
   <section class="view" id="view-quests">
     <div class="vhead" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
       <div>
-        <div class="eyebrow">Daily</div>
-        <h2>Quests</h2>
-        <div class="meta" id="questMeta">Resets at midnight local</div>
+        <div class="eyebrow">Find</div>
+        <h2>Hunts</h2>
+        <div class="meta" id="questMeta">Today's targets, scheduled meets, and the metal nobody can find.</div>
       </div>
       <button id="huntPlanBtn" style="background:linear-gradient(145deg,var(--ember),var(--ember-deep));color:#1B0E00;border-radius:999px;padding:10px 14px;font-weight:800;font-size:10px;letter-spacing:.12em;flex:0 0 auto">PLAN MY HUNT</button>
     </div>
@@ -934,7 +936,7 @@ input[type=file]{display:none}
     </button>
     <button class="tab" data-view="quests">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8.5l1.3 1.3 2.4-2.6M8.5 14l1.3 1.3 2.4-2.6M15 9h1.5M15 14.5h1.5"/></svg>
-      <span class="tl">QUESTS</span>
+      <span class="tl">HUNTS</span>
     </button>
     <button class="tab" data-view="rewards" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H4.5v1.5A3.5 3.5 0 0 0 8 10M17 5h2.5v1.5A3.5 3.5 0 0 1 16 10"/><path d="M12 14v3M8.5 20h7M9.5 17h5"/></svg>
@@ -5411,7 +5413,7 @@ function renderQuests(){
   $("questList").innerHTML =
     '<div id="lobbyBox"></div>' +
     aiCard + cotdCard +
-    '<div class="sechead">Today\'s hunts</div>' + qcards +
+    '<div class="sechead">Today\'s hunts · resets at midnight</div>' + qcards +
     '<div class="sechead">Wanted this week</div>' + wcards +
     `<div class="sechead">Challenge</div>
      <div class="qcard ${state.dayBonus ? "done" : ""}">
