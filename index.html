@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>TYRE HUNT — Spot & Collect</title>
 <meta name="theme-color" content="#0A0B0E">
 <meta property="og:type" content="website">
@@ -18,6 +18,9 @@
 <meta name="description" content="A camera-first game for people who notice cars. Shoot what you find, a verifier names it, and it's filed to your Registry.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230A0B0E'/%3E%3Cpath fill='none' stroke='%23F2F3F6' stroke-width='5.6' stroke-linecap='round' d='M4.5 54 A47.5 47.5 0 0 1 69.8 10'/%3E%3Cpath fill='%23F2F3F6' fill-rule='evenodd' d='M52 12 a42 42 0 1 0 0 84 a42 42 0 1 0 0-84 Z M52 23 a31 31 0 1 1 0 62 a31 31 0 1 1 0-62 Z M52 30 a24 24 0 1 0 0 48 a24 24 0 1 0 0-48 Z M62.5 43.5 a6.5 6.5 0 1 1 0 13 a6.5 6.5 0 1 1 0-13 Z'/%3E%3Ccircle cx='44' cy='65' r='6' fill='%23FF8A1E'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Sora:wght@800&family=Outfit:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://kokxlzygppakgcebkygc.supabase.co" crossorigin>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,7 +30,6 @@
 <link rel="manifest" href="manifest.json">
 <!-- self-hosted: add a real sw.js + PNG icons for offline shell; single-file mode installs without offline cache -->
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Sora:wght@800&family=Outfit:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
 
 :root{
   --carbon:#0A0B0E;
@@ -67,9 +69,10 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #camwrap{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 0%,#171A21 0%,#0A0B0E 70%)}
 #cam,#freeze{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #freeze{display:none;background:#000;background-size:cover;background-position:center}
-#scanline{position:absolute;left:0;right:0;top:-90px;height:90px;z-index:3;pointer-events:none;display:none;background:linear-gradient(180deg,rgba(94,151,255,0) 0%,rgba(94,151,255,.12) 55%,rgba(110,160,255,.45) 96%,rgba(190,215,255,.85) 100%)}
+#scanline{position:absolute;left:0;right:0;top:0;bottom:-90px;z-index:3;pointer-events:none;display:none}
+#scanline::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:90px;background:linear-gradient(180deg,rgba(94,151,255,0) 0%,rgba(94,151,255,.12) 55%,rgba(110,160,255,.45) 96%,rgba(190,215,255,.85) 100%)}
 #scanline.on{display:block;animation:scan 1.5s linear infinite}
-@keyframes scan{0%{top:-90px}100%{top:100%}}
+@keyframes scan{0%{transform:translateY(0)}100%{transform:translateY(100%)}}
 #camwrap::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,8,.78) 0%,rgba(5,6,8,0) 22%,rgba(5,6,8,0) 55%,rgba(5,6,8,.88) 86%);pointer-events:none}
 #nocam{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:0 40px}
 #nocam .big{font-weight:800;letter-spacing:.14em;color:var(--ink);font-size:13px;text-transform:uppercase}
@@ -264,8 +267,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #dossier{position:absolute;inset:0;z-index:22;display:none;flex-direction:column;background:var(--carbon)}
 #dossier.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
 #dHero{position:relative;aspect-ratio:16/10;background:#000 center/cover no-repeat;flex:0 0 auto;border-bottom:1px solid var(--line)}
-#dHero .back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-weight:800;font-size:11px;letter-spacing:.12em}
-#dHero .star{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+#dHero .back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;padding:9px 14px;min-height:44px;display:inline-flex;align-items:center;font-weight:800;font-size:11px;letter-spacing:.12em}
+#dHero .star{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;background:rgba(10,11,14,.75);border:1px solid var(--line);border-radius:999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
 #dHero .star.on{color:var(--gold);border-color:rgba(255,194,75,.55)}
 #dBody{flex:1;overflow-y:auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 24px);-webkit-overflow-scrolling:touch}
 .dfield{margin-bottom:11px}
@@ -291,7 +294,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .crewrow .hd{font-weight:700;font-size:14px}
 .crewrow.me{border-color:rgba(24,183,220,.45)}
 .crewrow .ty{margin-left:auto;font:700 13px var(--mono);color:var(--gold)}
-.crewrow .rm{color:var(--muted);font-size:16px;padding:2px 6px}
+.crewrow .rm{color:var(--muted);font-size:16px;padding:12px 14px;margin:-10px -8px}
 .streak{cursor:pointer}
 
 /* segmented control */
@@ -661,7 +664,7 @@ button.bdg[disabled]{cursor:default}
 #modBox .ms{font-size:11.5px;color:var(--muted);margin-bottom:13px}
 #modBox .btn{width:100%;margin-bottom:9px;text-align:center}
 #modBox .btn.warn{color:var(--bad);border-color:rgba(255,93,93,.35)}
-.modDots{flex:0 0 auto;color:var(--muted);font-weight:800;padding:2px 7px;font-size:13px;letter-spacing:.05em}
+.modDots{flex:0 0 auto;color:var(--muted);font-weight:800;padding:12px 14px;margin:-10px -7px;font-size:13px;letter-spacing:.05em}
 
 /* hunt ticker — ambient activity over the camera */
 #ticker{position:absolute;left:12px;bottom:150px;z-index:6;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:none}
