@@ -4699,8 +4699,9 @@ $("dLink").addEventListener("click", async () => {
   let link = CONFIG.appUrl;
   if (sb && sbSession && sp.phash){
     try{
-      const { data } = await sb.from("captures").select("id").eq("user_id", sbSession.user.id).eq("phash", sp.phash).maybeSingle();
-      if (data && data.id) link = captureLink(data.id);
+      // phash is no longer client-readable; this RPC is scoped to your own rows
+      const { data } = await sb.rpc("my_capture_id_by_phash", { p: sp.phash });
+      if (data) link = captureLink(data);
     }catch(e){}
   }
   const text = name ? name + " — filed on TYRE HUNT" : "Filed on TYRE HUNT";
@@ -6471,7 +6472,9 @@ async function fillLobby(){
   if (lobbyCache.code === code && Date.now() - lobbyCache.ts < 30000){ box.innerHTML = lobbyCache.html; return; }
   box.innerHTML = head + '<p class="pfnote">Loading the board…</p>';
   try{
-    const { data: caps } = await sb.from("captures").select("user_id,cx_key,created_at").eq("event_code", code).is("flagged", null);
+    // event_code is no longer client-readable — lobby codes can't be enumerated,
+    // only queried by someone who already has one
+    const { data: caps } = await sb.rpc("event_captures", { code: code });
     const hot = (caps || []).some(c => Date.now() - new Date(c.created_at).getTime() < 9e5);
     sigLiveCount = new Set((caps || []).filter(c => Date.now() - new Date(c.created_at).getTime() < 9e5).map(c => c.user_id)).size;
     renderSignal();
