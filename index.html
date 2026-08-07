@@ -86,8 +86,6 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .wordmark h1{line-height:0}
 .wordmark .sub{display:none}
 .balance{display:flex;align-items:center;gap:7px;background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:6px 11px 6px 6px;flex:0 0 auto}
-.coin{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#FFE2A6,var(--gold) 42%,var(--ember-deep) 100%);border:1.5px solid rgba(255,214,138,.8);display:flex;align-items:center;justify-content:center;font:900 13px var(--disp);color:#3A2000;box-shadow:0 0 10px rgba(255,160,50,.45)}
-.coin.sm{width:20px;height:20px;font-size:10px}
 .balance .amt{font:700 14px var(--mono)}
 .balance .lbl{font-size:8.5px;letter-spacing:.18em;color:var(--muted);display:block;line-height:1}
 .balance.pop{animation:pop .5s ease}
@@ -155,7 +153,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;color:var(--muted)}
 .tab svg{width:22px;height:22px}
 .tab .tl{font-size:9.5px;font-weight:700;letter-spacing:.14em}
-.tab.on{color:var(--gold)}
+.tab.on{color:var(--ember)}
 .tab.cam{margin-top:-22px;transition:margin-top .18s ease}
 .tab.cam .ring{width:52px;height:52px;border-radius:50%;background:var(--carbon);border:2.5px solid var(--ember);display:flex;align-items:center;justify-content:center;color:var(--ember);box-shadow:0 0 16px rgba(24,183,220,.4);transition:width .18s ease,height .18s ease,box-shadow .18s ease,background .18s ease}
 /* on the hunt screen the shutter is the hero — the hunt tab collapses to a you-are-here dot */
@@ -564,7 +562,7 @@ button.bdg[disabled]{cursor:default}
 .lbrow:last-child{border-bottom:0}
 .lbrow.me{background:linear-gradient(90deg,rgba(24,183,220,.12),transparent);border-radius:var(--r-sm)}
 .lbrow .rk{font:900 13px var(--mono);color:var(--muted);text-align:center}
-.lbrow.p1 .rk{color:var(--gold)} .lbrow.p2 .rk{color:var(--ink)} .lbrow.p3 .rk{color:var(--ember)}
+.lbrow.p1 .rk{color:var(--gold)} .lbrow.p2 .rk{color:var(--ink)} .lbrow.p3 .rk{color:#C9834A}
 .lbrow .who{min-width:0}
 .lbrow .hd{font:700 13px var(--mono);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lbrow .ti{font:700 8.5px var(--disp);letter-spacing:.14em;color:var(--gold);text-transform:uppercase;margin-top:2px}
@@ -5273,7 +5271,7 @@ function drawWorld(){
       const x = P.X(cell.cell_lo * 0.1 + 0.05), y = P.Y(cell.cell_la * 0.1 + 0.05);
       const r = Math.min(5 + val * 1.5, 16) * Math.min(wv.z, 2.2);
       const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-      g.addColorStop(0, "rgba(255,170,60,.6)"); g.addColorStop(1, "rgba(24,183,220,0)");
+      g.addColorStop(0, "rgba(91,216,240,.6)"); g.addColorStop(1, "rgba(24,183,220,0)");
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
       worldHit.push({ x, y, r: Math.max(r, 11), cell });
     });
