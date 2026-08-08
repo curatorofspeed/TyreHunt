@@ -3540,12 +3540,16 @@ async function renderBounties(){
     return;
   }
   const ids = liveBounties.map(b => b.id);
-  let hits = {};
+  let hits = {}, firsts = {};
   try{
-    const { data } = await sb.from("bounty_hits").select("bounty_id,hunter").in("bounty_id", ids);
-    (data || []).forEach(h => { hits[h.bounty_id] = (hits[h.bounty_id] || 0) + 1; if (sbSession && h.hunter === sbSession.user.id) hits["me" + h.bounty_id] = true; });
+    const { data } = await sb.from("bounty_hits").select("bounty_id,hunter,created_at").in("bounty_id", ids).order("created_at", { ascending: true });
+    (data || []).forEach(h => {
+      hits[h.bounty_id] = (hits[h.bounty_id] || 0) + 1;
+      if (!firsts[h.bounty_id]) firsts[h.bounty_id] = h.hunter;   // rows arrive oldest-first
+      if (sbSession && h.hunter === sbSession.user.id) hits["me" + h.bounty_id] = true;
+    });
   }catch(e){}
-  const uids = [...new Set(liveBounties.map(b => b.owner))];
+  const uids = [...new Set(liveBounties.map(b => b.owner).concat(Object.values(firsts)))];
   try{
     const { data } = await sb.from("profiles").select("id,handle").in("id", uids);
     (data || []).forEach(pp => { feedHandles[pp.id] = pp.handle; });
@@ -3554,14 +3558,15 @@ async function renderBounties(){
   box.innerHTML = liveBounties.map(b => {
     const mine = sbSession && b.owner === sbSession.user.id;
     const found = hits["me" + b.id];
+    const firstMe = sbSession && firsts[b.id] === sbSession.user.id;
     const ends = Math.max(0, Math.ceil((new Date(b.window_end).getTime() - Date.now()) / 864e5));
     return `<div class="bcard ${mine ? "mine" : ""}">
       <div class="bhead">
         <span class="bn">${esc(((b.make || "") + " " + (b.model || "")).trim())}</span>
-        <span class="btag ${mine ? "mine" : found ? "found" : "live"}">${mine ? "YOUR CAR" : found ? "FOUND ✓" : "OPEN"}</span>
+        <span class="btag ${mine ? "mine" : found ? "found" : "live"}">${mine ? "YOUR CAR" : firstMe ? "★ FIRST" : found ? "FOUND ✓" : "OPEN"}</span>
       </div>
       <div class="bmeta">@${esc(feedHandles[b.owner] || "hunter")} · ${esc(b.region || "anywhere")} · ${ends}d left${b.note ? "<br>" + esc(b.note) : ""}</div>
-      <div class="bmeta" style="color:var(--gold)">${hits[b.id] || 0} hunter${(hits[b.id] || 0) === 1 ? "" : "s"} found it</div>
+      <div class="bmeta" style="color:var(--gold)">${hits[b.id] || 0} hunter${(hits[b.id] || 0) === 1 ? "" : "s"} found it${firsts[b.id] ? " · first blood @" + esc(feedHandles[firsts[b.id]] || "hunter") : ""}</div>
       ${mine ? "" : `<button class="btn" data-dispute="${b.id}" style="width:100%;margin-top:9px;font-size:10px;padding:8px;color:var(--muted)">${myDisputes.has(b.id) ? "REPORTED ✓" : "NOT THEIR CAR"}</button>`}
     </div>`;
   }).join("");
@@ -3721,12 +3726,30 @@ async function checkBounty(spot){
   try{
     const { error } = await sb.from("bounty_hits").insert({ bounty_id: hit.id, hunter: sbSession.user.id, capture_id: null });
     if (error) return;
+    // First blood never closes the bounty — it just crowns whoever got there
+    // before everyone else. Count runs after our own insert landed, so 1 = us.
+    let first = false;
+    try{
+      const { count } = await sb.from("bounty_hits").select("id", { count: "exact", head: true }).eq("bounty_id", hit.id);
+      first = count === 1;
+    }catch(e){}
     spot.bounty = true;
+    if (first) spot.bountyFirst = true;
     await Store.save();
     sfx("legendary");
-    toast("BOUNTY CLAIMED · you found @" + (feedHandles[hit.owner] || "a hunter") + "'s " + ((hit.make || "") + " " + (hit.model || "")).trim());
-    notify(hit.owner, "Your car was found",
-      "@" + ((state.profile && state.profile.handle) || "a hunter") + " spotted your " + ((hit.make || "") + " " + (hit.model || "")).trim(), "/");
+    if (first) haptic([40, 60, 40, 60, 120]);
+    const carNm = ((hit.make || "") + " " + (hit.model || "")).trim();
+    const ownNm = feedHandles[hit.owner] || "a hunter";
+    toast(first ? "★ FIRST TO FIND · @" + ownNm + "'s " + carNm + " — you got there before everyone"
+                : "BOUNTY CLAIMED · you found @" + ownNm + "'s " + carNm);
+    if ($("verdict").classList.contains("on")){
+      $("vQuests").insertAdjacentHTML("beforeend",
+        '<div class="qhit" style="color:var(--gold);border-color:rgba(255,194,75,.45);background:rgba(255,194,75,.08)"><span>' +
+        (first ? "★ FIRST TO FIND" : "BOUNTY CLAIMED") + ' · @' + esc(ownNm).toUpperCase() + "'S " + esc(carNm).toUpperCase() +
+        '</span><span>' + (first ? "★" : "✓") + '</span></div>');
+    }
+    notify(hit.owner, first ? "Your car was found — first blood" : "Your car was found",
+      "@" + ((state.profile && state.profile.handle) || "a hunter") + (first ? " was FIRST to spot your " : " spotted your ") + carNm, "/");
   }catch(e){}
 }
 function bountyCount(){ return state.spots.filter(s => s.bounty).length; }
@@ -5985,7 +6008,7 @@ function openDossier(id){
   $("dStory").value = s.story || ""; $("dColor").value = s.color || ""; $("dOwner").value = s.owner || "";
   $("dMetaChip").className = "chip " + s.rarity;
   $("dMetaChip").textContent = s.rarity.toUpperCase();
-  $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + (s.shot ? " · SHOT " + s.shot.score : "") + (isFullDossier(s) ? ' · <span style="color:var(--gold)">FULL DOSSIER</span>' : "") + (isSleeping(s) ? ' · <span class="sleepchip">' + (s.condition === "sleeping" ? "SLEEPING" : s.condition === "project" ? "PROJECT" : "WRECK") + '</span>' : "") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
+  $("dMeta").innerHTML = " " + s.confidence + "% MATCH · SPOT #" + (s.seq || "—") + (s.shot ? " · SHOT " + s.shot.score : "") + (isFullDossier(s) ? ' · <span style="color:var(--gold)">FULL DOSSIER</span>' : "") + (isSleeping(s) ? ' · <span class="sleepchip">' + (s.condition === "sleeping" ? "SLEEPING" : s.condition === "project" ? "PROJECT" : "WRECK") + '</span>' : "") + " · " + new Date(s.ts).toLocaleDateString() + (s.flagged ? ' · <span style="color:var(--bad)">NOT COUNTED: ' + esc(s.flagged) + '</span>' : "") + (s.bountyFirst ? ' · <span style="color:var(--gold)">★ FIRST TO FIND</span>' : s.bounty ? ' · <span style="color:var(--gold)">◎ BOUNTY CLAIMED</span>' : "") + (s.hv ? ' <span class="hv">HUNTER VERIFIED</span>' : "");
   $("dOwn").textContent = s.owned ? "IN YOUR STABLE ✓" : "THIS ONE'S MINE";
   $("dOwn").style.color = s.owned ? "var(--gold)" : "";
   $("dOwn").style.borderColor = s.owned ? "rgba(255,194,75,.45)" : "";
