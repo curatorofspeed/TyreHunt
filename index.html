@@ -73,6 +73,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #scanline::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:90px;background:linear-gradient(180deg,rgba(94,151,255,0) 0%,rgba(94,151,255,.12) 55%,rgba(110,160,255,.45) 96%,rgba(190,215,255,.85) 100%)}
 #scanline.on{display:block;animation:scan 1.5s linear infinite}
 @keyframes scan{0%{transform:translateY(0)}100%{transform:translateY(100%)}}
+#zoomChip{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);z-index:4;font:700 12px var(--mono);letter-spacing:.06em;color:var(--ink);background:rgba(10,11,14,.72);border:1px solid var(--line);border-radius:999px;padding:6px 12px;opacity:0;transition:opacity .25s;pointer-events:none}
+#zoomChip.on{opacity:1}
 #camwrap::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,8,.78) 0%,rgba(5,6,8,0) 22%,rgba(5,6,8,0) 55%,rgba(5,6,8,.88) 86%);pointer-events:none}
 #nocam{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:0 40px}
 #nocam .big{font-weight:800;letter-spacing:.14em;color:var(--ink);font-size:13px;text-transform:uppercase}
@@ -695,6 +697,7 @@ input[type=file]{display:none}
     <video id="cam" autoplay playsinline muted></video>
     <div id="freeze" aria-hidden="true"></div>
     <div id="scanline"></div>
+    <div id="zoomChip" aria-hidden="true"></div>
     <div id="nocam">
       <div class="big">Camera standing by</div>
       <p>Live view isn't available here. Hit the shutter to open your camera and start hunting.</p>
@@ -2522,6 +2525,19 @@ if (window.visualViewport){
     const vv = window.visualViewport;
     const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
     document.documentElement.style.setProperty("--kb", Math.round(kb) + "px");
+    // If the page itself is pinch-zoomed (started from a text view, say), the
+    // shutter bar rides the visual viewport instead of vanishing below it.
+    // Portrait only — landscape docks the bar to the side with its own layout.
+    const hf = $("huntfoot");
+    if (hf && getComputedStyle(hf).position === "relative"){
+      if (vv.scale > 1.02){
+        hf.style.transformOrigin = "0 100%";
+        hf.style.transform = "translate(" + Math.round(vv.offsetLeft) + "px," +
+          Math.round(vv.offsetTop + vv.height - hf.parentElement.clientHeight) + "px) scale(" + (1 / vv.scale) + ")";
+      } else if (hf.style.transform){
+        hf.style.transform = ""; hf.style.transformOrigin = "";
+      }
+    }
   };
   window.visualViewport.addEventListener("resize", vvKb);
   window.visualViewport.addEventListener("scroll", vvKb);
@@ -4333,6 +4349,32 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
 
 /* ================= CAMERA ================= */
 let stream = null, track = null, torch = false, torchOK = false;
+/* Pinch on the viewfinder zooms the CAMERA, never the page. Real sensor zoom
+   when the track supports it (frames arrive already zoomed, so the capture is
+   automatically honest). Otherwise a digital fallback: the video scales on
+   screen and the capture crops the same centered region — what you saw is
+   exactly what gets filed. */
+let camZoom = 1, camZoomMin = 1, camZoomMax = 1, camZoomNative = false, zoomAppliedAt = 0, zoomChipT = 0;
+function zoomSrcRect(w, hgt, z){
+  const sw = w / z, sh = hgt / z;
+  return [ (w - sw) / 2, (hgt - sh) / 2, sw, sh ];
+}
+function setCamZoom(z){
+  camZoom = Math.max(camZoomMin, Math.min(camZoomMax, z));
+  const chip = $("zoomChip");
+  chip.textContent = (camZoomNative ? camZoom / camZoomMin : camZoom).toFixed(1) + "\u00d7";
+  chip.classList.add("on");
+  clearTimeout(zoomChipT); zoomChipT = setTimeout(() => chip.classList.remove("on"), 900);
+  if (camZoomNative){
+    const now = Date.now();
+    if (now - zoomAppliedAt > 80 && track){
+      zoomAppliedAt = now;
+      try{ track.applyConstraints({ advanced: [{ zoom: camZoom }] }).catch(() => {}); }catch(e){}
+    }
+  } else {
+    $("cam").style.transform = camZoom > 1.001 ? "scale(" + camZoom + ")" : "";
+  }
+}
 /* The OS can end or mute the camera at any time — backgrounding the app, a call,
    screen lock, another app grabbing it. When that happens the <video> keeps its
    last decoded frame (videoWidth stays non-zero), so anything that trusts
@@ -4360,6 +4402,12 @@ async function startCam(){
     torch = false; $("flashState").textContent = "OFF"; $("flashBtn").classList.remove("active");
     const caps = track && track.getCapabilities ? track.getCapabilities() : {};
     torchOK = !!caps.torch;
+    camZoomNative = !!(caps.zoom && typeof caps.zoom.max === "number" && caps.zoom.max > (caps.zoom.min || 1));
+    camZoomMin = camZoomNative ? Math.max(1, caps.zoom.min || 1) : 1;
+    camZoomMax = camZoomNative ? Math.min(camZoomMin * 8, caps.zoom.max) : 3;
+    camZoom = camZoomMin;
+    $("cam").style.transform = "";
+    $("zoomChip").classList.remove("on");
     $("flashBtn").style.opacity = torchOK ? "" : .45;
   }catch(e){
     telemetry("camera", e);
@@ -4374,6 +4422,26 @@ async function startCam(){
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && !busy && !camLive()) startCam();
 });
+(function(){
+  const cw = $("camwrap");
+  const dist = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  let pz = null;
+  cw.addEventListener("touchstart", e => {
+    if (e.touches.length === 2) pz = { d: dist(e), z: camZoom };
+  }, { passive: true });
+  cw.addEventListener("touchmove", e => {
+    if (e.touches.length < 2) return;
+    e.preventDefault();          // a pinch that starts on the viewfinder never zooms the page
+    if (!pz) pz = { d: dist(e), z: camZoom };
+    const nd = dist(e);
+    setCamZoom(pz.z * (nd / (pz.d || nd)));
+  }, { passive: false });
+  cw.addEventListener("touchend", () => { pz = null; }, { passive: true });
+  cw.addEventListener("touchcancel", () => { pz = null; }, { passive: true });
+  // older WebKit fires proprietary gesture events for page pinch — same scope, same rule
+  ["gesturestart", "gesturechange", "gestureend"].forEach(t =>
+    cw.addEventListener(t, e => e.preventDefault()));
+})();
 $("flashBtn").addEventListener("click", async () => {
   if (!torchOK || !track){ toast("Flash isn't available on this camera"); return; }
   torch = !torch;
@@ -4407,7 +4475,9 @@ function captureFromVideo(){
   }
   const c = $("work"), s = Math.min(1, CONFIG.sendEdge / Math.max(v.videoWidth, v.videoHeight));
   c.width = Math.round(v.videoWidth * s); c.height = Math.round(v.videoHeight * s);
-  c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+  const dz = camZoomNative ? 1 : camZoom;   // native zoom is already in the frames
+  const [sx, sy, sw, sh] = zoomSrcRect(v.videoWidth, v.videoHeight, dz);
+  c.getContext("2d").drawImage(v, sx, sy, sw, sh, 0, 0, c.width, c.height);
   runVerify(c, "camera");
 }
 function handleFile(file, input, src){
