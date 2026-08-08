@@ -2464,9 +2464,40 @@ if (window.visualViewport){
   window.visualViewport.addEventListener("scroll", vvKb);
   vvKb();
 }
-function buzz(ms){
-  try{ if (navigator.vibrate) navigator.vibrate(ms); }catch(e){}
+/* One haptic channel for the whole app, gated once for reduced motion.
+   Android speaks real vibration patterns. iOS WebKit has no vibrate() API at
+   all, so we pulse a hidden switch control instead — Safari 17.4+ plays a real
+   Taptic tick when it toggles. Patterns become spaced ticks; older devices and
+   desktops feel nothing, silently. */
+let hapticLab = null;
+function hapticTick(){
+  try{
+    if (!hapticLab){
+      hapticLab = document.createElement("label");
+      hapticLab.setAttribute("aria-hidden", "true");
+      hapticLab.style.cssText = "position:fixed;left:-99px;top:0;width:1px;height:1px;opacity:0;pointer-events:none";
+      const sw = document.createElement("input");
+      sw.type = "checkbox"; sw.tabIndex = -1; sw.setAttribute("switch", "");
+      hapticLab.appendChild(sw);
+      document.body.appendChild(hapticLab);
+    }
+    hapticLab.click();
+  }catch(e){}
 }
+function haptic(pattern){
+  try{
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (navigator.vibrate){ navigator.vibrate(pattern); return; }
+    const seq = Array.isArray(pattern) ? pattern : [pattern];
+    let at = 0;
+    for (let i = 0; i < seq.length; i++){
+      if (i % 2){ at += seq[i]; continue; }      // odd slots are gaps
+      i === 0 ? hapticTick() : setTimeout(hapticTick, at);
+      at += seq[i];
+    }
+  }catch(e){}
+}
+const buzz = haptic;
 function skeletonCards(n){
   let h = "";
   for (let i = 0; i < n; i++){
@@ -2724,19 +2755,27 @@ function makeDismissable(id, onClose){
     g.className = "grabber";
     el.appendChild(g);
   }
-  let y0 = 0, dy = 0, dragging = false;
+  let y0 = 0, dy = 0, dragging = false, armed = false, lastY = 0, lastT = 0, vel = 0;
   const body = scrollableIn(el);
   el.addEventListener("touchstart", e => {
     if (e.touches.length !== 1) return;
     // only take over when the content is already scrolled to the top
     if (body && body.scrollTop > 0) return;
     y0 = e.touches[0].clientY; dy = 0; dragging = true;
+    armed = false; lastY = y0; lastT = performance.now(); vel = 0;
     el.style.transition = "none";
   }, { passive: true });
   el.addEventListener("touchmove", e => {
     if (!dragging) return;
     dy = e.touches[0].clientY - y0;
     if (dy < 0) dy = 0;
+    const _n = performance.now();
+    vel = (e.touches[0].clientY - lastY) / Math.max(1, _n - lastT);
+    lastY = e.touches[0].clientY; lastT = _n;
+    // a tick the moment the drag crosses the point of no return — and again
+    // if you retreat, so your hand always knows which side it is on
+    if (!armed && dy > 96){ armed = true; haptic(8); }
+    else if (armed && dy <= 96){ armed = false; }
     el.style.transform = "translateY(" + dy + "px)";
     el.style.opacity = String(Math.max(.55, 1 - dy / 520));
   }, { passive: true });
@@ -2744,7 +2783,7 @@ function makeDismissable(id, onClose){
     if (!dragging) return;
     dragging = false;
     el.style.transition = "transform .22s cubic-bezier(.2,.8,.3,1), opacity .22s ease";
-    if (dy > 96){
+    if (dy > 96 || (vel > .55 && dy > 30)){   // a real flick counts too
       el.style.transform = "translateY(100%)";
       el.style.opacity = "0";
       setTimeout(() => {
@@ -3676,7 +3715,7 @@ document.addEventListener("click", async e => {
   const b = e.target.closest("#delAcct");
   if (!b) return;
   if (!delAcctArm){
-    delAcctArm = true;
+    delAcctArm = true; haptic([20, 40, 20]);
     b.textContent = "TAP AGAIN — DELETES YOUR ACCOUNT FOREVER";
     setTimeout(() => { delAcctArm = false; const x = $("delAcct"); if (x) x.textContent = "DELETE ACCOUNT"; }, 6000);
     return;
@@ -4367,7 +4406,7 @@ function detectUI(mode, data){
 
 async function runVerify(canvas, source){
   busy = true; $("shutter").disabled = true;
-  sfx("shutter");
+  sfx("shutter"); haptic(15);
   const fz = $("freeze");
   fz.style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
   fz.style.display = "block";
@@ -4745,11 +4784,7 @@ function openVerdict(spot, canvas, raw){
       f.classList.add("soft");
       f.classList.remove("on"); void f.offsetWidth; f.classList.add("on");
     }
-    try{
-      if (navigator.vibrate && !window.matchMedia("(prefers-reduced-motion: reduce)").matches){
-        navigator.vibrate(spot.rarity === "legendary" ? [40, 60, 40, 60, 120] : spot.rarity === "rare" ? [30, 40, 60] : 20);
-      }
-    }catch(e){}
+    haptic(spot.rarity === "legendary" ? [40, 60, 40, 60, 120] : spot.rarity === "rare" ? [30, 40, 60] : 20);
   } else if (spot && spot.flagged){
     sfx("flag");
   } else {
@@ -5690,7 +5725,7 @@ $("dSave").addEventListener("click", async () => {
 });
 $("dDelete").addEventListener("click", async () => {
   if (!delArm){
-    delArm = true; $("dDelete").textContent = "TAP AGAIN TO DELETE";
+    delArm = true; haptic([20, 40, 20]); $("dDelete").textContent = "TAP AGAIN TO DELETE";
     clearTimeout(delTimer);
     delTimer = setTimeout(() => { delArm = false; if ($("dDelete")) $("dDelete").textContent = "DELETE SPOT"; }, 3500);
     return;
