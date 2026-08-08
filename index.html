@@ -194,6 +194,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .chip.rare{color:var(--r-rare);border-color:rgba(94,151,255,.5)}
 .chip.legendary{color:var(--r-legend);border-color:rgba(255,194,75,.55);background:rgba(255,194,75,.08)}
 .gtyres{font:700 12px var(--mono);color:var(--gold)}
+.bpill{margin-left:auto;font:800 9px var(--mono);letter-spacing:.1em;color:var(--gold);border:1px solid rgba(255,194,75,.5);border-radius:999px;padding:4px 9px}
 #gFilter .chip{display:inline-flex;align-items:center;min-height:44px}
 .empty{border:1px dashed rgba(255,255,255,.15);border-radius:var(--r-lg);padding:38px 24px;text-align:center;color:var(--muted)}
 .empty .e1{font-weight:800;letter-spacing:.1em;color:var(--ink);font-size:13px;text-transform:uppercase;margin-bottom:6px}
@@ -1091,6 +1092,7 @@ input[type=file]{display:none}
     <div class="sheethead"><h3>Post a bounty</h3><button class="btn" id="bBack" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
     <div class="sheetbody">
       <div class="vmk" id="bCar" style="font-size:19px"></div>
+      <div id="bForm">
       <p class="pfnote" style="margin-top:6px">Hunters who spot this car in the wild get a bounty badge. You'll see who found you. Never post a plate, an address, or a live location — a region or event is the right amount.</p>
       <div class="dfield"><label>Where it'll be out</label><input id="bRegion" maxlength="60" placeholder="Monterey, CA · Cars & Coffee · Cle Elum"></div>
       <div class="dfield"><label>Note for hunters (optional)</label><input id="bNote" maxlength="160" placeholder="Out Saturday morning. Say hi."></div>
@@ -1103,6 +1105,12 @@ input[type=file]{display:none}
       </div>
       <button class="btn hot" id="bPost" style="width:100%;margin-top:14px">POST BOUNTY</button>
       <div id="bMine"></div>
+      </div><!-- /bForm -->
+      <div id="bPosted" style="display:none">
+        <p class="pfnote" style="margin-top:10px;text-align:left">Bounty is live. Now tell the world — post the story card so hunters know where to look. Whoever spots you earns the badge, and you get pinged.</p>
+        <button class="btn hot" id="bShare" style="width:100%;margin-top:12px">SHARE STORY CARD</button>
+        <button class="btn" id="bDone" style="width:100%;margin-top:10px">DONE</button>
+      </div>
     </div>
   </section>
 
@@ -3514,7 +3522,7 @@ $("huntList").addEventListener("click", e => {
 });
 
 /* ================= BOUNTIES (owner-declared, self only) ================= */
-let liveBounties = [], bountySpotId = null, bWindowDays = 2;
+let liveBounties = [], bountySpotId = null, bWindowDays = 2, lastBounty = null;
 async function fetchBounties(){
   if (!sb || !sbSession) return;
   try{
@@ -3611,6 +3619,8 @@ function openBounty(spotId){
     });
   }
   bountySpotId = spotId;
+  $("bForm").style.display = "";
+  $("bPosted").style.display = "none";
   $("bCar").textContent = ((sp.make || "") + " " + (sp.model || "")).trim();
   $("bRegion").value = sp.place || sp.event || "";
   $("bNote").value = "";
@@ -3637,11 +3647,68 @@ $("bPost").addEventListener("click", async () => {
       window_end: new Date(Date.now() + bWindowDays * 864e5).toISOString()
     });
     sfx("classic");
-    toast("Bounty posted — hunters can claim it for " + bWindowDays + " days");
-    $("bountySheet").classList.remove("on");
+    haptic([30, 40, 60]);
     renderBounties();
+    // The sheet doesn't close — it turns into the megaphone. A bounty nobody
+    // hears about is a bounty nobody claims.
+    lastBounty = { spotId: sp.id, region: region.slice(0, 60),
+                   note: $("bNote").value.trim().slice(0, 160), days: bWindowDays };
+    $("bForm").style.display = "none";
+    $("bPosted").style.display = "";
   }catch(e){ toast("Bounty didn't post — try again"); }
 });
+$("bDone").addEventListener("click", () => $("bountySheet").classList.remove("on"));
+$("bShare").addEventListener("click", () => { if (lastBounty) shareBountyCard(lastBounty); });
+/* The bounty story card — 9:16, born for TikTok and IG stories. Full-bleed
+   photo, an unmissable ask, and the app link as the way in. */
+function shareBountyCard(bo){
+  const sp = state.spots.find(x => x.id === bo.spotId);
+  if (!sp || !sp.img) return;
+  const img = new Image();
+  img.onload = () => {
+    const W = 1080, H = 1920, c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    x.fillStyle = "#0A0B0E"; x.fillRect(0, 0, W, H);
+    const sc = Math.max(W / img.width, H / img.height);
+    x.drawImage(img, (W - img.width * sc) / 2, (H - img.height * sc) / 2, img.width * sc, img.height * sc);
+    let g = x.createLinearGradient(0, 0, 0, 460);
+    g.addColorStop(0, "rgba(10,11,14,.9)"); g.addColorStop(1, "rgba(10,11,14,0)");
+    x.fillStyle = g; x.fillRect(0, 0, W, 460);
+    g = x.createLinearGradient(0, H - 980, 0, H);
+    g.addColorStop(0, "rgba(10,11,14,0)"); g.addColorStop(.4, "rgba(10,11,14,.84)"); g.addColorStop(1, "rgba(10,11,14,.98)");
+    x.fillStyle = g; x.fillRect(0, H - 980, W, 980);
+    x.textBaseline = "top"; x.textAlign = "center";
+    drawMark(x, W / 2, 128, 78, "#F2F3F6");
+    x.fillStyle = "#18B7DC"; x.font = "700 30px 'JetBrains Mono', monospace";
+    x.fillText("TYRE HUNT · OPEN BOUNTY", W / 2, 196);
+    x.fillStyle = "#FFC24B"; x.font = "800 46px 'JetBrains Mono', monospace";
+    x.fillText("★ SPOT ME IN THE WILD ★", W / 2, H - 800);
+    x.fillStyle = "#F2F3F6"; x.font = "900 96px 'Archivo', sans-serif";
+    wrapText(x, ((sp.make || "") + " " + (sp.model || "")).trim(), W / 2, H - 716, W - 140, 104);
+    x.fillStyle = "#F2F3F6"; x.font = "700 42px 'JetBrains Mono', monospace";
+    x.fillText(bo.region.toUpperCase(), W / 2, H - 486);
+    const end = new Date(Date.now() + bo.days * 864e5);
+    const DOW = ["SUN","MON","TUE","WED","THU","FRI","SAT"], MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+    x.fillStyle = "#98A0AC"; x.font = "600 32px 'JetBrains Mono', monospace";
+    x.fillText("OPEN THROUGH " + DOW[end.getDay()] + " " + MON[end.getMonth()] + " " + end.getDate(), W / 2, H - 418);
+    if (bo.note){
+      x.fillStyle = "#98A0AC"; x.font = "italic 600 34px 'Archivo', sans-serif";
+      wrapText(x, "\u201C" + bo.note + "\u201D", W / 2, H - 352, W - 200, 44);
+    }
+    x.fillStyle = "#98A0AC"; x.font = "600 30px 'Archivo', sans-serif";
+    x.fillText("Spot my car in the app — you take the bounty badge, I get pinged.", W / 2, H - 256);
+    if (state.profile && state.profile.handle){
+      x.fillStyle = "#F2F3F6"; x.font = "700 40px 'JetBrains Mono', monospace";
+      x.fillText("@" + state.profile.handle, W / 2, H - 196);
+    }
+    drawHandle(x, W / 2, H - 118, 36, "#18B7DC");
+    x.textAlign = "left";
+    deliverCard(c, "tyrehunt-bounty-" + sp.id + ".jpg",
+      "Open bounty — spot my " + ((sp.make || "") + " " + (sp.model || "")).trim() + " · " + bo.region + " · TYRE HUNT");
+  };
+  img.src = sp.img;
+}
 async function checkBounty(spot){
   if (!sb || !sbSession || !spot || spot.flagged) return;
   if (!liveBounties.length) await fetchBounties();
@@ -4998,7 +5065,7 @@ $("vDoc").addEventListener("click", () => {
   openAngles(lastVerdictSpot.id);
 });
 $("dDoc").addEventListener("click", () => { if (dId != null) openAngles(dId); });
-$("dBounty").addEventListener("click", () => { if (dId != null) openBounty(dId); });
+$("dBounty").addEventListener("click", () => { if (dId != null) routeBounty(dId); });
 $("dLink").addEventListener("click", async () => {
   const sp = state.spots.find(x => x.id === dId);
   if (!sp) return;
@@ -5066,6 +5133,7 @@ function gcardHtml(s){
         <div class="row">
           <span class="chip ${s.rarity}">${s.rarity.toUpperCase()}</span>
           <span class="gtyres">${s.owned ? "MINE" : "#" + (s.seq || "—")}</span>
+          ${s.owned ? '<span class="bpill" role="button" tabindex="0" data-bounty="' + s.id + '">◎ BOUNTY</span>' : ""}
         </div>
       </div>
     </button>`;
@@ -5887,6 +5955,23 @@ $("ggrid").addEventListener("click", e => {
   const b = e.target.closest(".gcard");
   if (b && b.dataset.id) openDossier(+b.dataset.id);
 });
+/* The Stable grid never had a click route of its own — cards were dead taps.
+   The bounty pill wins over the card; a locked bounty walks you into the
+   angles flow instead of hiding behind a toast. */
+$("stableGrid").addEventListener("click", e => {
+  const bp = e.target.closest("[data-bounty]");
+  if (bp){ routeBounty(+bp.dataset.bounty); return; }
+  const b = e.target.closest(".gcard");
+  if (b && b.dataset.id) openDossier(+b.dataset.id);
+});
+function routeBounty(id){
+  const s = state.spots.find(x => x.id === id);
+  if (!s) return;
+  if (isFullDossier(s)){ openBounty(id); return; }
+  openDossier(id);
+  toast("3 verified angles unlock the bounty — it proves the car is yours");
+  setTimeout(() => openAngles(id), 350);
+}
 function openDossier(id){
   const s = state.spots.find(x => x.id === id); if (!s) return;
   dId = id; delArm = false; clearTimeout(delTimer); $("dDelete").textContent = "DELETE SPOT";
@@ -5895,7 +5980,8 @@ function openDossier(id){
   $("dMake").value = s.make || ""; $("dModel").value = s.model || ""; $("dYear").value = s.year || "";
   $("dEvent").value = s.event || ""; $("dPlace").value = s.place || "";
   renderDossierAngles();
-  $("dBounty").style.display = (s.owned && isFullDossier(s)) ? "" : "none";
+  $("dBounty").style.display = s.owned ? "" : "none";
+  $("dBounty").textContent = (s.owned && !isFullDossier(s)) ? "BOUNTY · 3 ANGLES FIRST" : "BOUNTY";
   $("dStory").value = s.story || ""; $("dColor").value = s.color || ""; $("dOwner").value = s.owner || "";
   $("dMetaChip").className = "chip " + s.rarity;
   $("dMetaChip").textContent = s.rarity.toUpperCase();
