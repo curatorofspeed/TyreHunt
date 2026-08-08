@@ -881,22 +881,17 @@ input[type=file]{display:none}
   <section class="view" id="view-rewards">
     <div class="vhead">
       <div class="eyebrow">Community</div>
-      <h2>Hall</h2>
-      <div class="meta">What everyone's finding — and where you stand</div>
+      <h2>Feed</h2>
+      <div class="meta">What everyone's finding</div>
       <div class="seg" id="hallSeg">
-        <button data-hall="feed" class="on">FEED</button>
-        <button data-hall="standing">STANDING</button>
+        <button data-hall="latest" class="on">LATEST</button>
+        <button data-hall="cotd">CAR OF THE DAY</button>
+        <button data-hall="rankings">RANKINGS</button>
       </div>
     </div>
     <div class="vbody">
       <div id="hallStanding" style="display:none">
-      <div id="balhero">
-        <div class="rname" id="rankName">ROOKIE</div>
-        <div class="bl">Hunter rank</div>
-        <div class="rstats" id="rankStats">0 models · 0 rare · 0 legendary</div>
-        <div class="rnext" id="rankNext"></div>
-      </div>
-      <div class="sechead">Season</div>
+      <div class="sechead" style="margin-top:0">Season</div>
       <div id="seasonCard"></div>
       <div class="sechead">Leaderboard</div>
       <div class="seg" id="lbLane" style="margin-bottom:8px;display:none"></div>
@@ -907,22 +902,12 @@ input[type=file]{display:none}
       </div>
       <div id="lbWrap"><p class="pfnote">Sign in to see where you stand.</p></div>
       <p id="lbNote"></p>
-      <div class="sechead">Records</div>
-      <div id="recordList"></div>
-      <div class="sechead">Titles</div>
-      <div id="titleGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
-      <div class="sechead">Badges</div>
-      <div id="badgeGrid"></div>
       </div><!-- /hallStanding -->
 
       <!-- The community feed. It used to live inside Garage, which framed
            other people's captures as part of your own collection. It's the
            most social surface in the app, so it leads the Hall now. -->
       <div id="segFeed">
-        <div class="seg" id="feedMode" style="margin-bottom:11px">
-          <button data-fm="all" class="on">ALL HUNTS</button>
-          <button data-fm="cotd">CAR OF THE DAY</button>
-        </div>
         <div id="cotdHead"></div>
         <button class="btn" id="feedRefresh" style="width:100%;margin-bottom:12px">↻ REFRESH</button>
         <div id="feedList"></div>
@@ -950,8 +935,8 @@ input[type=file]{display:none}
       <span class="tl">HUNTS</span>
     </button>
     <button class="tab" data-view="rewards" style="position:relative">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 5H4.5v1.5A3.5 3.5 0 0 0 8 10M17 5h2.5v1.5A3.5 3.5 0 0 1 16 10"/><path d="M12 14v3M8.5 20h7M9.5 17h5"/></svg>
-      <span class="tl">HALL</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="3.5" width="16" height="10" rx="2"/><path d="M8 9.5l2.2-2.6 2.6 2.6 2-1.6 3.2 1.6" opacity=".7"/><path d="M5.5 17h13M7 20.5h10"/></svg>
+      <span class="tl">FEED</span>
       <span id="feedBadge"></span>
     </button>
   </nav>
@@ -4071,13 +4056,6 @@ async function renderFeed2(){
     armLazyImages(box);
   }catch(e){ box.innerHTML = '<p class="pfnote">Feed didn\'t load — pull refresh in a moment.</p>'; }
 }
-$("feedMode").addEventListener("click", e => {
-  const b = e.target.closest("button");
-  if (!b) return;
-  feedMode = b.dataset.fm;
-  document.querySelectorAll("#feedMode button").forEach(x => x.classList.toggle("on", x === b));
-  renderFeed2();
-});
 $("feedRefresh").addEventListener("click", renderFeed2);
 let lastTapAt = 0, lastTapId = null;
 $("feedList").addEventListener("click", e => {
@@ -4340,9 +4318,12 @@ function show(view){
   if (view === "quests") renderQuests();
   if (view === "rewards"){
     renderRewards();
-    // Hall opens on the feed by default — it's the reason to come here.
+    // The Feed opens on the feed — rankings only when you asked for them last.
     const on = document.querySelector("#hallSeg button.on");
-    if (!on || on.dataset.hall === "feed"){ renderFeed2(); clearFeedBadge(); }
+    if (!on || on.dataset.hall !== "rankings"){
+      feedMode = on && on.dataset.hall === "cotd" ? "cotd" : "all";
+      renderFeed2(); clearFeedBadge();
+    }
   }
 }
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => show(t.dataset.view)));
@@ -5096,15 +5077,15 @@ function renderStable(){
   g.innerHTML = stable.map(gcardHtml).join("");
 }
 
-/* ================= HALL: FEED / STANDING ================= */
+/* ================= FEED: LATEST / COTD / RANKINGS ================= */
 $("hallSeg").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
   document.querySelectorAll("#hallSeg button").forEach(x => x.classList.toggle("on", x === b));
-  const on = b.dataset.hall;
-  $("segFeed").style.display = on === "feed" ? "" : "none";
-  $("hallStanding").style.display = on === "standing" ? "" : "none";
-  if (on === "feed"){ renderFeed2(); clearFeedBadge(); }
+  const on = b.dataset.hall, isFeed = on !== "rankings";
+  $("segFeed").style.display = isFeed ? "" : "none";
+  $("hallStanding").style.display = isFeed ? "none" : "";
+  if (isFeed){ feedMode = on === "cotd" ? "cotd" : "all"; renderFeed2(); clearFeedBadge(); }
   else { renderLeaderboard(); }
 });
 
@@ -5720,12 +5701,6 @@ function renderQuests(){
 /* ================= HALL ================= */
 function renderRewards(){
   renderLeaderboard();
-  const st = hunterStats();
-  const r = currentRank(st);
-  $("rankName").textContent = r.name;
-  $("rankStats").textContent = st.models + " models · " + st.rare + " rare · " + st.legend + " legendary";
-  const nxt = RANKS[RANKS.indexOf(r) + 1];
-  $("rankNext").textContent = nxt ? "Next — " + nxt.name + ": " + nxt.req : "Top of the mountain.";
   const si = seasonIndex();
   if (si >= 0){
     const ss = seasonState(si);
@@ -5745,6 +5720,34 @@ function renderRewards(){
     const d = Math.max(0, Math.ceil((LAUNCH.getTime() - Date.now()) / 864e5));
     $("seasonCard").innerHTML = '<p class="pfnote">Season one drops at launch' + (d ? " — " + d + " day" + (d === 1 ? "" : "s") + " out" : "") + '.</p>';
   }
+}
+/* The trophy case — rank, records, titles, badges — lives on the hunter's own
+   card now. renderProfile drops a #pfStanding container into both branches
+   (claimed tag or not — your local standing is yours either way) and this
+   fills it. The Feed tab stays purely community. */
+function renderStanding(){
+  const box = $("pfStanding");
+  if (!box) return;
+  const st = hunterStats();
+  const r = currentRank(st);
+  const nxt = RANKS[RANKS.indexOf(r) + 1];
+  box.innerHTML = `
+    <div class="sechead">Standing</div>
+    <div id="balhero">
+      <div class="rname" id="rankName"></div>
+      <div class="bl">Hunter rank</div>
+      <div class="rstats" id="rankStats"></div>
+      <div class="rnext" id="rankNext"></div>
+    </div>
+    <div class="sechead">Records</div>
+    <div id="recordList"></div>
+    <div class="sechead">Titles</div>
+    <div id="titleGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+    <div class="sechead">Badges</div>
+    <div id="badgeGrid"></div>`;
+  $("rankName").textContent = r.name;
+  $("rankStats").textContent = st.models + " models · " + st.rare + " rare · " + st.legend + " legendary";
+  $("rankNext").textContent = nxt ? "Next — " + nxt.name + ": " + nxt.req : "Top of the mountain.";
   const rec = recordsData();
   $("recordList").innerHTML = [
     ["ODOMETER", odoFmt(odoCount()) + " spots"],
@@ -5773,8 +5776,9 @@ function renderRewards(){
   document.querySelectorAll("[data-title]").forEach(b => b.addEventListener("click", async () => {
     state.title = state.title === b.dataset.title ? "" : b.dataset.title;
     await Store.save();
-    renderRewards();
-    if ($("profile").classList.contains("on")) renderProfile();
+    const sc = $("pfBody").scrollTop;
+    renderProfile();                 // the tag card shows the equipped title
+    $("pfBody").scrollTop = sc;
     syncProfile();
   }));
   const badges = [];
@@ -6276,7 +6280,8 @@ function renderProfile(){
         <input id="otpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="ENTER CODE">
         <button class="btn hot" style="width:100%;margin-top:9px" id="otpGo">SIGN IN</button>
         <p class="otpnote">We sent a <b>code</b> to your email. Type it here — that works even if the link opens in another browser.</p>
-      </div>`;
+      </div>
+      <div id="pfStanding"></div>`;
     $("pfClaim").addEventListener("click", async () => {
       const h = ($("pfHandle").value || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
       if (h.length < 3){ toast("Handle needs 3+ characters"); return; }
@@ -6287,6 +6292,7 @@ function renderProfile(){
       toast("Tag claimed · @" + h);
     });
     bindMagic();
+    renderStanding();
     return;
   }
   const myStats = hunterStats();
@@ -6319,6 +6325,7 @@ function renderProfile(){
       <button class="btn hot" id="pfShareTag">SHARE TAG</button>
       <button class="btn" id="pfCopy">COPY CODE</button>
     </div>
+    <div id="pfStanding"></div>
     <div class="sechead">What you hunt</div>
     <div class="seg" id="laneSeg" style="margin-bottom:8px">
       <button data-lane="car"${state.lane === "car" ? ' class="on"' : ""}>VEHICLES</button>
@@ -6366,6 +6373,7 @@ function renderProfile(){
     <div class="sechead">Crew feed</div>
     <div id="crewFeed"><p class="pfnote">Loading…</p></div>` : ""}`;
   drawQR();
+  renderStanding();
   $("pfShareTag").addEventListener("click", async () => {
     const msg = "Add me on TYRE HUNT — hunter code " + p.code + "\n" + crewLink(p.code);
     if (navigator.share){
