@@ -1244,6 +1244,47 @@ const CONFIG = {
   sendEdge: 900          // long edge sent to the verifier (~30% cheaper per capture than 1100)
 };
 const RARITIES = { everyday:1, classic:1, rare:1, legendary:1 };
+/* ================= TELEMETRY =================
+   Field errors report themselves — signed in or not — so a bug in someone
+   else's hand no longer depends on them describing it. Deduped and capped per
+   session, hard length limits server-side, and the reporter itself can never
+   throw. Build version rides on document.lastModified, which changes with
+   every deploy for free. */
+const ERR_MAX = 8, errSeen = new Set();
+function telemetry(kind, err){
+  try{
+    const raw = err && (err.message || (err.reason && err.reason.message)) || String(err || "unknown");
+    const msg = ((kind ? kind + ": " : "") + raw).slice(0, 500);
+    if (/ResizeObserver/.test(msg)) return;
+    const key = msg.slice(0, 120);
+    if (errSeen.has(key) || errSeen.size >= ERR_MAX) return;
+    errSeen.add(key);
+    let uid = null; try{ uid = sbSession ? sbSession.user.id : null; }catch(_e){}
+    let stack = null;
+    try{ stack = (err && err.stack) || (err && err.reason && err.reason.stack) || null;
+         if (stack) stack = String(stack).slice(0, 2000); }catch(_e){}
+    const v = document.querySelector(".view.on");
+    fetch(CONFIG.supabaseUrl + "/rest/v1/client_errors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: CONFIG.supabaseAnon,
+                 Authorization: "Bearer " + CONFIG.supabaseAnon, Prefer: "return=minimal" },
+      body: JSON.stringify({
+        user_id: uid, message: msg, stack,
+        src: err && err.__src ? String(err.__src).slice(0, 300) : null,
+        view: v ? v.id : "hunt",
+        ver: String(document.lastModified || "").slice(0, 40),
+        ua: navigator.userAgent.slice(0, 300)
+      })
+    }).catch(() => {});
+  }catch(e){}
+}
+window.addEventListener("error", (e) => {
+  const er = e.error || { message: e.message };
+  try{ er.__src = (e.filename || "") + ":" + (e.lineno || 0) + ":" + (e.colno || 0); }catch(_e){}
+  telemetry("", er);
+});
+window.addEventListener("unhandledrejection", (e) => telemetry("promise", e.reason || e));
+
 const KEY = "tyrehunt:v1";
 
 /* ================= STATE ================= */
@@ -4299,6 +4340,7 @@ async function startCam(){
     torchOK = !!caps.torch;
     $("flashBtn").style.opacity = torchOK ? "" : .45;
   }catch(e){
+    telemetry("camera", e);
     stream = null; track = null;
     $("nocam").style.display = "flex";
     $("flashBtn").style.opacity = .45;
@@ -4427,6 +4469,7 @@ async function runVerify(canvas, source){
     const res = await verifyWithClaude(b64);
     await processResult(res, canvas, source || "camera");
   }catch(e){
+    telemetry("verify", e);
     await queueCapture(canvas, source);
     detectUI("err", { title:"Queued — no connection", sub:"It'll verify automatically when you're back online" });
   }finally{
