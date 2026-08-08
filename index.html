@@ -968,7 +968,7 @@ input[type=file]{display:none}
       <p class="shotnote" id="vShotNote"></p>
       <div class="payline" id="vPayline">
         <div class="crest sm"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg></div>
-        <div><div class="pv" id="vPay">—</div><div class="pl" id="vPayLbl">FILED TO REGISTRY</div><div class="pl" id="vCensus" style="margin-top:3px"></div></div>
+        <div><div class="pv" id="vPay">—</div><div class="pl" id="vPayLbl">FILED TO REGISTRY</div><div class="pl" id="vCensus" style="margin-top:3px"></div><div class="pl" id="vOdo" style="display:none;margin-top:3px;color:var(--gold)"></div></div>
       </div>
       <div id="vQuests"></div>
       <div class="miss" id="vMiss" style="display:none"></div>
@@ -1295,7 +1295,7 @@ const KEY = "tyrehunt:v1";
 
 /* ================= STATE ================= */
 let state = {
-  tyres: 0, streak: 0, lastSpotDay: null,
+  streak: 0, lastSpotDay: null,
   day: null, daySpots: 0, dayBonus: false, dayQ: { ids: [], done: {} }, dayMakes: [],
   profile: null, crew: [],
   activeEvent: "", activeEventCode: "",
@@ -1417,56 +1417,56 @@ const inSet = (a, list) => list.some(m => a.make.includes(m));
 const isMoto = a => (a.tags || []).includes("motorcycle");
 const QUEST_POOL = [
   // marque hunts
-  { id:"ferrari",  cat:"M", lane:"car", name:"Prancing Horse", desc:"Capture any Ferrari", pay:200, match:a=>a.make.includes("ferrari") },
-  { id:"porsche",  cat:"M", lane:"car", name:"Stuttgart Crest", desc:"Capture any Porsche", pay:150, match:a=>a.make.includes("porsche") },
-  { id:"lambo",    cat:"M", lane:"car", name:"Raging Bull", desc:"Capture any Lamborghini", pay:200, match:a=>a.make.includes("lamborghini") },
-  { id:"bmw",      cat:"M", lane:"car", name:"The Roundel", desc:"Capture any BMW", pay:50, match:a=>a.make.includes("bmw") },
-  { id:"merc",     cat:"M", lane:"car", name:"Three-Pointed Star", desc:"Capture any Mercedes", pay:50, match:a=>a.make.includes("mercedes") },
-  { id:"jdm",      cat:"M", lane:"car", name:"Rising Sun", desc:"Capture any Japanese marque", pay:50, match:a=>inSet(a, MAKESETS.jdm) },
-  { id:"italian",  cat:"M", lane:"car", name:"The Italian Job", desc:"Capture any Italian marque", pay:100, match:a=>inSet(a, MAKESETS.italian) },
-  { id:"british",  cat:"M", lane:"car", name:"British Steel", desc:"Capture any British marque", pay:75, match:a=>inSet(a, MAKESETS.british) },
-  { id:"mustang",  cat:"M", lane:"car", name:"Pony Up", desc:"Capture a Ford Mustang", pay:75, match:a=>a.make.includes("ford") && a.model.includes("mustang") },
-  { id:"corvette", cat:"M", lane:"car", name:"America's Sports Car", desc:"Capture a Corvette", pay:75, match:a=>a.model.includes("corvette") },
+  { id:"ferrari",  cat:"M", lane:"car", name:"Prancing Horse", desc:"Capture any Ferrari", match:a=>a.make.includes("ferrari") },
+  { id:"porsche",  cat:"M", lane:"car", name:"Stuttgart Crest", desc:"Capture any Porsche", match:a=>a.make.includes("porsche") },
+  { id:"lambo",    cat:"M", lane:"car", name:"Raging Bull", desc:"Capture any Lamborghini", match:a=>a.make.includes("lamborghini") },
+  { id:"bmw",      cat:"M", lane:"car", name:"The Roundel", desc:"Capture any BMW", match:a=>a.make.includes("bmw") },
+  { id:"merc",     cat:"M", lane:"car", name:"Three-Pointed Star", desc:"Capture any Mercedes", match:a=>a.make.includes("mercedes") },
+  { id:"jdm",      cat:"M", lane:"car", name:"Rising Sun", desc:"Capture any Japanese marque", match:a=>inSet(a, MAKESETS.jdm) },
+  { id:"italian",  cat:"M", lane:"car", name:"The Italian Job", desc:"Capture any Italian marque", match:a=>inSet(a, MAKESETS.italian) },
+  { id:"british",  cat:"M", lane:"car", name:"British Steel", desc:"Capture any British marque", match:a=>inSet(a, MAKESETS.british) },
+  { id:"mustang",  cat:"M", lane:"car", name:"Pony Up", desc:"Capture a Ford Mustang", match:a=>a.make.includes("ford") && a.model.includes("mustang") },
+  { id:"corvette", cat:"M", lane:"car", name:"America's Sports Car", desc:"Capture a Corvette", match:a=>a.model.includes("corvette") },
   // body & build
-  { id:"racecar",  cat:"B", lane:"car", name:"The Race Car", desc:"Livery, numbers, full race prep", pay:250, match:a=>a.tags.includes("race_car") },
-  { id:"droptop",  cat:"B", lane:"car", name:"Drop Top", desc:"Capture a convertible", pay:50, match:a=>a.tags.includes("convertible") },
-  { id:"longroof", cat:"B", lane:"car", name:"Longroof Society", desc:"Capture a wagon", pay:75, match:a=>a.tags.includes("wagon") },
-  { id:"pickup",   cat:"B", lane:"car", name:"Work Horse", desc:"Capture a pickup", pay:30, match:a=>a.tags.includes("pickup") },
-  { id:"moto",     cat:"B", lane:"moto", name:"Two Wheels", desc:"Capture a motorcycle", pay:50, match:a=>a.tags.includes("motorcycle") },
-  { id:"wing",     cat:"B", lane:"car", name:"Cleared for Takeoff", desc:"Capture a big rear wing", pay:75, match:a=>a.tags.includes("big_wing") },
-  { id:"wide",     cat:"B", lane:"car", name:"Widebody", desc:"Flares and stance", pay:100, match:a=>a.tags.includes("widebody") },
-  { id:"mud",      cat:"B", lane:"car", name:"Mud Plugger", desc:"Lifted 4x4 or overland rig", pay:50, match:a=>a.tags.includes("lifted_4x4") },
+  { id:"racecar",  cat:"B", lane:"car", name:"The Race Car", desc:"Livery, numbers, full race prep", match:a=>a.tags.includes("race_car") },
+  { id:"droptop",  cat:"B", lane:"car", name:"Drop Top", desc:"Capture a convertible", match:a=>a.tags.includes("convertible") },
+  { id:"longroof", cat:"B", lane:"car", name:"Longroof Society", desc:"Capture a wagon", match:a=>a.tags.includes("wagon") },
+  { id:"pickup",   cat:"B", lane:"car", name:"Work Horse", desc:"Capture a pickup", match:a=>a.tags.includes("pickup") },
+  { id:"moto",     cat:"B", lane:"moto", name:"Two Wheels", desc:"Capture a motorcycle", match:a=>a.tags.includes("motorcycle") },
+  { id:"wing",     cat:"B", lane:"car", name:"Cleared for Takeoff", desc:"Capture a big rear wing", match:a=>a.tags.includes("big_wing") },
+  { id:"wide",     cat:"B", lane:"car", name:"Widebody", desc:"Flares and stance", match:a=>a.tags.includes("widebody") },
+  { id:"mud",      cat:"B", lane:"car", name:"Mud Plugger", desc:"Lifted 4x4 or overland rig", match:a=>a.tags.includes("lifted_4x4") },
   // eras
-  { id:"prewar",   cat:"E", lane:"any", name:"Pre-War Iron", desc:"Capture anything pre-1946", pay:400, match:a=>a.decade==="pre-1946" },
-  { id:"fifties",  cat:"E", lane:"any", name:"Fins & Chrome", desc:"Capture a 1950s machine", pay:250, match:a=>a.decade==="1950s" },
-  { id:"muscle",   cat:"E", lane:"car", name:"Muscle Era", desc:"American muscle, '60s–'70s", pay:150, match:a=>a.tags.includes("american_muscle") || (inSet(a, MAKESETS.american) && (a.decade==="1960s" || a.decade==="1970s")) },
-  { id:"radwood",  cat:"E", lane:"any", name:"Radwood Hero", desc:"Capture an '80s or '90s hero", pay:100, match:a=>a.decade==="1980s" || a.decade==="1990s" },
-  { id:"aircool",  cat:"E", lane:"any", name:"Air-Cooled", desc:"No radiator, all character", pay:150, match:a=>a.tags.includes("air_cooled") },
-  { id:"y2k",      cat:"E", lane:"any", name:"New Millennium", desc:"Capture a 2000s car", pay:40, match:a=>a.decade==="2000s" },
+  { id:"prewar",   cat:"E", lane:"any", name:"Pre-War Iron", desc:"Capture anything pre-1946", match:a=>a.decade==="pre-1946" },
+  { id:"fifties",  cat:"E", lane:"any", name:"Fins & Chrome", desc:"Capture a 1950s machine", match:a=>a.decade==="1950s" },
+  { id:"muscle",   cat:"E", lane:"car", name:"Muscle Era", desc:"American muscle, '60s–'70s", match:a=>a.tags.includes("american_muscle") || (inSet(a, MAKESETS.american) && (a.decade==="1960s" || a.decade==="1970s")) },
+  { id:"radwood",  cat:"E", lane:"any", name:"Radwood Hero", desc:"Capture an '80s or '90s hero", match:a=>a.decade==="1980s" || a.decade==="1990s" },
+  { id:"aircool",  cat:"E", lane:"any", name:"Air-Cooled", desc:"No radiator, all character", match:a=>a.tags.includes("air_cooled") },
+  { id:"y2k",      cat:"E", lane:"any", name:"New Millennium", desc:"Capture a 2000s car", match:a=>a.decade==="2000s" },
   // wildcards
-  { id:"rosso",    cat:"W", lane:"any", name:"Rosso Corsa", desc:"Capture a red car", pay:40, match:a=>a.color==="red" },
-  { id:"green",    cat:"W", lane:"any", name:"Racing Green", desc:"Capture a green car", pay:50, match:a=>a.color==="green" },
-  { id:"loud",     cat:"W", lane:"any", name:"Highlighter Pack", desc:"Yellow or orange paint", pay:50, match:a=>a.color==="yellow" || a.color==="orange" },
-  { id:"murdered", cat:"W", lane:"any", name:"Murdered Out", desc:"Capture a black car", pay:30, match:a=>a.color==="black" },
-  { id:"unicorn",  cat:"W", lane:"any", name:"The Unicorn", desc:"Land a legendary", pay:400, match:a=>a.rarity==="legendary" },
-  { id:"badges",   cat:"W", lane:"any", name:"Badge Collector", desc:"Three different makes today", pay:100, match:a=>a.dayMakesCount>=3, prog:()=>Math.min((state.dayMakes||[]).length,3)+" / 3" },
+  { id:"rosso",    cat:"W", lane:"any", name:"Rosso Corsa", desc:"Capture a red car", match:a=>a.color==="red" },
+  { id:"green",    cat:"W", lane:"any", name:"Racing Green", desc:"Capture a green car", match:a=>a.color==="green" },
+  { id:"loud",     cat:"W", lane:"any", name:"Highlighter Pack", desc:"Yellow or orange paint", match:a=>a.color==="yellow" || a.color==="orange" },
+  { id:"murdered", cat:"W", lane:"any", name:"Murdered Out", desc:"Capture a black car", match:a=>a.color==="black" },
+  { id:"unicorn",  cat:"W", lane:"any", name:"The Unicorn", desc:"Land a legendary", match:a=>a.rarity==="legendary" },
+  { id:"badges",   cat:"W", lane:"any", name:"Badge Collector", desc:"Three different makes today", match:a=>a.dayMakesCount>=3, prog:()=>Math.min((state.dayMakes||[]).length,3)+" / 3" },
   { id:"afterdark", cat:"W", lane:"any", name:"After Dark", desc:"Capture anything at night", match:a=>a.conds.includes("night") },
   { id:"storm",    cat:"W", lane:"any", name:"Storm Chaser", desc:"A capture in rain or snow", match:a=>a.conds.includes("rain")||a.conds.includes("snow") },
   /* ===== the bike lane =====
      Every one of these requires the motorcycle tag, so a car capture can
      never accidentally close a bike quest. Colour and weather quests above
      are lane:"any" and stay shared — a red bike is still a red machine. */
-  { id:"m-duc",    cat:"M", lane:"moto", name:"Borgo Panigale", desc:"Capture any Ducati", pay:200, match:a=>isMoto(a) && a.make.includes("ducati") },
-  { id:"m-hd",     cat:"M", lane:"moto", name:"Milwaukee Iron", desc:"Capture any Harley-Davidson", pay:50, match:a=>isMoto(a) && (a.make.includes("harley")||a.model.includes("sportster")) },
-  { id:"m-brit",   cat:"M", lane:"moto", name:"Meriden Twin", desc:"Capture a British bike", pay:150, match:a=>isMoto(a) && inSet(a, MAKESETS.motoBritish) },
-  { id:"m-jap",    cat:"M", lane:"moto", name:"The Big Four", desc:"Honda, Yamaha, Suzuki or Kawasaki", pay:50, match:a=>isMoto(a) && inSet(a, MAKESETS.motoJapan) },
-  { id:"m-ital",   cat:"M", lane:"moto", name:"Italian Twins", desc:"Ducati, MV Agusta or Moto Guzzi", pay:150, match:a=>isMoto(a) && inSet(a, MAKESETS.motoItalian) },
-  { id:"m-any",    cat:"B", lane:"moto", name:"Two Wheels Good", desc:"Capture any motorcycle", pay:40, match:a=>isMoto(a) },
-  { id:"m-chop",   cat:"B", lane:"moto", name:"Custom Culture", desc:"A chopper, bobber or custom build", pay:100, match:a=>isMoto(a) && (a.model.includes("chopper")||a.model.includes("bobber")||a.make.includes("custom")) },
-  { id:"m-dirt",   cat:"B", lane:"moto", name:"Off The Tarmac", desc:"An enduro, motocross or adventure bike", pay:75, match:a=>isMoto(a) && (a.make.includes("ktm")||a.model.includes("enduro")||a.model.includes("exc")||a.model.includes("gs")) },
-  { id:"m-scoot",  cat:"B", lane:"moto", name:"Dolce Vita", desc:"Capture a scooter", pay:40, match:a=>isMoto(a) && (a.make.includes("vespa")||a.make.includes("lambretta")||a.model.includes("cub")) },
-  { id:"m-classic",cat:"E", lane:"moto", name:"Kickstart Era", desc:"A bike from the 1970s or earlier", pay:200, match:a=>isMoto(a) && ["pre-1946","1950s","1960s","1970s"].includes(a.decade) },
-  { id:"m-superbike", cat:"E", lane:"moto", name:"Superbike Era", desc:"An '80s or '90s sportbike", pay:150, match:a=>isMoto(a) && (a.decade==="1980s"||a.decade==="1990s") }
+  { id:"m-duc",    cat:"M", lane:"moto", name:"Borgo Panigale", desc:"Capture any Ducati", match:a=>isMoto(a) && a.make.includes("ducati") },
+  { id:"m-hd",     cat:"M", lane:"moto", name:"Milwaukee Iron", desc:"Capture any Harley-Davidson", match:a=>isMoto(a) && (a.make.includes("harley")||a.model.includes("sportster")) },
+  { id:"m-brit",   cat:"M", lane:"moto", name:"Meriden Twin", desc:"Capture a British bike", match:a=>isMoto(a) && inSet(a, MAKESETS.motoBritish) },
+  { id:"m-jap",    cat:"M", lane:"moto", name:"The Big Four", desc:"Honda, Yamaha, Suzuki or Kawasaki", match:a=>isMoto(a) && inSet(a, MAKESETS.motoJapan) },
+  { id:"m-ital",   cat:"M", lane:"moto", name:"Italian Twins", desc:"Ducati, MV Agusta or Moto Guzzi", match:a=>isMoto(a) && inSet(a, MAKESETS.motoItalian) },
+  { id:"m-any",    cat:"B", lane:"moto", name:"Two Wheels Good", desc:"Capture any motorcycle", match:a=>isMoto(a) },
+  { id:"m-chop",   cat:"B", lane:"moto", name:"Custom Culture", desc:"A chopper, bobber or custom build", match:a=>isMoto(a) && (a.model.includes("chopper")||a.model.includes("bobber")||a.make.includes("custom")) },
+  { id:"m-dirt",   cat:"B", lane:"moto", name:"Off The Tarmac", desc:"An enduro, motocross or adventure bike", match:a=>isMoto(a) && (a.make.includes("ktm")||a.model.includes("enduro")||a.model.includes("exc")||a.model.includes("gs")) },
+  { id:"m-scoot",  cat:"B", lane:"moto", name:"Dolce Vita", desc:"Capture a scooter", match:a=>isMoto(a) && (a.make.includes("vespa")||a.make.includes("lambretta")||a.model.includes("cub")) },
+  { id:"m-classic",cat:"E", lane:"moto", name:"Kickstart Era", desc:"A bike from the 1970s or earlier", match:a=>isMoto(a) && ["pre-1946","1950s","1960s","1970s"].includes(a.decade) },
+  { id:"m-superbike", cat:"E", lane:"moto", name:"Superbike Era", desc:"An '80s or '90s sportbike", match:a=>isMoto(a) && (a.decade==="1980s"||a.decade==="1990s") }
 ];
 const questById = id => QUEST_POOL.find(q => q.id === id);
 /* One in ten. The number that keeps a car hunter from being sent after
@@ -1899,29 +1899,29 @@ function nextRankHint(st){
 }
 
 const SETS = [
-  { id:"poster-wall", name:"Poster Wall", desc:"The '80s bedroom lineup", bonus:1000, needs:[
+  { id:"poster-wall", name:"Poster Wall", desc:"The '80s bedroom lineup", needs:[
     { label:"Countach", m:["countach"] }, { label:"Testarossa", m:["testarossa"] },
     { label:"F40", m:["f40"] }, { label:"911 Turbo", m:[["930"],["porsche","turbo"]] } ] },
-  { id:"jdm-heroes", name:"JDM Heroes", desc:"The golden-era imports", bonus:600, needs:[
+  { id:"jdm-heroes", name:"JDM Heroes", desc:"The golden-era imports", needs:[
     { label:"Supra", m:["supra"] }, { label:"GT-R", m:[["gt-r"],["gtr"],["skyline"]] },
     { label:"NSX", m:[["nsx"]] }, { label:"RX-7", m:[["rx-7"],["rx7"]] },
     { label:"Miata", m:[["miata"],["mx-5"],["mx5"]] } ] },
-  { id:"muscle-row", name:"Muscle Row", desc:"Detroit's finest hour", bonus:400, needs:[
+  { id:"muscle-row", name:"Muscle Row", desc:"Detroit's finest hour", needs:[
     { label:"Mustang", m:["mustang"] }, { label:"Camaro", m:["camaro"] },
     { label:"Mopar", m:[["charger"],["challenger"],["cuda"]] }, { label:"Corvette", m:["corvette"] } ] },
-  { id:"air-cooled", name:"Air-Cooled Icons", desc:"No radiator, all character", bonus:500, needs:[
+  { id:"air-cooled", name:"Air-Cooled Icons", desc:"No radiator, all character", needs:[
     { label:"Air-cooled 911", m:["porsche","911"], decades:["1960s","1970s","1980s","1990s"] },
     { label:"Beetle", m:["beetle"] },
     { label:"Vintage Bus", m:[["type 2"],["kombi"],["vanagon"],["microbus"]] } ] },
-  { id:"track-rats", name:"Track Rats", desc:"Built, not bought", bonus:500, needs:[
+  { id:"track-rats", name:"Track Rats", desc:"Built, not bought", needs:[
     { label:"Race car", tag:"race_car" }, { label:"Big wing", tag:"big_wing" }, { label:"Widebody", tag:"widebody" } ] },
-  { id:"open-air", name:"Open Air Club", desc:"Three distinct drop tops", bonus:300, needs:[
+  { id:"open-air", name:"Open Air Club", desc:"Three distinct drop tops", needs:[
     { label:"Drop top 1", tag:"convertible" }, { label:"Drop top 2", tag:"convertible" }, { label:"Drop top 3", tag:"convertible" } ] },
-  { id:"exotic-trinity", name:"Exotic Trinity", desc:"The holy badges", bonus:750, needs:[
+  { id:"exotic-trinity", name:"Exotic Trinity", desc:"The holy badges", needs:[
     { label:"Ferrari", m:["ferrari"] }, { label:"Lamborghini", m:["lamborghini"] }, { label:"McLaren", m:["mclaren"] } ] },
-  { id:"work-fleet", name:"Work Fleet", desc:"The ones that earn their keep", bonus:250, needs:[
+  { id:"work-fleet", name:"Work Fleet", desc:"The ones that earn their keep", needs:[
     { label:"Pickup", tag:"pickup" }, { label:"Van", tag:"van" }, { label:"4x4", tag:"lifted_4x4" } ] },
-  { id:"radwood-five", name:"Radwood Five", desc:"Three '80s, two '90s", bonus:400, needs:[
+  { id:"radwood-five", name:"Radwood Five", desc:"Three '80s, two '90s", needs:[
     { label:"'80s 1", decades:["1980s"] }, { label:"'80s 2", decades:["1980s"] }, { label:"'80s 3", decades:["1980s"] },
     { label:"'90s 1", decades:["1990s"] }, { label:"'90s 2", decades:["1990s"] } ] }
 ];
@@ -1946,18 +1946,18 @@ function checkSets(){
 }
 
 const WANTED_POOL = [
-  { id:"countach", name:"Lamborghini Countach", pay:1500, m:["countach"] },
-  { id:"f40", name:"Ferrari F40", pay:1500, m:["f40"] },
-  { id:"mcf1", name:"McLaren F1", pay:3000, m:[["mclaren","f1"]] },
-  { id:"2000gt", name:"Toyota 2000GT", pay:2500, m:[["2000gt"],["2000 gt"]] },
-  { id:"miura", name:"Lamborghini Miura", pay:2000, m:["miura"] },
-  { id:"300sl", name:"Mercedes 300SL", pay:2000, m:[["300sl"],["300 sl"]] },
-  { id:"gt3rs", name:"Porsche 911 GT3 RS", pay:800, m:["gt3 rs"] },
-  { id:"testa", name:"Ferrari Testarossa", pay:1000, m:["testarossa"] },
-  { id:"etype", name:"Jaguar E-Type", pay:900, m:[["e-type"],["etype"],["xke"]] },
-  { id:"integrale", name:"Lancia Delta Integrale", pay:900, m:[["integrale"]] },
-  { id:"r34", name:"Skyline GT-R R34", pay:900, m:[["r34"]] },
-  { id:"daytona", name:"Ferrari Daytona", pay:1200, m:[["ferrari","daytona"],["365 gtb"]] }
+  { id:"countach", name:"Lamborghini Countach", m:["countach"] },
+  { id:"f40", name:"Ferrari F40", m:["f40"] },
+  { id:"mcf1", name:"McLaren F1", m:[["mclaren","f1"]] },
+  { id:"2000gt", name:"Toyota 2000GT", m:[["2000gt"],["2000 gt"]] },
+  { id:"miura", name:"Lamborghini Miura", m:["miura"] },
+  { id:"300sl", name:"Mercedes 300SL", m:[["300sl"],["300 sl"]] },
+  { id:"gt3rs", name:"Porsche 911 GT3 RS", m:["gt3 rs"] },
+  { id:"testa", name:"Ferrari Testarossa", m:["testarossa"] },
+  { id:"etype", name:"Jaguar E-Type", m:[["e-type"],["etype"],["xke"]] },
+  { id:"integrale", name:"Lancia Delta Integrale", m:[["integrale"]] },
+  { id:"r34", name:"Skyline GT-R R34", m:[["r34"]] },
+  { id:"daytona", name:"Ferrari Daytona", m:[["ferrari","daytona"],["365 gtb"]] }
 ];
 const wantedById = id => WANTED_POOL.find(w => w.id === id);
 function launchWeek(){ return Math.floor((Date.now() - LAUNCH.getTime()) / WEEK_MS); }
@@ -2093,6 +2093,22 @@ function titlesUnlocked(){
   return TITLES.filter(t => { try{ return t.test(st); }catch(e){ return false; } }).map(t => t.id);
 }
 function titleNameOf(id){ const t = TITLES.find(x => x.id === id); return t ? t.title : ""; }
+
+/* The odometer — raw counted captures, the axis the ranks ignore. Unique
+   models measure taste; the odometer measures miles. Same counting rule as
+   the scoreboard: flagged and Stable cars don't turn it. */
+const ODO = [100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000];
+const odoCount = () => state.spots.reduce((n, s) => n + (s.flagged || s.owned ? 0 : 1), 0);
+const odoFmt = n => n.toLocaleString("en-US");
+/* Awards every crossed milestone, not just an exact hit, so a hunter who
+   moves cars to the Stable and back can never strand a badge. Returns the
+   largest newly-earned milestone for the celebration. */
+function odoSweep(){
+  const c = odoCount();
+  let hit = 0;
+  ODO.forEach(m => { if (c >= m && !state.badges["odo:" + m]){ state.badges["odo:" + m] = true; hit = m; } });
+  return hit;
+}
 
 async function planHunt(force){
   ensureDay();
@@ -4367,7 +4383,7 @@ $("flashBtn").addEventListener("click", async () => {
 });
 
 /* ================= CAPTURE PIPELINE ================= */
-let busy = false, lastQuestHits = [], lastVerdictSpot = null, lastRankUp = "";
+let busy = false, lastQuestHits = [], lastVerdictSpot = null, lastRankUp = "", lastOdoHit = 0;
 $("shutter").addEventListener("click", () => {
   if (busy) return;
   if (camLive()){ captureFromVideo(); }
@@ -4624,6 +4640,7 @@ async function processResult(res, canvas, source, ctx){
 
   lastQuestHits = [];
   lastRankUp = "";
+  lastOdoHit = 0;
   if (counts){
     // streak
     const today = dayKey();
@@ -4709,6 +4726,8 @@ async function processResult(res, canvas, source, ctx){
   state.spots.unshift(spot);
   if (counts){
     checkSets().forEach(h => lastQuestHits.push(h));
+    lastOdoHit = odoSweep();
+    if (lastOdoHit) lastQuestHits.push({ label: "ODOMETER", name: odoFmt(lastOdoHit) + " SPOTS" });
     if (spot.shot && prior > 0 && spot.shot.score > prevBestShot){
       lastQuestHits.push({ label: "RECORD", name: "NEW BEST SHOT · " + spot.shot.score });
     }
@@ -4766,6 +4785,21 @@ function ordinalTxt(n){
   const suf = (m100 >= 11 && m100 <= 13) ? "TH" : m10 === 1 ? "ST" : m10 === 2 ? "ND" : m10 === 3 ? "RD" : "TH";
   return n + suf;
 }
+/* The counter rolls the last two dozen digits up to the milestone, the way
+   a real odometer turns over — then holds on the round number. */
+function rollOdo(el, target){
+  const from = Math.max(0, target - 24), t0 = performance.now(), dur = 1400;
+  const pad = n => String(Math.round(n)).padStart(7, "0").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  el.textContent = "ODOMETER " + pad(from);
+  // rAF can be throttled to nothing in low-power states — the milestone
+  // number itself must never be a casualty of that
+  setTimeout(() => { el.textContent = "ODOMETER " + pad(target); }, dur + 150);
+  (function tick(now){
+    const pr = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - pr, 3);
+    el.textContent = "ODOMETER " + pad(from + (target - from) * e);
+    if (pr < 1) requestAnimationFrame(tick);
+  })(performance.now());
+}
 function openVerdict(spot, canvas, raw){
   const v = $("verdict");
   lastVerdictSpot = spot || null;
@@ -4773,6 +4807,7 @@ function openVerdict(spot, canvas, raw){
   $("vPhoto").style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
   $("vPhoto").style.aspectRatio = String(Math.max(.8, Math.min(1.6, canvas.width / Math.max(1, canvas.height))));
   $("vCensus").textContent = "";
+  $("vOdo").style.display = "none";
   if (spot){
     $("vMake").textContent = (spot.make + " " + spot.model).trim();
     $("vYear").textContent = spot.year;
@@ -4807,6 +4842,10 @@ function openVerdict(spot, canvas, raw){
         .concat(lastQuestHits.map(q => '<div class="qhit"><span>' + q.label + ' · ' + q.name.toUpperCase() + '</span><span>✓</span></div>'));
       $("vQuests").innerHTML = rows.join("");
       $("vMiss").style.display = "none";
+      if (lastOdoHit){
+        $("vOdo").style.display = "";
+        rollOdo($("vOdo"), lastOdoHit);
+      }
       // The platform-wide census — "the 3rd ever filed" is the line people
       // screenshot. Slightly delayed so this capture's own row has landed;
       // silent when offline or signed out.
@@ -4854,7 +4893,7 @@ function openVerdict(spot, canvas, raw){
       f.classList.add("soft");
       f.classList.remove("on"); void f.offsetWidth; f.classList.add("on");
     }
-    haptic(spot.rarity === "legendary" ? [40, 60, 40, 60, 120] : spot.rarity === "rare" ? [30, 40, 60] : 20);
+    haptic((lastOdoHit || spot.rarity === "legendary") ? [40, 60, 40, 60, 120] : spot.rarity === "rare" ? [30, 40, 60] : 20);
   } else if (spot && spot.flagged){
     sfx("flag");
   } else {
@@ -4863,7 +4902,7 @@ function openVerdict(spot, canvas, raw){
   // The card's energy follows the moment: a registry first or a rare pull is
   // a bragging moment — SHARE takes the heat. A Tuesday commuter keeps the
   // momentum pointed at the next hunt.
-  const shareMoment = !!(spot && !spot.flagged && (spot.cxNew || spot.rarity === "rare" || spot.rarity === "legendary"));
+  const shareMoment = !!(spot && !spot.flagged && (spot.cxNew || lastOdoHit || spot.rarity === "rare" || spot.rarity === "legendary"));
   $("vShare").classList.toggle("hot", shareMoment);
   $("vAgain").classList.toggle("hot", !shareMoment);
   v.classList.add("on");
@@ -5638,6 +5677,7 @@ function renderRewards(){
   }
   const rec = recordsData();
   $("recordList").innerHTML = [
+    ["ODOMETER", odoFmt(odoCount()) + " spots"],
     ["MOST CARS IN A DAY", rec.bestDay || "—"],
     ["MOST NEW IN A DAY", rec.bestDayNew || "—"],
     ["LONGEST STREAK", rec.bestStreak ? rec.bestStreak + " days" : "—"],
@@ -5670,6 +5710,10 @@ function renderRewards(){
   const badges = [];
   SETS.forEach(s => badges.push({ name: s.name, kind: "SET", got: !!state.setsDone[s.id] }));
   WANTED_POOL.forEach(w => badges.push({ name: w.name, kind: "WANTED", got: !!(state.badges && state.badges["w:" + w.id]) }));
+  odoSweep();   // retroactive-safe: long-time hunters see every rollover they've already earned
+  ODO.forEach(m => { if (state.badges["odo:" + m]) badges.push({ name: odoFmt(m) + " SPOTS", kind: "ODOMETER", got: true }); });
+  const nextOdo = ODO.find(m => !state.badges["odo:" + m]);
+  if (nextOdo) badges.push({ name: odoFmt(nextOdo) + " SPOTS", kind: "ODOMETER", got: false, sub: odoFmt(odoCount()) + " / " + odoFmt(nextOdo) });
   Object.keys(state.badges || {}).filter(k => k.startsWith("season:")).forEach(k => {
     const i = +k.split(":")[1];
     badges.push({ name: seasonMeta(i).badge, kind: "SEASON", got: true });
@@ -5680,7 +5724,7 @@ function renderRewards(){
     <div class="bdg ${b.got ? "got" : ""}">
       <div class="bk">${b.kind}</div>
       <div class="bn">${b.name}</div>
-      <div class="bs">${b.got ? "EARNED" : "LOCKED"}</div>
+      <div class="bs">${b.got ? "EARNED" : (b.sub || "LOCKED")}</div>
     </div>`).join("");
 }
 
