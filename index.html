@@ -16,7 +16,7 @@
 <meta name="twitter:description" content="Point your camera at real metal. Verified captures build your Registry.">
 <meta name="twitter:image" content="https://tyrehunt.app/icon-512.png">
 <meta name="description" content="A camera-first game for people who notice cars. Shoot what you find, a verifier names it, and it's filed to your Registry.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230A0B0E'/%3E%3Cpath fill='none' stroke='%23F2F3F6' stroke-width='5.6' stroke-linecap='round' d='M4.5 54 A47.5 47.5 0 0 1 69.8 10'/%3E%3Cpath fill='%23F2F3F6' fill-rule='evenodd' d='M52 12 a42 42 0 1 0 0 84 a42 42 0 1 0 0-84 Z M52 23 a31 31 0 1 1 0 62 a31 31 0 1 1 0-62 Z M52 30 a24 24 0 1 0 0 48 a24 24 0 1 0 0-48 Z M62.5 43.5 a6.5 6.5 0 1 1 0 13 a6.5 6.5 0 1 1 0-13 Z'/%3E%3Ccircle cx='44' cy='65' r='6' fill='%23FF8A1E'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230A0B0E'/%3E%3Cpath fill='none' stroke='%23F2F3F6' stroke-width='5.6' stroke-linecap='round' d='M4.5 54 A47.5 47.5 0 0 1 69.8 10'/%3E%3Cpath fill='%23F2F3F6' fill-rule='evenodd' d='M52 12 a42 42 0 1 0 0 84 a42 42 0 1 0 0-84 Z M52 23 a31 31 0 1 1 0 62 a31 31 0 1 1 0-62 Z M52 30 a24 24 0 1 0 0 48 a24 24 0 1 0 0-48 Z M62.5 43.5 a6.5 6.5 0 1 1 0 13 a6.5 6.5 0 1 1 0-13 Z'/%3E%3Ccircle cx='44' cy='65' r='6' fill='%2318B7DC'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,8 +129,6 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 
 /* ---------- bottom stack (hunt) ---------- */
 #huntfoot{position:relative;z-index:5;margin-top:auto;padding:0 14px calc(env(safe-area-inset-bottom,0px) + 8px)}
-#quest .pay .v{font:800 19px var(--mono);color:var(--ember)}
-#quest .pay .u{font-size:8.5px;letter-spacing:.2em;color:var(--muted)}
 #controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:12px 18px 2px}
 #controls .ctlstack{justify-self:end;display:flex;flex-direction:column;align-items:center;gap:7px}
 #controls #eventPill{position:relative;display:inline-flex;align-items:center;font:700 8.5px var(--mono);letter-spacing:.12em;color:var(--muted);background:transparent;border:1px dashed rgba(255,255,255,.2);border-radius:999px;padding:5px 10px;white-space:nowrap}
@@ -190,7 +188,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .gcard .row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
 .chip{font-size:8.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:3.5px 8px;border-radius:999px;border:1px solid}
 .chip.everyday{color:var(--r-everyday);border-color:rgba(139,147,161,.45)}
-.chip.classic{color:var(--r-classic);border-color:rgba(24,183,220,.5)}
+.chip.classic{color:var(--r-classic);border-color:rgba(255,138,30,.5)}
 .chip.rare{color:var(--r-rare);border-color:rgba(94,151,255,.5)}
 .chip.legendary{color:var(--r-legend);border-color:rgba(255,194,75,.55);background:rgba(255,194,75,.08)}
 .gtyres{font:700 12px var(--mono);color:var(--gold)}
@@ -227,7 +225,6 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 /* rewards */
 #balhero{background:linear-gradient(160deg,#1C1610,#12100B 60%);border:1px solid rgba(255,194,75,.3);border-radius:var(--r-lg);padding:22px;text-align:center;position:relative;overflow:hidden}
 #balhero::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,160,50,.16),transparent 70%);top:-90px;right:-70px}
-#balhero .bh{font:900 42px var(--mono);color:var(--gold);letter-spacing:-.02em}
 #balhero .bl{font-size:10px;letter-spacing:.34em;color:var(--muted);text-transform:uppercase;margin-top:2px}
 #balhero .note{font-size:11px;color:var(--muted);margin-top:12px;position:relative}
 .rcard{display:flex;align-items:center;gap:13px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;margin-bottom:9px}
@@ -245,7 +242,6 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #vcard{width:100%;background:#101218;border-top:1px solid var(--line);border-radius:var(--r-lg) 24px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 20px);animation:up .35s ease}
 @keyframes up{from{transform:translateY(40px);opacity:0}}
 @media (prefers-reduced-motion:reduce){#vcard{animation:none}}
-#vcard .grab{width:42px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 16px}
 #vcard .vph{width:100%;aspect-ratio:16/9;border-radius:var(--r-md);background:#000 center/cover no-repeat;border:1px solid var(--line)}
 #vcard .vmk{font-size:21px;font-weight:900;margin-top:14px;letter-spacing:.01em}
 #vcard .vyr{font:600 12px var(--mono);color:var(--muted);margin-top:3px}
@@ -360,6 +356,10 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 /* reveal juice */
 #vcard{perspective:1000px}
 #vcard.reveal .vph{animation:flipin .55s ease}
+/* Every capture — even a Tuesday commuter — gets a small "stamped into the
+   Registry" beat: the payline settles in with a gentle pop after the flip. */
+#vcard.reveal .payline{animation:paypop .45s cubic-bezier(.2,.9,.3,1) .3s backwards}
+@keyframes paypop{0%{transform:scale(.96);opacity:.4}70%{transform:scale(1.015)}100%{transform:scale(1)}}
 @keyframes flipin{from{transform:rotateY(80deg) scale(.96);opacity:.2}}
 #vcard .vph{overflow:hidden;position:relative}
 #vcard .vph.holo::after{content:"";position:absolute;inset:-60%;background:linear-gradient(115deg,transparent 42%,rgba(255,224,160,.4) 50%,rgba(150,190,255,.28) 56%,transparent 66%);animation:holo 2s ease-in-out infinite}
@@ -376,7 +376,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .ptitle{font:800 11px var(--disp);letter-spacing:.22em;color:var(--gold);margin-top:6px;text-transform:uppercase}
 .bdg.eq{border-color:var(--pulse-hi);box-shadow:0 0 12px rgba(110,160,255,.22)}
 button.bdg[disabled]{cursor:default}
-@media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard .vph.holo::after,#flash.on,.view.on,#verdict.on,#verdict.on #vcard,#dossier.on,#profile.on,#cxSheet.on,#scanline.on,.tick{animation:none}button{transition:none}}
+@media (prefers-reduced-motion:reduce){#vcard.reveal .vph,#vcard.reveal .payline,#vcard .vph.holo::after,#flash.on,.view.on,#verdict.on,#verdict.on #vcard,#dossier.on,#profile.on,#cxSheet.on,#scanline.on,.tick{animation:none}button{transition:none}}
 /* iOS zooms the page on focusing any input under 16px — every field stays at 16 */
 #app input,#app textarea,#app select{font-size:16px}
 @media (prefers-reduced-motion:reduce){#signal.live .dot,.coachpulse::after,.shim{animation:none}}
@@ -399,7 +399,7 @@ button.bdg[disabled]{cursor:default}
 .fcard .pos{position:absolute;top:10px;left:10px;z-index:2;font:900 11px var(--disp);letter-spacing:.04em;padding:5px 10px;border-radius:999px;background:rgba(10,11,14,.82);border:1px solid var(--line);color:var(--muted)}
 .fcard .pos.p1{color:#04222A;background:linear-gradient(180deg,var(--gold),var(--ember));border-color:transparent}
 .fcard .pos.p2{color:var(--ink);border-color:rgba(255,255,255,.4)}
-.fcard .pos.p3{color:var(--ember);border-color:rgba(24,183,220,.5)}
+.fcard .pos.p3{color:#C9834A;border-color:rgba(201,131,74,.5)}
 .fcard{position:relative}
 
 /* feed */
@@ -415,8 +415,8 @@ button.bdg[disabled]{cursor:default}
 .fchip{font:700 8.5px var(--mono);letter-spacing:.1em;padding:2px 7px;border-radius:999px;text-transform:uppercase}
 
 /* comments + hunter sheets */
-#cmtSheet,#hunterSheet,#bountySheet,#leadSheet{position:absolute;inset:0;z-index:25;display:none;flex-direction:column;background:var(--carbon)}
-#cmtSheet.on,#hunterSheet.on,#bountySheet.on,#leadSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
+#cmtSheet,#hunterSheet,#bountySheet,#leadSheet,#eventSheet{position:absolute;inset:0;z-index:25;display:none;flex-direction:column;background:var(--carbon)}
+#cmtSheet.on,#hunterSheet.on,#bountySheet.on,#leadSheet.on,#eventSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
 .sheethead{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 12px;border-bottom:1px solid var(--line)}
 .sheethead h3{font-size:16px;font-weight:900;letter-spacing:.04em}
 .sheetbody{flex:1;overflow-y:auto;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 20px)}
@@ -426,7 +426,7 @@ button.bdg[disabled]{cursor:default}
 .cmt .cx{margin-left:auto;color:var(--muted);font-size:12px;padding:2px 6px}
 #cmtBar{display:flex;gap:9px;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 14px + var(--kb,0px));border-top:1px solid var(--line)}
 #cmtBar input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:11px 15px;color:var(--ink);font-size:16px}
-#cmtBar button{flex:0 0 auto;padding:0 18px;border-radius:999px;font:800 11px var(--disp);letter-spacing:.1em;color:#04222A;background:linear-gradient(180deg,var(--gold),var(--ember))}
+#cmtBar button{flex:0 0 auto;padding:0 18px;border-radius:999px;font:800 11px var(--disp);letter-spacing:.1em;color:#04222A;background:var(--ember)}
 .hstats{display:flex;gap:16px;margin:12px 0 4px}
 .hstats div{text-align:center}
 .hstats .v{font:800 19px var(--disp);color:var(--ink)}
@@ -713,7 +713,7 @@ input[type=file]{display:none}
     </div>
     <div class="balance" id="codexPill" role="button" tabindex="0" title="Open your Registry" aria-label="Registry progress. Open your Registry.">
       <div class="crest"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg></div>
-      <div><span class="amt" id="cxTop">0/60</span><span class="lbl" id="rankTop">ROOKIE</span></div>
+      <div><span class="amt" id="cxTop">0</span><span class="lbl" id="rankTop">ROOKIE</span></div>
     </div>
   </header>
 
@@ -804,7 +804,7 @@ input[type=file]{display:none}
       </div>
       <div id="segCodex" style="display:none">
         <div id="cxHead">
-          <div class="pct" id="cxPct">0%</div>
+          <div class="pct" id="cxPct">0</div>
           <div class="sub" id="cxCount">0 / 60 SPOTTED</div>
         </div>
         <div id="cxGrid"></div>
@@ -951,7 +951,6 @@ input[type=file]{display:none}
   <!-- ============ VERDICT ============ -->
   <div id="verdict">
     <div id="vcard">
-      <div class="grab"></div>
       <div class="vph" id="vPhoto" aria-hidden="true"></div>
       <div class="vmk" id="vMake">—</div>
       <div class="vyr" id="vYear"></div>
@@ -1147,6 +1146,29 @@ input[type=file]{display:none}
     </div>
   </section>
 
+  <section id="eventSheet">
+    <div class="sheethead"><h3>Event mode</h3><button class="btn" id="evClose" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
+    <div class="sheetbody">
+      <div id="evActive" style="display:none;margin-bottom:16px">
+        <div class="sechead" style="margin-top:0">Active now</div>
+        <p style="font:700 14px var(--disp);margin:0" id="evActiveName"></p>
+        <button class="btn" id="evClear" style="width:100%;margin-top:10px">CLEAR EVENT</button>
+      </div>
+      <div class="sechead" style="margin-top:0">Join a lobby</div>
+      <div style="display:flex;gap:10px">
+        <div class="dfield" style="flex:1;margin:0"><input id="evCode" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="4-letter code"></div>
+        <button class="btn hot" id="evJoin" style="flex:0 0 auto;padding:12px 18px">JOIN</button>
+      </div>
+      <div class="sechead">Host your own</div>
+      <div style="display:flex;gap:10px">
+        <div class="dfield" style="flex:1;margin:0"><input id="evName" maxlength="60" autocomplete="off" placeholder="Cars &amp; Coffee Cle Elum"></div>
+        <button class="btn hot" id="evHost" style="flex:0 0 auto;padding:12px 18px">HOST</button>
+      </div>
+      <p class="pfnote" style="margin-top:12px">Captures made in event mode carry the event name. Hosting with an account opens a live lobby your crew can join by code.</p>
+    </div>
+  </section>
+
+
   <!-- ============ HUNTER PROFILE ============ -->
   <section id="hunterSheet">
     <div class="sheethead"><h3 id="hTitle">@hunter</h3><button class="btn" id="hBack" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
@@ -1221,7 +1243,7 @@ const CONFIG = {
   premiumDayCap: 150,    // verified captures per day, Hunter's Edition
   sendEdge: 900          // long edge sent to the verifier (~30% cheaper per capture than 1100)
 };
-const PAYOUT = { everyday:10, classic:75, rare:150, legendary:400 };
+const RARITIES = { everyday:1, classic:1, rare:1, legendary:1 };
 const KEY = "tyrehunt:v1";
 
 /* ================= STATE ================= */
@@ -2736,8 +2758,10 @@ function makeDismissable(id, onClose){
 }
 function armSheetGestures(){
   [["cmtSheet"], ["hunterSheet"], ["bountySheet"], ["leadSheet"], ["premSheet"],
-   ["angleSheet"], ["opSheet"], ["cxSheet"], ["dossier"], ["profile"]]
+   ["angleSheet"], ["opSheet"], ["cxSheet"], ["dossier"], ["profile"], ["eventSheet"]]
     .forEach(([id]) => makeDismissable(id));
+  // the verdict card slides too — closing it must also clear the detect chip
+  makeDismissable("vcard", () => { $("verdict").classList.remove("on"); detectUI("off"); });
 }
 
 /* pull-to-refresh on the garage feed */
@@ -3641,6 +3665,12 @@ async function openMod(uid, capId, cmtId){
   $("modSheet").classList.add("on");
 }
 $("modCancel").addEventListener("click", () => $("modSheet").classList.remove("on"));
+document.addEventListener("click", async (ev) => {
+  if (!ev.target.closest("#signOutBtn")) return;
+  try{ await sb.auth.signOut(); }catch(e){}
+  toast("Signed out");
+  setTimeout(() => location.reload(), 350);
+});
 let delAcctArm = false;
 document.addEventListener("click", async e => {
   const b = e.target.closest("#delAcct");
@@ -4341,6 +4371,15 @@ async function runVerify(canvas, source){
   const fz = $("freeze");
   fz.style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
   fz.style.display = "block";
+  // Signed out with no self-hosted key, the verify call can only 401 — say the
+  // truth up front instead of blaming the network, and keep the shot queued.
+  if ((!sb || !sbSession) && !CONFIG.apiKey){
+    await queueCapture(canvas, source || "camera");
+    detectUI("err", { title:"Saved — sign in to verify", sub:"Tap the streak ring to sign in; your shot waits in the queue" });
+    busy = false; $("shutter").disabled = false;
+    setTimeout(() => { fz.style.display = "none"; }, 700);
+    return;
+  }
   $("scanline").classList.add("on");
   detectUI("busy");
   startVerifyStages();
@@ -4442,7 +4481,7 @@ async function processResult(res, canvas, source, ctx){
     openVerdict(null, canvas, res);
     return;
   }
-  const rarity = PAYOUT[res.rarity] ? res.rarity : "everyday";
+  const rarity = RARITIES[res.rarity] ? res.rarity : "everyday";
   const geo = (ctx && "geo" in ctx) ? ctx.geo : await getGeo();
   const srv = res.__server || null;
   const phash = srv && srv.phash ? srv.phash : aHash(canvas);
@@ -4717,15 +4756,6 @@ function openVerdict(spot, canvas, raw){
     sfx("miss");
   }
   v.classList.add("on");
-}
-function countUp(el, target){
-  const dur = 700, t0 = performance.now();
-  function step(t){
-    const p = Math.min(1, (t - t0)/dur);
-    el.textContent = "+" + Math.round(target * (p*(2-p)));
-    if (p < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
 }
 $("vAgain").addEventListener("click", () => { $("verdict").classList.remove("on"); detectUI("off"); });
 $("vShare").addEventListener("click", () => { if (lastVerdictSpot) shareCard(lastVerdictSpot); else toast("Nothing to share on a miss"); });
@@ -5534,42 +5564,51 @@ function renderRewards(){
 }
 
 /* ================= DOSSIER / EVENT MODE ================= */
-/* Delegated: lives in the profile panel, which renders on demand. */
-document.addEventListener("click", async (ev) => {
+/* Event mode — a proper sheet instead of a triple-overloaded prompt(). The
+   pill lives in the profile panel, which renders on demand, so it is delegated. */
+document.addEventListener("click", (ev) => {
   if (!ev.target.closest("#eventPill")) return;
-  const v = prompt("Event mode — name a new event to host, or enter a 4-character lobby code to join. Blank clears.", "");
-  if (v === null) return;
-  const input = v.trim();
-  if (!input){
-    state.activeEvent = "";
-    state.activeEventCode = "";
-    renderEventPill();
-    await Store.save();
-    return;
-  }
-  if (/^[A-Z0-9]{4}$/i.test(input)){
-    if (!sb || !sbSession){ toast("Lobby codes need an account — set the event by name instead"); return; }
+  $("evCode").value = ""; $("evName").value = "";
+  $("evActive").style.display = state.activeEvent ? "" : "none";
+  $("evActiveName").textContent = state.activeEvent
+    ? state.activeEvent + (state.activeEventCode ? " \u00b7 code " + state.activeEventCode : "") : "";
+  $("eventSheet").classList.add("on");
+});
+$("evClose").addEventListener("click", () => $("eventSheet").classList.remove("on"));
+async function evDone(msg){
+  renderEventPill(); await Store.save();
+  if (msg) toast(msg);
+  $("eventSheet").classList.remove("on");
+}
+$("evJoin").addEventListener("click", async () => {
+  const code = ($("evCode").value || "").trim().toUpperCase();
+  if (!/^[A-Z0-9]{4}$/.test(code)){ toast("Codes are 4 letters or numbers"); return; }
+  if (!sb || !sbSession){ toast("Lobby codes need an account \u2014 host by name instead"); return; }
+  try{
+    const { data } = await sb.from("events").select("code,name").eq("code", code).maybeSingle();
+    if (!data){ toast("No lobby with that code"); return; }
+    state.activeEvent = data.name; state.activeEventCode = data.code;
+    evDone("Joined lobby \u00b7 " + data.name);
+  }catch(e){ toast("Couldn't join the lobby"); }
+});
+$("evHost").addEventListener("click", async () => {
+  const name = ($("evName").value || "").trim();
+  if (!name){ toast("Name the event first"); return; }
+  state.activeEvent = name; state.activeEventCode = "";
+  if (sb && sbSession){
+    const code = Array.from({ length: 4 }, () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 31)]).join("");
     try{
-      const { data } = await sb.from("events").select("code,name").eq("code", input.toUpperCase()).maybeSingle();
-      if (!data){ toast("No lobby with that code"); return; }
-      state.activeEvent = data.name;
-      state.activeEventCode = data.code;
-      toast("Joined lobby · " + data.name);
-    }catch(e){ toast("Couldn't join the lobby"); return; }
-  } else {
-    state.activeEvent = input;
-    state.activeEventCode = "";
-    if (sb && sbSession){
-      const code = Array.from({ length: 4 }, () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 31)]).join("");
-      try{
-        await sb.from("events").insert({ code, name: input, created_by: sbSession.user.id });
-        state.activeEventCode = code;
-        toast("Lobby live · code " + code + " — crew types it to join");
-      }catch(e){ toast("Event set locally — lobby didn't create"); }
-    }
+      await sb.from("events").insert({ code, name, created_by: sbSession.user.id });
+      state.activeEventCode = code;
+      evDone("Lobby live \u00b7 code " + code + " \u2014 crew types it to join");
+      return;
+    }catch(e){ evDone("Event set locally \u2014 lobby didn't create"); return; }
   }
-  renderEventPill();
-  await Store.save();
+  evDone("Event set \u00b7 " + name);
+});
+$("evClear").addEventListener("click", async () => {
+  state.activeEvent = ""; state.activeEventCode = "";
+  evDone("Event cleared");
 });
 function renderEventPill(){
   // Lives in the profile panel now, so it only exists while that panel is open.
@@ -6021,7 +6060,7 @@ function renderProfile(){
     .sort((a, b) => ((b.models == null ? -1 : b.models) - (a.models == null ? -1 : a.models)));
   const acct = sb
     ? (sbSession
-        ? ('<p class="pfnote">Signed in — your tag, Registry count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? ("HUNTER'S EDITION · " + CONFIG.premiumDayCap + " verified captures a day") : ("FREE HUNT · " + CONFIG.freeDayCap + " verified captures a day")) + '</p><button class="btn" id="planBtn" style="width:100%;margin-top:11px;' + (sbPremium ? 'color:var(--gold);border-color:rgba(255,194,75,.45)' : '') + '">' + (sbPremium ? "MANAGE HUNTER\'S EDITION" : "SEE HUNTER\'S EDITION") + '</button><p class="pfnote" style="margin-top:10px"><a href="https://tyrehunt.app/privacy.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline">Privacy</a> · <a href="https://tyrehunt.app/terms.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline">Terms</a></p><button class="btn" id="delAcct" style="width:100%;margin-top:12px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE ACCOUNT</button>')
+        ? ('<p class="pfnote">Signed in — your tag, Registry count, and streak sync live.</p><p class="pfnote" style="margin-top:6px;color:' + (sbPremium ? 'var(--gold)' : 'var(--muted)') + '">' + (sbPremium ? ("HUNTER'S EDITION · " + CONFIG.premiumDayCap + " verified captures a day") : ("FREE HUNT · " + CONFIG.freeDayCap + " verified captures a day")) + '</p><button class="btn" id="planBtn" style="width:100%;margin-top:11px;' + (sbPremium ? 'color:var(--gold);border-color:rgba(255,194,75,.45)' : '') + '">' + (sbPremium ? "MANAGE HUNTER\'S EDITION" : "SEE HUNTER\'S EDITION") + '</button><p class="pfnote" style="margin-top:10px"><a href="https://tyrehunt.app/privacy.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline">Privacy</a> · <a href="https://tyrehunt.app/terms.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline">Terms</a></p><button class="btn" id="signOutBtn" style="width:100%;margin-top:12px">SIGN OUT</button><button class="btn" id="delAcct" style="width:100%;margin-top:12px;color:var(--bad);border-color:rgba(255,93,93,.3)">DELETE ACCOUNT</button>')
         : `<div class="dfield"><label>Email</label><input id="pfEmail" type="email" placeholder="you@example.com"></div>
            <button class="btn hot" style="width:100%" id="pfMagic">EMAIL ME A CODE</button>
            <div id="otpBox">
