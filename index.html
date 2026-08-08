@@ -2629,7 +2629,7 @@ function deepLink(params){
 }
 function crewLink(code){ return deepLink({ crew: code }); }
 function hunterLink(handle){ return deepLink({ h: handle }); }
-function captureLink(id){ return deepLink({ c: id }); }
+function captureLink(id){ return "https://www.tyrehunt.app/spot.html?c=" + id; }
 function lobbyLink(code){ return deepLink({ lobby: code }); }
 
 /* Read the address on arrival, then clear it so a refresh doesn't
