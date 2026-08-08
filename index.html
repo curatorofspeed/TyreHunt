@@ -73,6 +73,14 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #scanline::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:90px;background:linear-gradient(180deg,rgba(94,151,255,0) 0%,rgba(94,151,255,.12) 55%,rgba(110,160,255,.45) 96%,rgba(190,215,255,.85) 100%)}
 #scanline.on{display:block;animation:scan 1.5s linear infinite}
 @keyframes scan{0%{transform:translateY(0)}100%{transform:translateY(100%)}}
+#thirds{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.13;background:
+  linear-gradient(to right, transparent calc(33.33% - .5px), #fff 0, #fff calc(33.33% + .5px), transparent 0),
+  linear-gradient(to right, transparent calc(66.66% - .5px), #fff 0, #fff calc(66.66% + .5px), transparent 0),
+  linear-gradient(to bottom, transparent calc(33.33% - .5px), #fff 0, #fff calc(33.33% + .5px), transparent 0),
+  linear-gradient(to bottom, transparent calc(66.66% - .5px), #fff 0, #fff calc(66.66% + .5px), transparent 0)}
+#level{position:absolute;left:50%;top:50%;width:112px;height:1.5px;margin-left:-56px;background:#fff;opacity:0;transition:opacity .3s;z-index:1;pointer-events:none;border-radius:2px}
+#level.on{opacity:.45}
+#level.flat{background:var(--ok);opacity:.85}
 #zoomChip{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);z-index:4;font:700 12px var(--mono);letter-spacing:.06em;color:var(--ink);background:rgba(10,11,14,.72);border:1px solid var(--line);border-radius:999px;padding:6px 12px;opacity:0;transition:opacity .25s;pointer-events:none}
 #zoomChip.on{opacity:1}
 #camwrap::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,8,.78) 0%,rgba(5,6,8,0) 22%,rgba(5,6,8,0) 55%,rgba(5,6,8,.88) 86%);pointer-events:none}
@@ -256,6 +264,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 .shotnote{font:600 11px var(--mono);letter-spacing:.05em;line-height:1.65;margin-top:10px}
 #photoFull{position:absolute;inset:0;z-index:46;display:none;background:#000 center/contain no-repeat;cursor:zoom-out}
 #photoFull.on{display:block}
+#pfSave{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);font:800 11px var(--mono);letter-spacing:.1em;color:var(--ink);background:rgba(10,11,14,.8);border:1px solid var(--line);border-radius:999px;padding:11px 18px}
 #vcard .payline{display:flex;align-items:center;gap:10px;margin-top:16px;background:rgba(24,183,220,.08);border:1px solid rgba(24,183,220,.35);border-radius:var(--r-md);padding:12px 14px}
 #vcard .payline .pv{font:800 24px var(--mono);color:var(--ember)}
 #vcard .payline .pl{font-size:9px;letter-spacing:.22em;color:var(--muted)}
@@ -718,6 +727,8 @@ input[type=file]{display:none}
   </div>
 
   <div id="frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>
+  <div id="thirds" aria-hidden="true"></div>
+  <div id="level" aria-hidden="true"></div>
 
   <header id="hud">
     <div class="streak" id="profileBtn" role="button" tabindex="0" title="Your hunter tag">
@@ -899,6 +910,7 @@ input[type=file]{display:none}
       <div class="seg" id="hallSeg">
         <button data-hall="latest" class="on">LATEST</button>
         <button data-hall="cotd">CAR OF THE DAY</button>
+        <button data-hall="crew">CREW</button>
         <button data-hall="rankings">RANKINGS</button>
       </div>
     </div>
@@ -1231,7 +1243,7 @@ input[type=file]{display:none}
   <p id="srLive" class="vh" role="status" aria-live="assertive" aria-atomic="true"></p>
 
   <div id="flash"></div>
-  <div id="photoFull" role="button" tabindex="0" aria-label="Close the full photograph"></div>
+  <div id="photoFull" role="button" tabindex="0" aria-label="Close the full photograph"><button id="pfSave">⤓ SAVE FULL-RES</button></div>
   <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
   <input type="file" id="fileCam" accept="image/*" capture="environment">
   <input type="file" id="fileGal" accept="image/*">
@@ -4094,7 +4106,7 @@ async function liveCapture(r){
 /* ================= COMMUNITY FEED / LIKES / COMMENTS / HUNTERS ================= */
 const RCHIP = { everyday:"color:#8B93A1;border:1px solid rgba(139,147,161,.4)", classic:"color:var(--ember);border:1px solid rgba(24,183,220,.5)", rare:"color:var(--pulse-hi);border:1px solid rgba(94,151,255,.5)", legendary:"color:var(--gold);border:1px solid rgba(255,194,75,.55)" };
 let feedRows = [], feedLikes = {}, feedMine = new Set(), feedCmts = {}, feedHandles = {};
-let feedMode = "all", feedRank = {};
+let feedMode = "all", feedRank = {}, hunterFeedUid = null;
 function feedCardHtml(r){
   const nm = r.cx_name || ((r.make || "") + " " + (r.model || "")).trim();
   const likes = feedLikes[r.id] || 0, cmts = feedCmts[r.id] || 0;
@@ -4120,12 +4132,29 @@ async function renderFeed2(){
     const cd = carOfTheDay();
     const cotd = feedMode === "cotd";
     $("cotdHead").classList.toggle("on", cotd);
+    if (feedMode === "hunter" && hunterFeedUid){
+      handleOf(hunterFeedUid).then(hn => {
+        $("cotdHead").classList.add("on");
+        $("cotdHead").innerHTML = '<div class="k">HUNTER</div><div class="n">@' + esc(hn) + "'s hunts</div><div class=\"m\">Pick any segment above to go back to the main feed.</div>";
+      });
+    }
     let q = sb.from("captures")
       .select("id,user_id,make,model,cx_key,cx_name,rarity,img_path,created_at")
       .not("img_path", "is", null).is("flagged", null);
     if (cotd){
       const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
       q = q.eq("cx_key", cxKeyOf(cd)).gte("created_at", midnight.toISOString()).limit(60);
+    } else if (feedMode === "crew"){
+      // the crew IS the follow list — this is the following lane
+      const crewIds = state.crew.map(cc => cc.id).filter(Boolean);
+      if (sbSession) crewIds.push(sbSession.user.id);
+      if (crewIds.length <= 1){
+        box.innerHTML = '<p class="pfnote">Your crew feed. Tap any @handle in the feed and ADD TO CREW — their hunts line up here.</p>';
+        return;
+      }
+      q = q.in("user_id", crewIds).limit(40);
+    } else if (feedMode === "hunter" && hunterFeedUid){
+      q = q.eq("user_id", hunterFeedUid).limit(30);
     } else {
       q = q.limit(30);
     }
@@ -4285,15 +4314,25 @@ async function openHunter(uid){
   $("hTitle").textContent = "@hunter";
   body.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading…</p>';
   try{
-    const [{ data: pp }, { data: caps }] = await Promise.all([
-      sb.from("profiles").select("handle,code,models,legends,streak,spots").eq("id", uid).maybeSingle(),
-      sb.from("captures").select("img_path,cx_name,make,model").eq("user_id", uid).not("img_path", "is", null).is("flagged", null).order("created_at", { ascending: false }).limit(12)
+    const [{ data: pp }, { data: caps }, { data: bestRows }] = await Promise.all([
+      sb.from("profiles").select("handle,code,models,legends,streak,spots,title").eq("id", uid).maybeSingle(),
+      sb.from("captures").select("img_path,cx_name,make,model").eq("user_id", uid).not("img_path", "is", null).is("flagged", null).order("created_at", { ascending: false }).limit(12),
+      sb.from("captures").select("shot_score,make,model").eq("user_id", uid).not("shot_score", "is", null).is("flagged", null).order("shot_score", { ascending: false }).limit(1)
     ]);
     if (!pp){ body.innerHTML = '<p class="pfnote">Hunter not found.</p>'; return; }
     $("hTitle").textContent = "@" + pp.handle;
     const inCrew = state.crew.some(c => c.code === pp.code);
     const me = state.profile && state.profile.code === pp.code;
+    // rare count isn't public, so the rank is computed with legendary standing
+    // in for it — a floor, never an overstatement.
+    const rk = currentRank({ models: pp.models || 0, rare: pp.legends || 0, legend: pp.legends || 0 }).name;
+    const best = bestRows && bestRows[0];
     body.innerHTML = `
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px">
+        <span class="pill gold" style="font:800 9.5px var(--mono);letter-spacing:.12em;color:var(--gold);border:1px solid rgba(255,194,75,.45);border-radius:999px;padding:5px 10px">${rk}</span>
+        ${pp.title ? '<span style="font:800 9.5px var(--mono);letter-spacing:.12em;color:var(--ember);border:1px solid rgba(24,183,220,.4);border-radius:999px;padding:5px 10px">' + esc(titleNameOf(pp.title).toUpperCase()) + '</span>' : ""}
+        ${best ? '<span style="font:800 9.5px var(--mono);letter-spacing:.12em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 10px">BEST SHOT ' + best.shot_score + '</span>' : ""}
+      </div>
       <div class="hstats">
         <div><div class="v">${pp.models ?? 0}</div><div class="l">Models</div></div>
         <div><div class="v">${pp.legends ?? 0}</div><div class="l">Legendary</div></div>
@@ -4303,7 +4342,15 @@ async function openHunter(uid){
       ${me ? "" : `<button class="btn hot" id="hAdd" style="width:100%;margin-top:8px" ${inCrew ? "disabled" : ""}>${inCrew ? "IN YOUR CREW ✓" : "ADD TO CREW"}</button>
       <button class="btn" id="hMod" style="width:100%;margin-top:9px;color:var(--muted)">${myBlocks.has(uid) ? "BLOCKED — MANAGE" : "REPORT OR BLOCK"}</button>`}
       <div class="sechead">Recent spots</div>
-      ${caps && caps.length ? `<div class="hgrid">${caps.map(c => `<div style="background-image:url('${thumbUrl(c.img_path)}')"></div>`).join("")}</div>` : '<p class="pfnote">No published spots yet.</p>'}`;
+      ${caps && caps.length ? `<button class="btn" data-hfeed="1" style="width:100%;margin-bottom:10px">OPEN THEIR HUNTS IN THE FEED</button><div class="hgrid" data-hfeed="1" style="cursor:pointer">${caps.map(c => `<div style="background-image:url('${thumbUrl(c.img_path)}')"></div>`).join("")}</div>` : '<p class="pfnote">No published spots yet.</p>'}`;
+    body.querySelectorAll("[data-hfeed]").forEach(el => el.addEventListener("click", () => {
+      hunterFeedUid = uid; feedMode = "hunter";
+      $("hunterSheet").classList.remove("on");
+      document.querySelectorAll("#hallSeg button").forEach(x => x.classList.remove("on"));
+      $("segFeed").style.display = ""; $("hallStanding").style.display = "none";
+      show("rewards");
+      renderFeed2();
+    }));
     const hm = $("hMod");
     if (hm) hm.addEventListener("click", () => openMod(uid, null, null));
     const add = $("hAdd");
@@ -4432,7 +4479,8 @@ function show(view){
     // The Feed opens on the feed — rankings only when you asked for them last.
     const on = document.querySelector("#hallSeg button.on");
     if (!on || on.dataset.hall !== "rankings"){
-      feedMode = on && on.dataset.hall === "cotd" ? "cotd" : "all";
+      feedMode = on ? (on.dataset.hall === "cotd" ? "cotd" : on.dataset.hall === "crew" ? "crew" : "all")
+                    : (feedMode === "hunter" ? "hunter" : "all");
       renderFeed2(); clearFeedBadge();
     }
   }
@@ -4446,7 +4494,7 @@ let stream = null, track = null, torch = false, torchOK = false;
    automatically honest). Otherwise a digital fallback: the video scales on
    screen and the capture crops the same centered region — what you saw is
    exactly what gets filed. */
-let camZoom = 1, camZoomMin = 1, camZoomMax = 1, camZoomNative = false, zoomAppliedAt = 0, zoomChipT = 0;
+let camZoom = 1, camZoomMin = 1, camZoomMax = 1, camZoomNative = false, zoomAppliedAt = 0, zoomChipT = 0, lastFullFrame = null;
 function zoomSrcRect(w, hgt, z){
   const sw = w / z, sh = hgt / z;
   return [ (w - sw) / 2, (hgt - sh) / 2, sw, sh ];
@@ -4542,6 +4590,20 @@ $("flashBtn").addEventListener("click", async () => {
   $("flashBtn").classList.toggle("active", torch);
 });
 
+/* A live horizon line — green when you're level. iOS gates orientation
+   events behind a permission prompt, so this lights up where it's free
+   (Android) and stays silently absent elsewhere. */
+if ("ondeviceorientation" in window && !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function")){
+  window.addEventListener("deviceorientation", e => {
+    const lv = $("level");
+    if (!lv || e.gamma == null) return;
+    const a = Math.max(-30, Math.min(30, e.gamma));
+    lv.style.transform = "rotate(" + a + "deg)";
+    lv.classList.add("on");
+    lv.classList.toggle("flat", Math.abs(a) < 1.5);
+  });
+}
+
 /* ================= CAPTURE PIPELINE ================= */
 let busy = false, lastQuestHits = [], lastVerdictSpot = null, lastRankUp = "", lastOdoHit = 0;
 $("shutter").addEventListener("click", () => {
@@ -4565,12 +4627,54 @@ function captureFromVideo(){
     startCam();
     return;
   }
-  const c = $("work"), s = Math.min(1, CONFIG.sendEdge / Math.max(v.videoWidth, v.videoHeight));
-  c.width = Math.round(v.videoWidth * s); c.height = Math.round(v.videoHeight * s);
+  /* BURST — cars move and hands shake. Three frames across ~240ms, scored by
+     gradient energy on a 128px grayscale; the sharpest goes to the judge and
+     the full-resolution frame is kept for SAVE FULL-RES on the viewer. */
   const dz = camZoomNative ? 1 : camZoom;   // native zoom is already in the frames
   const [sx, sy, sw, sh] = zoomSrcRect(v.videoWidth, v.videoHeight, dz);
-  c.getContext("2d").drawImage(v, sx, sy, sw, sh, 0, 0, c.width, c.height);
-  runVerify(c, "camera");
+  const snap = () => {
+    if (!camLive() || !v.videoWidth) return null;
+    const fc = document.createElement("canvas");
+    fc.width = Math.round(sw); fc.height = Math.round(sh);
+    fc.getContext("2d").drawImage(v, sx, sy, sw, sh, 0, 0, fc.width, fc.height);
+    return fc;
+  };
+  const sharpness = (fc) => {
+    try{
+      const tw = 128, th = Math.max(16, Math.round(fc.height / fc.width * 128));
+      const t = document.createElement("canvas"); t.width = tw; t.height = th;
+      const g = t.getContext("2d", { willReadFrequently: true });
+      g.drawImage(fc, 0, 0, tw, th);
+      const d = g.getImageData(0, 0, tw, th).data;
+      let sum = 0;
+      for (let i = 0; i < d.length - tw * 4 - 4; i += 4){
+        const l0 = d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11;
+        const lr = d[i + 4] * .3 + d[i + 5] * .59 + d[i + 6] * .11;
+        const lb = d[i + tw * 4] * .3 + d[i + tw * 4 + 1] * .59 + d[i + tw * 4 + 2] * .11;
+        sum += Math.abs(l0 - lr) + Math.abs(l0 - lb);
+      }
+      return sum;
+    }catch(e){ return 0; }
+  };
+  const finish = (frames) => {
+    let bestF = frames[0], bestS = -1;
+    frames.forEach(f => { const s2 = sharpness(f); if (s2 > bestS){ bestS = s2; bestF = f; } });
+    lastFullFrame = bestF;
+    const c = $("work"), s = Math.min(1, CONFIG.sendEdge / Math.max(bestF.width, bestF.height));
+    c.width = Math.round(bestF.width * s); c.height = Math.round(bestF.height * s);
+    c.getContext("2d").drawImage(bestF, 0, 0, c.width, c.height);
+    runVerify(c, "camera");
+  };
+  const f1 = snap();
+  if (!f1){ toast("Camera reconnecting — give it a second"); startCam(); return; }
+  const frames = [f1];
+  setTimeout(() => {
+    const f2 = snap(); if (f2) frames.push(f2);
+    setTimeout(() => {
+      const f3 = snap(); if (f3) frames.push(f3);
+      finish(frames);
+    }, 120);
+  }, 120);
 }
 function handleFile(file, input, src){
   if (!file) return;
@@ -5078,6 +5182,23 @@ function openPhotoFull(){
 $("vPhoto").addEventListener("click", openPhotoFull);
 $("vPhoto").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openPhotoFull(); } });
 $("photoFull").addEventListener("click", () => $("photoFull").classList.remove("on"));
+$("pfSave").addEventListener("click", e => {
+  e.stopPropagation();
+  if (lastFullFrame){
+    deliverCard(lastFullFrame, "tyrehunt-full-" + Date.now() + ".jpg", "Full-resolution capture · TYRE HUNT");
+    return;
+  }
+  // imports and older captures: deliver what the viewer is showing
+  const m = ($("photoFull").style.backgroundImage || "").match(/url\("?(.*?)"?\)/);
+  if (!m){ toast("Nothing to save"); return; }
+  const im = new Image();
+  im.onload = () => {
+    const oc = document.createElement("canvas"); oc.width = im.width; oc.height = im.height;
+    oc.getContext("2d").drawImage(im, 0, 0);
+    deliverCard(oc, "tyrehunt-full-" + Date.now() + ".jpg", "Capture · TYRE HUNT");
+  };
+  im.src = m[1];
+});
 $("photoFull").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") $("photoFull").classList.remove("on"); });
 $("vAgain").addEventListener("click", () => { $("verdict").classList.remove("on"); detectUI("off"); });
 $("vShare").addEventListener("click", () => { if (lastVerdictSpot) shareCard(lastVerdictSpot); else toast("Nothing to share on a miss"); });
@@ -5197,7 +5318,7 @@ $("hallSeg").addEventListener("click", e => {
   const on = b.dataset.hall, isFeed = on !== "rankings";
   $("segFeed").style.display = isFeed ? "" : "none";
   $("hallStanding").style.display = isFeed ? "none" : "";
-  if (isFeed){ feedMode = on === "cotd" ? "cotd" : "all"; renderFeed2(); clearFeedBadge(); }
+  if (isFeed){ hunterFeedUid = null; feedMode = on === "cotd" ? "cotd" : on === "crew" ? "crew" : "all"; renderFeed2(); clearFeedBadge(); }
   else { renderLeaderboard(); }
 });
 
