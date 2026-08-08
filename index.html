@@ -248,6 +248,11 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #vcard .vrow{display:flex;align-items:center;gap:9px;margin-top:11px;flex-wrap:wrap}
 #vcard .conf{font:600 11px var(--mono);color:var(--pulse-hi)}
 #vcard .blurb{font-size:13px;color:var(--muted);line-height:1.55;margin-top:11px}
+#vcard .vph{cursor:zoom-in}
+/* the judge speaks in mono — its coaching note reads as the machine's voice */
+.shotnote{font:600 11px var(--mono);letter-spacing:.05em;line-height:1.65;margin-top:10px}
+#photoFull{position:absolute;inset:0;z-index:46;display:none;background:#000 center/contain no-repeat;cursor:zoom-out}
+#photoFull.on{display:block}
 #vcard .payline{display:flex;align-items:center;gap:10px;margin-top:16px;background:rgba(24,183,220,.08);border:1px solid rgba(24,183,220,.35);border-radius:var(--r-md);padding:12px 14px}
 #vcard .payline .pv{font:800 24px var(--mono);color:var(--ember)}
 #vcard .payline .pl{font-size:9px;letter-spacing:.22em;color:var(--muted)}
@@ -951,7 +956,7 @@ input[type=file]{display:none}
   <!-- ============ VERDICT ============ -->
   <div id="verdict">
     <div id="vcard">
-      <div class="vph" id="vPhoto" aria-hidden="true"></div>
+      <div class="vph" id="vPhoto" role="button" tabindex="0" aria-label="View the photograph full screen"></div>
       <div class="vmk" id="vMake">—</div>
       <div class="vyr" id="vYear"></div>
       <div class="vrow">
@@ -960,10 +965,10 @@ input[type=file]{display:none}
         <span id="vConds" style="display:contents"></span>
       </div>
       <p class="blurb" id="vBlurb"></p>
-      <p class="blurb" id="vShotNote" style="margin-top:5px;font-size:11.5px"></p>
+      <p class="shotnote" id="vShotNote"></p>
       <div class="payline" id="vPayline">
         <div class="crest sm"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg></div>
-        <div><div class="pv" id="vPay">—</div><div class="pl" id="vPayLbl">FILED TO REGISTRY</div></div>
+        <div><div class="pv" id="vPay">—</div><div class="pl" id="vPayLbl">FILED TO REGISTRY</div><div class="pl" id="vCensus" style="margin-top:3px"></div></div>
       </div>
       <div id="vQuests"></div>
       <div class="miss" id="vMiss" style="display:none"></div>
@@ -1209,6 +1214,7 @@ input[type=file]{display:none}
   <p id="srLive" class="vh" role="status" aria-live="assertive" aria-atomic="true"></p>
 
   <div id="flash"></div>
+  <div id="photoFull" role="button" tabindex="0" aria-label="Close the full photograph"></div>
   <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
   <input type="file" id="fileCam" accept="image/*" capture="environment">
   <input type="file" id="fileGal" accept="image/*">
@@ -4755,11 +4761,18 @@ async function processResult(res, canvas, source, ctx){
 }
 
 /* ================= VERDICT ================= */
+function ordinalTxt(n){
+  const m100 = n % 100, m10 = n % 10;
+  const suf = (m100 >= 11 && m100 <= 13) ? "TH" : m10 === 1 ? "ST" : m10 === 2 ? "ND" : m10 === 3 ? "RD" : "TH";
+  return n + suf;
+}
 function openVerdict(spot, canvas, raw){
   const v = $("verdict");
   lastVerdictSpot = spot || null;
   $("vDoc").style.display = (spot && !spot.flagged) ? "" : "none";
   $("vPhoto").style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
+  $("vPhoto").style.aspectRatio = String(Math.max(.8, Math.min(1.6, canvas.width / Math.max(1, canvas.height))));
+  $("vCensus").textContent = "";
   if (spot){
     $("vMake").textContent = (spot.make + " " + spot.model).trim();
     $("vYear").textContent = spot.year;
@@ -4794,6 +4807,20 @@ function openVerdict(spot, canvas, raw){
         .concat(lastQuestHits.map(q => '<div class="qhit"><span>' + q.label + ' · ' + q.name.toUpperCase() + '</span><span>✓</span></div>'));
       $("vQuests").innerHTML = rows.join("");
       $("vMiss").style.display = "none";
+      // The platform-wide census — "the 3rd ever filed" is the line people
+      // screenshot. Slightly delayed so this capture's own row has landed;
+      // silent when offline or signed out.
+      if (sb && sbSession && spot.cxKey){
+        setTimeout(async () => {
+          try{
+            const { count } = await sb.from("captures").select("id", { count: "exact", head: true }).eq("cx_key", spot.cxKey);
+            const el = $("vCensus");
+            if (!el || !count) return;
+            el.textContent = count === 1 ? "★ THE FIRST EVER FILED ON TYRE HUNT" : "THE " + ordinalTxt(count) + " FILED ON TYRE HUNT";
+            el.style.color = count <= 3 ? "var(--gold)" : "";
+          }catch(e){}
+        }, 900);
+      }
     }
     $("vChip").style.display = "";
   } else {
@@ -4833,8 +4860,24 @@ function openVerdict(spot, canvas, raw){
   } else {
     sfx("miss");
   }
+  // The card's energy follows the moment: a registry first or a rare pull is
+  // a bragging moment — SHARE takes the heat. A Tuesday commuter keeps the
+  // momentum pointed at the next hunt.
+  const shareMoment = !!(spot && !spot.flagged && (spot.cxNew || spot.rarity === "rare" || spot.rarity === "legendary"));
+  $("vShare").classList.toggle("hot", shareMoment);
+  $("vAgain").classList.toggle("hot", !shareMoment);
   v.classList.add("on");
 }
+function openPhotoFull(){
+  const bg = $("vPhoto").style.backgroundImage;
+  if (!bg) return;
+  $("photoFull").style.backgroundImage = bg;
+  $("photoFull").classList.add("on");
+}
+$("vPhoto").addEventListener("click", openPhotoFull);
+$("vPhoto").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openPhotoFull(); } });
+$("photoFull").addEventListener("click", () => $("photoFull").classList.remove("on"));
+$("photoFull").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") $("photoFull").classList.remove("on"); });
 $("vAgain").addEventListener("click", () => { $("verdict").classList.remove("on"); detectUI("off"); });
 $("vShare").addEventListener("click", () => { if (lastVerdictSpot) shareCard(lastVerdictSpot); else toast("Nothing to share on a miss"); });
 $("vDoc").addEventListener("click", () => {
