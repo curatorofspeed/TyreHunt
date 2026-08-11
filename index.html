@@ -20,7 +20,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Sora:wght@800&family=Outfit:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Racing+Sans+One&family=Outfit:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://kokxlzygppakgcebkygc.supabase.co" crossorigin>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -534,7 +534,7 @@ button.bdg[disabled]{cursor:default}
 
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .thmark{flex:0 0 auto;color:currentColor;overflow:visible}
-.thword{flex:0 0 auto;font-family:'Sora',var(--disp);font-weight:800;letter-spacing:-.02em;line-height:1;white-space:nowrap}
+.thword{flex:0 0 auto;font-family:'Racing Sans One',var(--disp);font-weight:700;letter-spacing:.01em;text-transform:uppercase;line-height:1;white-space:nowrap}
 /* hunt header: a quiet brand anchor only — the viewfinder is the product */
 .hbrand{display:flex;align-items:center;justify-content:center;height:26px}
 .hbrand .thword{font-size:17px;color:var(--ink)}
@@ -2427,11 +2427,13 @@ function drawHandle(x, cx, y, size, color){
   x.restore();
 }
 function drawWord(x, cx, cy, height, color){
-  if (!_pWord) _pWord = new Path2D(BRAND_WORD_D);
-  const u = height / 100;
+  // the wordmark is set live in Racing Sans One so canvas cards always
+  // match the app header — no frozen vector path to fall out of date
   x.save();
-  x.translate(cx - BRAND_WORD_VW * u / 2, cy - height / 2); x.scale(u, u);
-  x.fillStyle = color; x.fill(_pWord, "evenodd");
+  x.textAlign = "center"; x.textBaseline = "middle";
+  x.fillStyle = color;
+  x.font = "700 " + height + "px 'Racing Sans One', 'Archivo', sans-serif";
+  x.fillText("TYRE HUNT", cx, cy + height * .05);
   x.restore();
 }
 
