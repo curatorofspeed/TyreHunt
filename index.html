@@ -1082,12 +1082,13 @@ input[type=file]{display:none}
       </div>
       <div class="perk"><span class="pi">◎</span><div><div class="pt">150 VERIFIED CAPTURES A DAY</div><div class="pd">Five times the free limit. Enough to shoot a whole concours lawn without thinking about it.</div></div></div>
       <div class="perk"><span class="pi">◎</span><div><div class="pt">UNLIMITED BOUNTIES</div><div class="pd">Free hunters post one bounty at a time. Run as many as you like on the cars you own.</div></div></div>
-      <div class="perk"><span class="pi">◎</span><div><div class="pt">GOLD REGISTRY CARDS</div><div class="pd">Your share cards and reels carry the Hunter's Edition mark.</div></div></div>
+      <div class="perk"><span class="pi">◎</span><div><div class="pt">GOLD REGISTRY CARDS</div><div class="pd">Your share cards and reels carry the Hunter's Edition mark — and your handle wears gold in the feed.</div></div></div>
+      <div class="perk"><span class="pi">◎</span><div><div class="pt">GOLD VIEWFINDER</div><div class="pd">The Hunter's Edition camera theme, unlocked the moment you upgrade.</div></div></div>
       <div class="perk"><span class="pi">◎</span><div><div class="pt">FIRST LOOK</div><div class="pd">New features land in your app before anyone else's.</div></div></div>
       <div class="perk" style="border-bottom:none"><span class="pi">◎</span><div><div class="pt">YOU KEEP THE APP ALIVE</div><div class="pd">Solo-built, no ads, no data selling. Subscriptions are the entire business model.</div></div></div>
       <button class="btn hot" id="premGo" style="width:100%;margin-top:10px;padding:15px;font-size:13px">UPGRADE ON THE WEB</button>
       <button class="btn" id="premCheck" style="width:100%;margin-top:9px">I ALREADY UPGRADED — REFRESH</button>
-      <p class="premnote">Checkout is handled by Stripe — the charge shows on your statement as Link, their payment service. Cancel any time from the receipt email. Verification limits are what the subscription pays for — nobody can buy their way past the judge.</p>
+      <p class="premnote">Checkout is handled by Stripe — the charge shows on your statement as Link, their payment service. Cancel any time from the receipt email. Verification limits are what the subscription pays for — nobody can buy their way past the judge. Free hunters get one uncapped event day a month: being at the show is never punished.</p>
     </div>
   </section>
 
@@ -1339,6 +1340,7 @@ const KEY = "tyrehunt:v1";
 let state = {
   streak: 0, lastSpotDay: null,
   day: null, daySpots: 0, dayBonus: false, dayQ: { ids: [], done: {} }, dayMakes: [],
+  eventBoostMonth: null, eventBoostDay: null,
   profile: null, crew: [],
   activeEvent: "", activeEventCode: "",
   week: null, wantedIds: [], wantedDone: {}, setsDone: {}, badges: {},
@@ -2519,6 +2521,7 @@ async function makeReel(spots, title, fname){
           x.fillText(st.models + " MODELS IN THE REGISTRY" + (state.profile && state.profile.handle ? "  ·  @" + state.profile.handle : ""), W/2, H*0.50);
           drawMark(x, W/2, H*0.645, 76, "#F2F3F6");
           drawHandle(x, W/2, H*0.72, 30, "rgba(242,243,246,.72)");
+          if (sbPremium){ x.fillStyle = "#FFC24B"; x.font = "700 26px 'JetBrains Mono', monospace"; x.fillText("◎ HUNTER'S EDITION", W/2, H*0.77); }
           x.fillStyle = "#18B7DC"; x.font = "800 34px 'Archivo', sans-serif";
           drawWord(x, W/2, H*0.592, 56, "#F2F3F6");
           x.globalAlpha = 1; x.textAlign = "left";
@@ -3753,6 +3756,7 @@ function shareBountyCard(bo){
     drawMark(x, W / 2, 128, 78, "#F2F3F6");
     x.fillStyle = "#18B7DC"; x.font = "700 30px 'JetBrains Mono', monospace";
     x.fillText("TYRE HUNT · OPEN BOUNTY", W / 2, 196);
+    if (sbPremium){ x.fillStyle = "#FFC24B"; x.font = "700 26px 'JetBrains Mono', monospace"; x.fillText("◎ HUNTER'S EDITION", W / 2, 240); }
     x.fillStyle = "#FFC24B"; x.font = "800 46px 'JetBrains Mono', monospace";
     x.fillText("★ SPOT ME IN THE WILD ★", W / 2, H - 800);
     x.fillStyle = "#F2F3F6"; x.font = "900 96px 'Archivo', sans-serif";
@@ -4161,7 +4165,7 @@ async function liveCapture(r){
 
 /* ================= COMMUNITY FEED / LIKES / COMMENTS / HUNTERS ================= */
 const RCHIP = { everyday:"color:#8B93A1;border:1px solid rgba(139,147,161,.4)", classic:"color:var(--ember);border:1px solid rgba(24,183,220,.5)", rare:"color:var(--pulse-hi);border:1px solid rgba(94,151,255,.5)", legendary:"color:var(--gold);border:1px solid rgba(255,194,75,.55)" };
-let feedRows = [], feedLikes = {}, feedMine = new Set(), feedCmts = {}, feedHandles = {};
+let feedRows = [], feedLikes = {}, feedMine = new Set(), feedCmts = {}, feedHandles = {}, feedSup = {};
 let feedMode = "all", feedRank = {}, hunterFeedUid = null;
 function feedCardHtml(r){
   const nm = r.cx_name || ((r.make || "") + " " + (r.model || "")).trim();
@@ -4170,7 +4174,7 @@ function feedCardHtml(r){
   const pos = feedRank[r.id];
   return `<div class="fcard">
     ${pos ? `<span class="pos p${pos <= 3 ? pos : ""}">${pos === 1 ? "TOP SHOT" : "#" + pos}</span>` : ""}
-    <div class="fhead"><button class="fh" data-hunter="${r.user_id}">@${esc(feedHandles[r.user_id] || "hunter")}</button><span style="display:flex;align-items:center;gap:6px"><span class="fago">${ago(r.created_at)}</span>${sbSession && r.user_id !== sbSession.user.id ? `<button class="modDots" data-mod="${r.user_id}|${r.id}|">⋯</button>` : ""}</span></div>
+    <div class="fhead"><button class="fh" data-hunter="${r.user_id}">@${esc(feedHandles[r.user_id] || "hunter")}${feedSup[r.user_id] ? ' <b style="color:var(--gold)">◎</b>' : ""}</button><span style="display:flex;align-items:center;gap:6px"><span class="fago">${ago(r.created_at)}</span>${sbSession && r.user_id !== sbSession.user.id ? `<button class="modDots" data-mod="${r.user_id}|${r.id}|">⋯</button>` : ""}</span></div>
     <div class="fimg loading" role="img" aria-label="Photo of ${esc(nm)}" data-src="${thumbUrl(r.img_path)}"></div>
     <div class="frow">
       <button class="flike ${mine ? "on" : ""}" data-like="${r.id}">♥ <span>${likes}</span></button>
@@ -4230,12 +4234,12 @@ async function renderFeed2(){
     const [likesRes, cmtsRes, profsRes] = await Promise.all([
       sb.from("likes").select("capture_id,user_id").in("capture_id", ids),
       sb.from("comments").select("capture_id").in("capture_id", ids),
-      sb.from("profiles").select("id,handle").in("id", uids)
+      sb.from("profiles").select("id,handle,supporter").in("id", uids)
     ]);
     feedLikes = {}; feedMine = new Set(); feedCmts = {}; feedHandles = {};
     (likesRes.data || []).forEach(l => { feedLikes[l.capture_id] = (feedLikes[l.capture_id] || 0) + 1; if (l.user_id === sbSession.user.id) feedMine.add(l.capture_id); });
     (cmtsRes.data || []).forEach(c => { feedCmts[c.capture_id] = (feedCmts[c.capture_id] || 0) + 1; });
-    (profsRes.data || []).forEach(pp => { feedHandles[pp.id] = pp.handle; });
+    (profsRes.data || []).forEach(pp => { feedHandles[pp.id] = pp.handle; feedSup[pp.id] = !!pp.supporter; });
     feedRank = {};
     if (feedMode === "cotd"){
       feedRows.sort((a, b) => (feedLikes[b.id] || 0) - (feedLikes[a.id] || 0) || new Date(a.created_at) - new Date(b.created_at));
@@ -4371,7 +4375,7 @@ async function openHunter(uid){
   body.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading…</p>';
   try{
     const [{ data: pp }, { data: caps }, { data: bestRows }] = await Promise.all([
-      sb.from("profiles").select("handle,code,models,legends,streak,spots,title").eq("id", uid).maybeSingle(),
+      sb.from("profiles").select("handle,code,models,legends,streak,spots,title,supporter").eq("id", uid).maybeSingle(),
       sb.from("captures").select("img_path,cx_name,make,model").eq("user_id", uid).not("img_path", "is", null).is("flagged", null).order("created_at", { ascending: false }).limit(12),
       sb.from("captures").select("shot_score,make,model").eq("user_id", uid).not("shot_score", "is", null).is("flagged", null).order("shot_score", { ascending: false }).limit(1)
     ]);
@@ -4388,6 +4392,7 @@ async function openHunter(uid){
         <span class="pill gold" style="font:800 9.5px var(--mono);letter-spacing:.12em;color:var(--gold);border:1px solid rgba(255,194,75,.45);border-radius:999px;padding:5px 10px">${rk}</span>
         ${pp.title ? '<span style="font:800 9.5px var(--mono);letter-spacing:.12em;color:var(--ember);border:1px solid rgba(24,183,220,.4);border-radius:999px;padding:5px 10px">' + esc(titleNameOf(pp.title).toUpperCase()) + '</span>' : ""}
         ${best ? '<span style="font:800 9.5px var(--mono);letter-spacing:.12em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 10px">BEST SHOT ' + best.shot_score + '</span>' : ""}
+        ${pp.supporter ? '<span style="font:800 9.5px var(--mono);letter-spacing:.12em;color:var(--gold);border:1px solid rgba(255,194,75,.45);border-radius:999px;padding:5px 10px">◎ SUPPORTER</span>' : ""}
       </div>
       <div class="hstats">
         <div><div class="v">${pp.models ?? 0}</div><div class="l">Models</div></div>
@@ -4923,7 +4928,17 @@ async function processResult(res, canvas, source, ctx){
     if (dup) flags.push("duplicate of an earlier capture");
     if (res.authenticity === "suspect") flags.push("didn't pass the authenticity check");
     if (!(ctx && ctx.queued) && state.lastPaidTs && Date.now() - state.lastPaidTs < 20000) flags.push("captures too fast");
-    if ((state.dayPaid || 0) >= (sbPremium ? CONFIG.premiumDayCap : CONFIG.freeDayCap)) flags.push("daily cap reached");
+    if ((state.dayPaid || 0) >= (sbPremium ? CONFIG.premiumDayCap : CONFIG.freeDayCap)){
+      // The taste of the paid life: hitting the free cap while IN event mode
+      // unlocks one uncapped day a month. Being there is never punished.
+      const mo = (state.day || "").slice(0, 7);
+      if (!sbPremium && state.activeEvent && state.eventBoostMonth !== mo){
+        state.eventBoostMonth = mo; state.eventBoostDay = state.day;
+        sfx("classic");
+        toast("EVENT DAY — cap lifted till midnight, on the house");
+      }
+      if (state.eventBoostDay !== state.day) flags.push("daily cap reached");
+    }
   }
   if (flags.includes("daily cap reached")) capReached();
   if (CONFIG.strictCapture && source !== "camera" && source !== "capture") flags.push("imported photos don't count in strict mode");
@@ -5562,6 +5577,10 @@ async function shareTop8(){
     x.fillStyle = "#18B7DC"; x.font = "800 27px 'Archivo', sans-serif";
     drawMark(x, 78, H - 74, 30, "#18B7DC");
     drawWord(x, 100 + 62, H - 80, 30, "#18B7DC");
+    if (sbPremium){
+      x.fillStyle = "#FFC24B"; x.font = "700 21px 'JetBrains Mono', monospace";
+      x.textAlign = "right"; x.fillText("◎ HUNTER'S EDITION", W - 64, 44); x.textAlign = "left";
+    }
     x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
     x.fillText("SPOT & COLLECT", 276, H - 82);
     if (state.profile && state.profile.handle){
@@ -6282,6 +6301,10 @@ function shareCard(s){
     x.fillStyle = "#18B7DC"; x.font = "800 27px 'Archivo', sans-serif";
     drawMark(x, 78, H - 74, 30, "#18B7DC");
     drawWord(x, 100 + 62, H - 80, 30, "#18B7DC");
+    if (sbPremium){
+      x.fillStyle = "#FFC24B"; x.font = "700 21px 'JetBrains Mono', monospace";
+      x.textAlign = "right"; x.fillText("◎ HUNTER'S EDITION", W - 64, 44); x.textAlign = "left";
+    }
     x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
     x.fillText("SPOT & COLLECT", 276, H - 82);
     if (state.profile && state.profile.handle){
@@ -6848,6 +6871,10 @@ async function shareExpedition(e){
     x.fillStyle = "#18B7DC"; x.font = "800 27px 'Archivo', sans-serif";
     drawMark(x, 78, H - 74, 30, "#18B7DC");
     drawWord(x, 100 + 62, H - 80, 30, "#18B7DC");
+    if (sbPremium){
+      x.fillStyle = "#FFC24B"; x.font = "700 21px 'JetBrains Mono', monospace";
+      x.textAlign = "right"; x.fillText("◎ HUNTER'S EDITION", W - 64, 44); x.textAlign = "left";
+    }
     x.fillStyle = "#98A0AC"; x.font = "600 22px 'Archivo', sans-serif";
     x.fillText("SPOT & COLLECT", 276, H - 82);
     if (state.profile && state.profile.handle){
