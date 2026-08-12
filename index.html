@@ -310,6 +310,10 @@ html.twa #planBtn{display:none!important}
 .crewrow .ty{margin-left:auto;font:700 13px var(--mono);color:var(--gold)}
 .crewrow .rm{color:var(--muted);font-size:16px;padding:12px 14px;margin:-10px -8px}
 .streak{cursor:pointer}
+/* the copy says "tap the streak ring" — this makes the ring raise its hand */
+.streak.call{animation:ringcall 1.7s ease 3}
+@keyframes ringcall{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@media (prefers-reduced-motion: reduce){.streak.call{animation:none;outline:2px solid var(--ember);outline-offset:3px;border-radius:50%}}
 
 /* segmented control */
 /* wraps rather than overflows — the leaderboard pill grows to 5 buttons once the
@@ -4698,6 +4702,7 @@ function captureFromVideo(){
     startCam();
     return;
   }
+  busy = true; $("shutter").disabled = true;
   /* BURST — cars move and hands shake. Three frames across ~240ms, scored by
      gradient energy on a 128px grayscale; the sharpest goes to the judge and
      the full-resolution frame is kept for SAVE FULL-RES on the viewer. */
@@ -4737,7 +4742,10 @@ function captureFromVideo(){
     runVerify(c, "camera");
   };
   const f1 = snap();
-  if (!f1){ toast("Camera reconnecting — give it a second"); startCam(); return; }
+  if (!f1){
+    busy = false; $("shutter").disabled = false;
+    toast("Camera reconnecting — give it a second"); startCam(); return;
+  }
   const frames = [f1];
   setTimeout(() => {
     const f2 = snap(); if (f2) frames.push(f2);
@@ -7086,6 +7094,12 @@ async function queueCapture(canvas, source){
   });
   await Store.save();
   renderQueuePill();
+  if (!sb || !sbSession){
+    const ring = $("profileBtn");
+    ring.classList.remove("call"); void ring.offsetWidth;
+    ring.classList.add("call");
+    setTimeout(() => ring.classList.remove("call"), 5400);
+  }
 }
 async function processQueue(){
   if (draining || !state.queue || !state.queue.length) return;
