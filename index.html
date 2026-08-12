@@ -322,6 +322,9 @@ html.twa #planBtn,html.twa #heTop{display:none!important}
 /* wraps rather than overflows — the leaderboard pill grows to 5 buttons once the
    lane switch appears, which is wider than a phone. */
 .seg{display:flex;flex-wrap:wrap;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;width:max-content;max-width:100%;margin-top:10px}
+#hallSeg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+#hallSeg::-webkit-scrollbar{display:none}
+#hallSeg button{white-space:nowrap;flex:0 0 auto}
 .seg button{font:800 10px var(--disp);letter-spacing:.16em;color:var(--muted);padding:0 15px;border-radius:999px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 .seg button.on{background:rgba(24,183,220,.14);color:var(--ember)}
 
@@ -421,7 +424,7 @@ button.bdg[disabled]{cursor:default}
 #cotdHead .k{font:800 8.5px var(--disp);letter-spacing:.22em;color:var(--gold)}
 #cotdHead .n{font:900 19px var(--disp);letter-spacing:-.01em;margin-top:5px}
 #cotdHead .m{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5}
-.fcard .pos{position:absolute;top:10px;left:10px;z-index:2;font:900 11px var(--disp);letter-spacing:.04em;padding:5px 10px;border-radius:999px;background:rgba(10,11,14,.82);border:1px solid var(--line);color:var(--muted)}
+.fcard .pos{position:absolute;top:50px;left:10px;z-index:2;font:900 11px var(--disp);letter-spacing:.04em;padding:5px 10px;border-radius:999px;background:rgba(10,11,14,.82);border:1px solid var(--line);color:var(--muted)}
 .fcard .pos.p1{color:#04222A;background:linear-gradient(180deg,var(--gold),var(--ember));border-color:transparent}
 .fcard .pos.p2{color:var(--ink);border-color:rgba(255,255,255,.4)}
 .fcard .pos.p3{color:#C9834A;border-color:rgba(201,131,74,.5)}
@@ -2880,15 +2883,19 @@ $("inboxBell").addEventListener("click", async () => {
     const ICO = { like: "♥", comment: "💬", bounty_hit: "◎", bounty_first: "★" };
     const TXT = { like: "liked your", comment: "commented on your", bounty_hit: "claimed your bounty —", bounty_first: "was FIRST to claim your bounty —" };
     box.innerHTML = rows.length ? rows.map(n =>
-      '<div class="qcard" style="margin-bottom:9px;opacity:' + (n.read ? ".6" : "1") + '"><div style="flex:1">' +
+      '<div class="qcard" ' + (n.capture_id ? 'data-cap="' + n.capture_id + '" role="button" tabindex="0" ' : '') + 'style="margin-bottom:9px;opacity:' + (n.read ? ".6" : "1") + (n.capture_id ? ';cursor:pointer' : '') + '"><div style="flex:1">' +
       '<div class="qn" style="color:' + (n.kind === "bounty_first" ? "var(--gold)" : "var(--ink)") + '">' + (ICO[n.kind] || "•") + " @" + esc(feedHandles[n.actor] || "hunter") + " " + (TXT[n.kind] || "") + " " + esc(n.body || "spot") + '</div>' +
-      '<div class="qd">' + ago(n.created_at) + '</div></div></div>').join("")
+      '<div class="qd">' + ago(n.created_at) + (n.capture_id ? ' · <span style="color:var(--ember)">SEE THE SPOT →</span>' : '') + '</div></div></div>').join("")
       : '<p class="pfnote">Nothing yet. When hunters like, comment, or claim your bounties, it lands here.</p>';
     await sb.from("notifications").update({ read: true }).eq("read", false);
     pollInbox();
   }catch(e){ box.innerHTML = '<p class="pfnote">Couldn\'t load your activity.</p>'; }
 });
 $("ibBack").addEventListener("click", () => $("inboxSheet").classList.remove("on"));
+$("ibList").addEventListener("click", e => {
+  const card = e.target.closest("[data-cap]");
+  if (card) window.open(captureLink(+card.dataset.cap), "_blank", "noopener");
+});
 
 /* ================= DEEP LINKS =================
    Shared things need addresses. Without these you can only share
