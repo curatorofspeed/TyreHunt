@@ -81,6 +81,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #level{position:absolute;left:50%;top:50%;width:112px;height:1.5px;margin-left:-56px;background:#fff;opacity:0;transition:opacity .3s;z-index:1;pointer-events:none;border-radius:2px}
 #level.on{opacity:.45}
 #level.flat{background:var(--ok);opacity:.85}
+html.twa #planBtn{display:none!important}
 #zoomChip{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);z-index:4;font:700 12px var(--mono);letter-spacing:.06em;color:var(--ink);background:rgba(10,11,14,.72);border:1px solid var(--line);border-radius:999px;padding:6px 12px;opacity:0;transition:opacity .25s;pointer-events:none}
 #zoomChip.on{opacity:1}
 #camwrap::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,8,.78) 0%,rgba(5,6,8,0) 22%,rgba(5,6,8,0) 55%,rgba(5,6,8,.88) 86%);pointer-events:none}
@@ -1067,10 +1068,10 @@ input[type=file]{display:none}
       </div>
       <div class="plancards" id="planCards">
         <button class="plancard on" data-plan="year">
-          <span class="save">SAVE 35%</span>
+          <span class="save">SAVE 33%</span>
           <div class="pn">YEARLY</div>
-          <div class="pp">$39</div>
-          <div class="ps">$3.25 a month<br>billed once a year</div>
+          <div class="pp">$39.99</div>
+          <div class="ps">$3.33 a month<br>billed once a year</div>
           <span class="tick">✓</span>
         </button>
         <button class="plancard" data-plan="month">
@@ -1280,8 +1281,8 @@ const CONFIG = {
   launch: "2026-08-16", // Pebble Beach anchor — all seasons/WANTED rotate procedurally from here
   strictCapture: true,   // live camera captures only; gallery/file imports save but don't count
   thumbEdge: 640,        // stored thumbnail long edge
-  stripeMonthly: "https://buy.stripe.com/test_5kQ8wR2Q0ficgjV5Jz4F200",  // $4.99/mo (TEST)
-  stripeYearly:  "https://buy.stripe.com/test_3cIeVf1LW5HCd7J0pf4F201",  // $39/yr (TEST)
+  stripeMonthly: "https://buy.stripe.com/fZu14n6ya6CO7yce0Xd7q00",  // $4.99/mo LIVE
+  stripeYearly:  "https://buy.stripe.com/fZueVde0C3qC5q45urd7q01",  // $39.99/yr LIVE
   appUrl: "https://hunt.tyrehunt.app",
   // Public half of the VAPID pair. Safe to ship — it's sent to every browser
   // as the applicationServerKey. The private half lives only in the Supabase
@@ -1333,6 +1334,13 @@ window.addEventListener("error", (e) => {
   telemetry("", er);
 });
 window.addEventListener("unhandledrejection", (e) => telemetry("promise", e.reason || e));
+
+/* Play Store build (TWA) launches at /?twa=1. Google's billing policy bars
+   steering to web checkout from a Play-installed app, so that build hides
+   the storefront entirely — subscriptions live on the open web. */
+try{ if (new URLSearchParams(location.search).get("twa") === "1") localStorage.setItem("th:twa", "1"); }catch(e){}
+const IS_TWA = (() => { try{ return localStorage.getItem("th:twa") === "1"; }catch(e){ return false; } })();
+if (IS_TWA) document.documentElement.classList.add("twa");
 
 const KEY = "tyrehunt:v1";
 
@@ -3865,6 +3873,7 @@ $("planCards").addEventListener("click", e => {
   renderPlanChoice();
 });
 function openPremium(){
+  if (IS_TWA){ toast("Hunter's Edition is managed on the web"); return; }
   $("premSheet").classList.add("on");
   renderPlanChoice();
 }
