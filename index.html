@@ -2153,7 +2153,18 @@ const TITLES = [
   { id:"globetrotter", title:"Globetrotter", req:"Claim 10 map cells", test:() => cellCount() >= 10 },
   { id:"archivist", title:"The Archivist", req:"3 full dossiers", test:() => fullDossierCount() >= 3 },
   { id:"bountyhunter", title:"Bounty Hunter", req:"Claim 3 bounties", test:() => bountyCount() >= 3 },
-  { id:"barnfinder", title:"The Barn Finder", req:"Find 5 sleeping cars", test:() => sleepingCount() >= 5 }
+  { id:"barnfinder", title:"The Barn Finder", req:"Find 5 sleeping cars", test:() => sleepingCount() >= 5 },
+  { id:"decade-spanner", title:"Decade Spanner", req:"Capture 5 different decades", test:() => new Set(state.spots.filter(s => !s.flagged && s.decade).map(s => s.decade)).size >= 5 },
+  { id:"dawn-patrol", title:"Dawn Patrol", req:"5 captures before 7am", test:() => state.spots.filter(s => !s.flagged && new Date(s.ts).getHours() < 7).length >= 5 },
+  { id:"midnight-oil", title:"Midnight Oil", req:"5 captures after 10pm", test:() => state.spots.filter(s => !s.flagged && new Date(s.ts).getHours() >= 22).length >= 5 },
+  { id:"brand-loyalist", title:"Brand Loyalist", req:"10 captures of one make", test:() => { const c = {}; let m = 0; state.spots.forEach(s => { if (s.flagged || !s.make || s.make === "Unknown") return; const k = s.make.toLowerCase(); c[k] = (c[k] || 0) + 1; if (c[k] > m) m = c[k]; }); return m >= 10; } },
+  { id:"rainbow-garage", title:"Rainbow Garage", req:"6 different colors", test:() => new Set(state.spots.filter(s => !s.flagged && s.color).map(s => s.color.toLowerCase())).size >= 6 },
+  { id:"perfect-frame", title:"Perfect Frame", req:"Shot 90+ on rare or legendary metal", test:() => state.spots.some(s => !s.flagged && s.shot && s.shot.score >= 90 && (s.rarity === "rare" || s.rarity === "legendary")) },
+  { id:"wing-watcher", title:"Wing Watcher", req:"5 big wings", test:() => state.spots.filter(s => !s.flagged && (s.tags || []).includes("big_wing")).length >= 5 },
+  { id:"working-class", title:"Working Class", req:"Complete Work Fleet", test:() => !!state.setsDone["work-fleet"] },
+  { id:"full-house", title:"Full House", req:"Complete 5 sets", test:() => Object.keys(state.setsDone || {}).length >= 5 },
+  { id:"the-regular", title:"The Regular", req:"30-day streak", test:() => (state.bestStreak || state.streak || 0) >= 30 },
+  { id:"weekend-warrior", title:"Weekend Warrior", req:"10 weekend captures", test:() => state.spots.filter(s => { if (s.flagged) return false; const d = new Date(s.ts).getDay(); return d === 0 || d === 6; }).length >= 10 }
 ];
 function titlesUnlocked(){
   const st = hunterStats();
@@ -5095,6 +5106,11 @@ async function processResult(res, canvas, source, ctx){
       if (q && q.match(attrs)){
         state.dayQ.done[id] = true;
         lastQuestHits.push({ label: "QUEST", name: q.name });
+        if ((state.boosts.turboUntil || 0) > Date.now() && !state.boosts.turboShieldGiven){
+          state.boosts.turboShieldGiven = true;
+          state.boosts.shield = (state.boosts.shield || 0) + 1;
+          lastQuestHits.push({ label: "HOT HAND", name: "STREAK SHIELD EARNED" });
+        }
       }
     });
     const sstr = attrs.make + " " + attrs.model;
@@ -5136,6 +5152,23 @@ async function processResult(res, canvas, source, ctx){
   state.spots.unshift(spot);
   if (counts){
     checkSets().forEach(h => lastQuestHits.push(h));
+    // set near-miss: the moment a set needs exactly one more car, say so — once
+    if (!state.setNudged) state.setNudged = {};
+    SETS.forEach(set => {
+      if (state.setsDone[set.id] || state.setNudged[set.id]) return;
+      const prog = setProgress(set);
+      if (prog.filter(ok => !ok).length === 1 && prog.some(Boolean)){
+        state.setNudged[set.id] = true;
+        const idx = prog.findIndex(ok => !ok);
+        lastQuestHits.push({ label: "SET", name: "1 AWAY FROM " + set.name.toUpperCase() + " — NEED " + set.needs[idx].label.toUpperCase() });
+      }
+    });
+    // a legendary lights the Hot Hand: one hour to turn the high into insurance
+    if (rarity === "legendary" && (state.boosts.turboUntil || 0) < Date.now()){
+      state.boosts.turboUntil = Date.now() + 3600e3;
+      state.boosts.turboShieldGiven = false;
+      lastQuestHits.push({ label: "HOT HAND", name: "QUEST WITHIN THE HOUR EARNS A STREAK SHIELD" });
+    }
     lastOdoHit = odoSweep();
     if (lastOdoHit) lastQuestHits.push({ label: "ODOMETER", name: odoFmt(lastOdoHit) + " SPOTS" });
     if (spot.shot && prior > 0 && spot.shot.score > prevBestShot){
