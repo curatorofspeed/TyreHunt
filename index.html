@@ -92,8 +92,10 @@ html.twa #planBtn,html.twa #heTop{display:none!important}
 /* ---------- HUD ---------- */
 #hud{position:relative;z-index:5;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 4px}
 #hud .streak{justify-self:start}
+#hud .wordmark{grid-column:2}
+#hud .balance{grid-column:3}
 #hud .balance{justify-self:end}
-.streak{position:relative;width:52px;height:52px;flex:0 0 auto}
+.streak{position:fixed;left:14px;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:7;width:52px;height:52px;flex:0 0 auto}
 .streak svg{transform:rotate(-90deg)}
 .streak .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 15px var(--mono);color:var(--ink)}
 .wordmark{text-align:center;min-width:0;justify-self:center}
@@ -180,6 +182,7 @@ html.twa #planBtn,html.twa #heTop{display:none!important}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes sheetIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .vhead{padding:calc(env(safe-area-inset-top,0px) + 18px) 18px 12px;border-bottom:1px solid var(--line)}
+.vhead .eyebrow,.vhead h2,.vhead .meta{margin-left:66px}
 .vhead .eyebrow{font-size:9.5px;font-weight:700;letter-spacing:.34em;color:var(--ember);text-transform:uppercase}
 .vhead h2{font-size:24px;font-weight:900;letter-spacing:.04em;margin-top:3px}
 .vhead .meta{font-size:12px;color:var(--muted);margin-top:4px}
@@ -746,8 +749,7 @@ input[type=file]{display:none}
   <div id="thirds" aria-hidden="true"></div>
   <div id="level" aria-hidden="true"></div>
 
-  <header id="hud">
-    <div class="streak" id="profileBtn" role="button" tabindex="0" title="Your hunter tag">
+  <div class="streak" id="profileBtn" role="button" tabindex="0" title="Your hunter tag">
       <svg width="52" height="52" viewBox="0 0 52 52">
         <circle cx="26" cy="26" r="22" fill="rgba(10,11,14,.7)" stroke="rgba(255,255,255,.1)" stroke-width="4"/>
         <circle id="streakArc" cx="26" cy="26" r="22" fill="none" stroke="url(#sg)" stroke-width="4" stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="138.2"/>
@@ -755,6 +757,8 @@ input[type=file]{display:none}
       </svg>
       <div class="num" id="streakNum">0</div>
     </div>
+  <header id="hud">
+    
     <div class="wordmark">
       <h1 class="hbrand"><svg class="thmark hmk" viewBox="-110 -110 220 220" aria-hidden="true"><use href="#thm" x="-110" y="-110" width="220" height="220"/></svg><span class="thword">Tyre Hunt</span><span class="vh">Tyre Hunt</span></h1>
       <div class="sub">Spot &amp; Collect</div>
