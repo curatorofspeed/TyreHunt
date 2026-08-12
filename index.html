@@ -2428,11 +2428,15 @@ function renderDossierAngles(){
 }
 
 
+const _markCache = {};
 function drawMark(x, cx, cy, size, color){
   // tyre-crosshair mark, vector-matched to the logo animation lockup.
-  // rendered offscreen so the tread cuts stay transparent on any card.
+  // rendered offscreen so the tread cuts stay transparent on any card;
+  // cached per size+color — the reel calls this every frame.
   const white = color || "#F2F3F6";
   const px = Math.max(8, Math.ceil(size * 2));
+  const ck = px + "|" + white;
+  if (_markCache[ck]){ x.drawImage(_markCache[ck], cx - size / 2, cy - size / 2, size, size); return; }
   const oc = document.createElement("canvas"); oc.width = px; oc.height = px;
   const o = oc.getContext("2d");
   const u = px / 220;
@@ -2478,6 +2482,7 @@ function drawMark(x, cx, cy, size, color){
   }
   o.fillStyle = "#1FA8FF";
   o.beginPath(); o.arc(0, 0, 15 * u, 0, Math.PI * 2); o.fill();
+  _markCache[ck] = oc;
   x.drawImage(oc, cx - size / 2, cy - size / 2, size, size);
 }
 /* The line that makes a share findable. Without this a reel is a
