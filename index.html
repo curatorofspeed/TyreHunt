@@ -81,7 +81,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pulse-hi);
 #level{position:absolute;left:50%;top:50%;width:112px;height:1.5px;margin-left:-56px;background:#fff;opacity:0;transition:opacity .3s;z-index:1;pointer-events:none;border-radius:2px}
 #level.on{opacity:.45}
 #level.flat{background:var(--ok);opacity:.85}
-html.twa #planBtn{display:none!important}
+html.twa #planBtn,html.twa #heTop{display:none!important}
 #zoomChip{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);z-index:4;font:700 12px var(--mono);letter-spacing:.06em;color:var(--ink);background:rgba(10,11,14,.72);border:1px solid var(--line);border-radius:999px;padding:6px 12px;opacity:0;transition:opacity .25s;pointer-events:none}
 #zoomChip.on{opacity:1}
 #camwrap::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,8,.78) 0%,rgba(5,6,8,0) 22%,rgba(5,6,8,0) 55%,rgba(5,6,8,.88) 86%);pointer-events:none}
@@ -1285,8 +1285,8 @@ const CONFIG = {
   launch: "2026-08-16", // Pebble Beach anchor — all seasons/WANTED rotate procedurally from here
   strictCapture: true,   // live camera captures only; gallery/file imports save but don't count
   thumbEdge: 640,        // stored thumbnail long edge
-  stripeMonthly: "https://buy.stripe.com/fZu14n6ya6CO7yce0Xd7q00",  // $4.99/mo LIVE
-  stripeYearly:  "https://buy.stripe.com/fZueVde0C3qC5q45urd7q01",  // $39.99/yr LIVE
+  stripeMonthly: "https://buy.stripe.com/3cI4gz9Km0eqcSw1ebd7q02",  // $4.99/mo LIVE (real account)
+  stripeYearly:  "https://buy.stripe.com/aFa8wP1dQ6CO7yc4qnd7q03",  // $39.99/yr LIVE (real account)
   appUrl: "https://hunt.tyrehunt.app",
   // Public half of the VAPID pair. Safe to ship — it's sent to every browser
   // as the applicationServerKey. The private half lives only in the Supabase
@@ -6674,6 +6674,7 @@ function renderProfile(){
       <button class="btn hot" id="pfShareTag">SHARE TAG</button>
       <button class="btn" id="pfCopy">COPY CODE</button>
     </div>
+    ${sbPremium ? "" : `<button class="btn" id="heTop" style="width:100%;margin-top:12px;color:var(--gold);border-color:rgba(255,194,75,.5);background:rgba(255,194,75,.06);font-size:12.5px;padding:14px">◎ GO HUNTER'S EDITION — 150 CAPTURES A DAY</button>`}
     <div id="pfStanding"></div>
     <div class="sechead">What you hunt</div>
     <div class="seg" id="laneSeg" style="margin-bottom:8px">
@@ -6723,6 +6724,8 @@ function renderProfile(){
     <div id="crewFeed"><p class="pfnote">Loading…</p></div>` : ""}`;
   drawQR();
   renderStanding();
+  const heTop = $("heTop");
+  if (heTop) heTop.addEventListener("click", () => openPremium());
   $("pfShareTag").addEventListener("click", async () => {
     const msg = "Add me on TYRE HUNT — hunter code " + p.code + "\n" + crewLink(p.code);
     if (navigator.share){
