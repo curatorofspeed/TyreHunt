@@ -16,7 +16,7 @@
 <meta name="twitter:description" content="Point your camera at real metal. Verified captures build your Registry.">
 <meta name="twitter:image" content="https://tyrehunt.app/icon-512.png">
 <meta name="description" content="A camera-first game for people who notice cars. Shoot what you find, a verifier names it, and it's filed to your Registry.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230A0B0E'/%3E%3Cpath fill='none' stroke='%23F2F3F6' stroke-width='5.6' stroke-linecap='round' d='M4.5 54 A47.5 47.5 0 0 1 69.8 10'/%3E%3Cpath fill='%23F2F3F6' fill-rule='evenodd' d='M52 12 a42 42 0 1 0 0 84 a42 42 0 1 0 0-84 Z M52 23 a31 31 0 1 1 0 62 a31 31 0 1 1 0-62 Z M52 30 a24 24 0 1 0 0 48 a24 24 0 1 0 0-48 Z M62.5 43.5 a6.5 6.5 0 1 1 0 13 a6.5 6.5 0 1 1 0-13 Z'/%3E%3Ccircle cx='44' cy='65' r='6' fill='%2318B7DC'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-110 -110 220 220'%3E%3Crect x='-110' y='-110' width='220' height='220' fill='%230A0B0E'/%3E%3Ccircle r='86' fill='none' stroke='%23F2F3F6' stroke-width='28'/%3E%3Cpath d='M96.02 16.93L100.94 17.8M92.19 31.74L96.92 33.37M67.73 70.14L71.2 73.73M55.92 79.87L58.79 83.96M13.57 96.55L14.27 101.5M-45.77 86.09L-48.12 90.5M-58.68 77.87L-61.69 81.86M-87.63 42.74L-92.13 44.93M-93.24 28.51L-98.02 29.97M-96.02 -16.93L-100.94 -17.8M-92.19 -31.74L-96.92 -33.37M-67.73 -70.14L-71.2 -73.73M-55.92 -79.87L-58.79 -83.96M-13.57 -96.55L-14.27 -101.5M45.77 -86.09L48.12 -90.5M58.68 -77.87L61.69 -81.86M87.63 -42.74L92.13 -44.93M93.24 -28.51L98.02 -29.97' fill='none' stroke='%230A0B0E' stroke-width='4'/%3E%3Cpath d='M-86.15 -12.11A75.9 75.9 0 0 1 -18.09 -85.1A104.4 104.4 0 0 0 -86.15 -12.11Z' fill='%230A0B0E'/%3E%3Ccircle r='58.5' fill='none' stroke='%23F2F3F6' stroke-width='7'/%3E%3Cpath d='M42 0H110M-42 0H-110M0 42V110M0 -42V-110' fill='none' stroke='%23F2F3F6' stroke-width='7' stroke-linecap='round'/%3E%3Ccircle r='15' fill='%231FA8FF'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -543,6 +543,11 @@ button.bdg[disabled]{cursor:default}
 /* hunt header: a quiet brand anchor only — the viewfinder is the product */
 .hbrand{display:flex;align-items:center;justify-content:center;height:26px}
 .hbrand .thword{font-size:17px;color:var(--ink)}
+.hbrand .hmk{width:21px;height:21px;color:var(--ink);margin-right:7px}
+#brandSplash{position:fixed;inset:0;z-index:99999;background:#050505;display:none;opacity:1;transition:opacity .32s ease}
+#brandSplash.on{display:block}
+#brandSplash.out{opacity:0}
+#brandSplash video{width:100%;height:100%;object-fit:cover;display:block}
 #intro .thmark{width:44px;height:44px;color:var(--ink);display:block;margin:0 auto 8px}
 #intro .thword{display:block;font-size:clamp(30px,9vw,40px);text-align:center;margin:0 auto;color:var(--ink)}
 
@@ -721,6 +726,8 @@ input[type=file]{display:none}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><mask id="thmcut" maskUnits="userSpaceOnUse" x="-110" y="-110" width="220" height="220"><rect x="-110" y="-110" width="220" height="220" fill="#fff"/><path d="M96.02 16.93L100.94 17.8M92.19 31.74L96.92 33.37M67.73 70.14L71.2 73.73M55.92 79.87L58.79 83.96M13.57 96.55L14.27 101.5M-45.77 86.09L-48.12 90.5M-58.68 77.87L-61.69 81.86M-87.63 42.74L-92.13 44.93M-93.24 28.51L-98.02 29.97M-96.02 -16.93L-100.94 -17.8M-92.19 -31.74L-96.92 -33.37M-67.73 -70.14L-71.2 -73.73M-55.92 -79.87L-58.79 -83.96M-13.57 -96.55L-14.27 -101.5M45.77 -86.09L48.12 -90.5M58.68 -77.87L61.69 -81.86M87.63 -42.74L92.13 -44.93M93.24 -28.51L98.02 -29.97" fill="none" stroke="#000" stroke-width="4"/><path d="M-86.15 -12.11A75.9 75.9 0 0 1 -18.09 -85.1A104.4 104.4 0 0 0 -86.15 -12.11Z" fill="#000"/></mask><symbol id="thm" viewBox="-110 -110 220 220"><circle r="86" fill="none" stroke="currentColor" stroke-width="28" mask="url(#thmcut)"/><circle r="58.5" fill="none" stroke="currentColor" stroke-width="7"/><path d="M42 0H110M-42 0H-110M0 42V110M0 -42V-110" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle r="15" fill="#1FA8FF"/></symbol></defs></svg>
+<div id="brandSplash" aria-hidden="true"><video id="splashV" muted playsinline preload="auto" src="logo-anim.mp4"></video></div>
 <div id="app" role="main">
 
   <!-- ============ HUNT (camera) ============ -->
@@ -749,7 +756,7 @@ input[type=file]{display:none}
       <div class="num" id="streakNum">0</div>
     </div>
     <div class="wordmark">
-      <h1 class="hbrand"><span class="thword">Tyre Hunt</span><span class="vh">Tyre Hunt</span></h1>
+      <h1 class="hbrand"><svg class="thmark hmk" viewBox="-110 -110 220 220" aria-hidden="true"><use href="#thm"/></svg><span class="thword">Tyre Hunt</span><span class="vh">Tyre Hunt</span></h1>
       <div class="sub">Spot &amp; Collect</div>
     </div>
     <div class="balance" id="codexPill" role="button" tabindex="0" title="Open your Registry" aria-label="Registry progress. Open your Registry.">
@@ -1235,7 +1242,7 @@ input[type=file]{display:none}
   <!-- ============ FIRST RUN ============ -->
   <section id="intro">
     <div class="introcard">
-      <svg class="thmark" viewBox="0 0 97.8 100" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M42.83 99.45C31.81 97.71 23.95 93.86 16.03 86.34C5.89 76.71 0.39 63.90 0.41 50.00C0.42 41.74 1.87 35.29 5.34 28.06C13.33 11.37 28.24 1.28 46.47 0.20C59.51 -0.58 72.04 3.98 81.65 13.00C88.72 19.64 93.12 26.74 95.99 36.18C97.33 40.59 97.47 41.83 97.48 49.73C97.49 60.06 96.62 63.98 92.43 72.55C87.74 82.16 80.06 89.85 70.38 94.62C67.39 96.09 63.06 97.77 60.75 98.35C55.76 99.60 47.15 100.13 42.83 99.45ZM57.07 82.83C66.94 79.90 74.58 72.89 78.34 63.32C79.76 59.71 80.10 58.00 80.31 53.25C80.61 46.51 79.79 42.52 76.86 36.54C73.19 29.02 65.17 22.61 56.72 20.43C52.46 19.33 44.65 19.32 40.47 20.41C25.78 24.22 16.04 36.81 16.11 51.90C16.13 57.38 17.09 61.32 19.75 66.82C21.83 71.12 27.71 77.31 32.07 79.75C34.84 81.31 40.27 83.29 43.48 83.90C45.94 84.37 54.02 83.74 57.07 82.83ZM43.48 76.07C34.83 74.53 28.45 69.60 24.51 61.41C22.61 57.46 22.55 57.15 22.55 51.09C22.55 44.99 22.60 44.74 24.59 40.57C28.93 31.47 37.35 26.11 47.30 26.09C51.66 26.09 56.53 27.30 59.78 29.20C63.09 31.14 67.74 35.61 69.41 38.46C72.69 44.06 73.67 51.44 71.98 57.90C69.68 66.75 62.08 73.88 52.86 75.83C48.84 76.68 47.18 76.73 43.48 76.07ZM60.51 66.79C62.76 65.76 63.78 62.14 62.35 60.28C61.45 59.11 59.56 58.15 58.15 58.15C56.67 58.15 53.80 60.98 53.80 62.43C53.80 66.13 57.17 68.31 60.51 66.79ZM12.74 34.21C16.38 28.56 24.74 20.46 30.17 17.34C32.56 15.96 35.49 14.44 36.68 13.95L38.86 13.06L35.87 13.39C31.77 13.83 25.81 15.86 21.93 18.14C13.46 23.10 7.36 33.22 6.33 44.02L5.99 47.55L8.06 42.91C9.20 40.35 11.30 36.44 12.74 34.21ZM38.71 42.54C41.00 40.27 41.85 39.04 41.85 37.96C41.85 36.36 40.15 34.78 38.43 34.78C37.87 34.78 35.97 36.16 34.20 37.85C30.76 41.14 30.19 42.79 31.88 44.66C33.51 46.46 35.32 45.90 38.71 42.54Z"/><circle cx="58.2" cy="62.5" r="4.6" fill="var(--ember)"/></svg>
+      <svg class="thmark" viewBox="-110 -110 220 220" aria-hidden="true"><use href="#thm"/></svg>
       <span class="thword">Tyre Hunt</span><h1 class="iw vh">Tyre Hunt</h1>
       <div class="isub">Spot &amp; Collect</div>
       <p class="ivc-over">Point. Shoot. Every capture ends like this</p>
@@ -2416,19 +2423,58 @@ function renderDossierAngles(){
   box.innerHTML = shots.length ? `<div class="dangles">${shots.join("")}</div>` : "";
 }
 
-const BRAND_MARK_D = "M42.83 99.45C31.81 97.71 23.95 93.86 16.03 86.34C5.89 76.71 0.39 63.90 0.41 50.00C0.42 41.74 1.87 35.29 5.34 28.06C13.33 11.37 28.24 1.28 46.47 0.20C59.51 -0.58 72.04 3.98 81.65 13.00C88.72 19.64 93.12 26.74 95.99 36.18C97.33 40.59 97.47 41.83 97.48 49.73C97.49 60.06 96.62 63.98 92.43 72.55C87.74 82.16 80.06 89.85 70.38 94.62C67.39 96.09 63.06 97.77 60.75 98.35C55.76 99.60 47.15 100.13 42.83 99.45ZM57.07 82.83C66.94 79.90 74.58 72.89 78.34 63.32C79.76 59.71 80.10 58.00 80.31 53.25C80.61 46.51 79.79 42.52 76.86 36.54C73.19 29.02 65.17 22.61 56.72 20.43C52.46 19.33 44.65 19.32 40.47 20.41C25.78 24.22 16.04 36.81 16.11 51.90C16.13 57.38 17.09 61.32 19.75 66.82C21.83 71.12 27.71 77.31 32.07 79.75C34.84 81.31 40.27 83.29 43.48 83.90C45.94 84.37 54.02 83.74 57.07 82.83ZM43.48 76.07C34.83 74.53 28.45 69.60 24.51 61.41C22.61 57.46 22.55 57.15 22.55 51.09C22.55 44.99 22.60 44.74 24.59 40.57C28.93 31.47 37.35 26.11 47.30 26.09C51.66 26.09 56.53 27.30 59.78 29.20C63.09 31.14 67.74 35.61 69.41 38.46C72.69 44.06 73.67 51.44 71.98 57.90C69.68 66.75 62.08 73.88 52.86 75.83C48.84 76.68 47.18 76.73 43.48 76.07ZM60.51 66.79C62.76 65.76 63.78 62.14 62.35 60.28C61.45 59.11 59.56 58.15 58.15 58.15C56.67 58.15 53.80 60.98 53.80 62.43C53.80 66.13 57.17 68.31 60.51 66.79ZM12.74 34.21C16.38 28.56 24.74 20.46 30.17 17.34C32.56 15.96 35.49 14.44 36.68 13.95L38.86 13.06L35.87 13.39C31.77 13.83 25.81 15.86 21.93 18.14C13.46 23.10 7.36 33.22 6.33 44.02L5.99 47.55L8.06 42.91C9.20 40.35 11.30 36.44 12.74 34.21ZM38.71 42.54C41.00 40.27 41.85 39.04 41.85 37.96C41.85 36.36 40.15 34.78 38.43 34.78C37.87 34.78 35.97 36.16 34.20 37.85C30.76 41.14 30.19 42.79 31.88 44.66C33.51 46.46 35.32 45.90 38.71 42.54Z";
-const BRAND_WORD_D = "M67.88 92.76L68.18 85.35L83.33 84.85L98.48 84.34L98.79 80.62L99.10 76.91L82.63 76.58C67.13 76.28 65.96 76.12 62.76 73.84C56.37 69.28 55.60 65.85 55.58 41.67L55.56 20.20L63.64 20.20L71.72 20.20L71.72 40.20C71.72 54.41 72.07 60.55 72.93 61.41C73.74 62.23 78.31 62.63 86.85 62.63L99.56 62.63L99.72 45.71C99.80 36.40 99.90 26.86 99.94 24.49L100.00 20.20L107.58 20.20L115.15 20.20L115.13 53.28C115.11 83.35 114.94 86.74 113.23 90.50C112.07 93.05 109.85 95.57 107.44 97.07C103.76 99.35 102.48 99.51 85.56 99.83L67.58 100.16L67.88 92.76ZM21.38 76.04C17.94 75.39 11.53 68.53 10.76 64.68C10.40 62.86 10.10 55.28 10.10 47.85L10.10 34.34L5.05 34.34L0.00 34.34L0.00 27.27L0.00 20.20L5.05 20.20L10.10 20.20L10.10 10.61L10.10 1.01L17.68 1.01L25.25 1.01L25.25 10.61L25.25 20.20L35.35 20.20L45.45 20.20L45.45 27.27L45.45 34.34L35.35 34.34L25.25 34.34L25.25 46.90C25.25 62.73 25.17 62.63 37.45 62.63L46.46 62.63L46.46 69.70L46.46 76.77L35.10 76.63C28.85 76.55 22.68 76.29 21.38 76.04ZM125.25 54.51C125.25 34.19 125.43 31.89 127.29 28.26C128.60 25.69 130.74 23.54 133.31 22.24C136.74 20.48 139.26 20.20 151.47 20.20L165.66 20.20L165.66 27.27L165.66 34.34L154.62 34.34C145.93 34.34 143.24 34.68 141.99 35.93C140.66 37.26 140.40 40.65 140.40 57.14L140.40 76.77L132.83 76.77L125.25 76.77L125.25 54.51ZM182.32 75.34C178.25 73.53 174.91 69.74 173.71 65.57C173.17 63.68 172.73 55.19 172.73 46.69C172.73 29.15 173.66 25.51 178.98 22.21C182.09 20.29 183.65 20.16 201.52 20.43C219.76 20.69 220.87 20.82 224.01 23.06C229.27 26.82 230.27 29.84 230.55 42.91L230.81 54.61L215.15 55.00C206.54 55.22 197.11 55.43 194.19 55.48C189.35 55.55 188.89 55.76 188.89 57.88C188.89 62.35 190.18 62.63 210.81 62.63L230.30 62.63L230.30 69.70L230.30 76.77L207.83 76.73C191.36 76.70 184.54 76.33 182.32 75.34ZM241.08 76.09C240.71 75.72 240.40 58.73 240.40 38.33L240.40 1.24L245.82 0.57C248.79 0.19 252.43 0.19 253.90 0.56C256.54 1.22 256.57 1.30 256.57 10.72L256.57 20.20L271.46 20.22C289.38 20.25 293.53 21.55 296.91 28.17C298.82 31.92 298.99 34.02 298.99 54.51L298.99 76.77L291.41 76.77L283.84 76.77L283.84 57.51C283.84 46.17 283.41 37.45 282.79 36.30C281.84 34.53 280.57 34.34 269.16 34.34L256.57 34.34L256.57 55.56L256.57 76.77L249.16 76.77C245.08 76.77 241.45 76.46 241.08 76.09ZM317.73 74.48C315.54 73.24 312.81 70.63 311.67 68.69C309.78 65.46 309.57 63.20 309.27 42.68L308.95 20.20L317.10 20.20L325.25 20.20L325.25 40.20C325.25 54.41 325.60 60.55 326.46 61.41C327.28 62.23 331.85 62.63 340.38 62.63L353.08 62.63L353.11 41.67L353.14 20.71L360.91 20.41L368.69 20.12L368.69 48.44L368.69 76.77L345.20 76.75C322.78 76.74 321.54 76.63 317.73 74.48ZM378.79 48.43L378.79 20.10L402.96 20.40C425.54 20.69 427.31 20.84 429.92 22.79C436.28 27.55 436.83 29.18 437.37 45.27C437.65 53.43 437.72 63.85 437.52 68.43L437.17 76.77L429.69 76.77L422.22 76.77L422.22 56.77C422.22 42.56 421.87 36.42 421.01 35.56C420.20 34.74 415.69 34.34 407.37 34.34L394.95 34.34L394.95 55.56L394.95 76.77L386.87 76.77L378.79 76.77L378.79 48.43ZM462.61 74.45C455.42 70.65 454.11 66.94 453.70 49.24L453.35 34.34L448.90 34.34L444.44 34.34L444.44 27.27L444.44 20.20L448.99 20.20L453.54 20.20L453.54 10.61L453.54 1.01L461.62 1.01L469.70 1.01L469.70 10.61L469.70 20.20L479.29 20.20L488.89 20.20L488.89 27.27L488.89 34.34L479.29 34.34L469.70 34.34L469.70 47.44C469.70 63.03 469.36 62.63 482.26 62.63L490.91 62.63L490.91 69.70L490.91 76.77L478.95 76.77C468.43 76.77 466.46 76.49 462.61 74.45ZM214.96 38.13L214.65 34.85L201.77 34.57L188.89 34.28L188.89 37.85L188.89 41.41L202.08 41.41L215.28 41.41L214.96 38.13Z";
-const BRAND_MARK_VW = 97.8, BRAND_WORD_VW = 490.9;
-let _pMark = null, _pWord = null;
+
 function drawMark(x, cx, cy, size, color){
-  if (!_pMark) _pMark = new Path2D(BRAND_MARK_D);
-  const u = size / 100;
-  x.save();
-  x.translate(cx - BRAND_MARK_VW * u / 2, cy - size / 2); x.scale(u, u);
-  x.fillStyle = color; x.fill(_pMark, "evenodd");
-  x.fillStyle = "#18B7DC";
-  x.beginPath(); x.arc(58.2, 62.5, 4.6, 0, 7); x.fill();
-  x.restore();
+  // tyre-crosshair mark, vector-matched to the logo animation lockup.
+  // rendered offscreen so the tread cuts stay transparent on any card.
+  const white = color || "#F2F3F6";
+  const px = Math.max(8, Math.ceil(size * 2));
+  const oc = document.createElement("canvas"); oc.width = px; oc.height = px;
+  const o = oc.getContext("2d");
+  const u = px / 220;
+  o.translate(px / 2, px / 2);
+  o.fillStyle = white;
+  o.beginPath();
+  o.arc(0, 0, 100 * u, 0, Math.PI * 2);
+  o.arc(0, 0, 72 * u, 0, Math.PI * 2, true);
+  o.fill("evenodd");
+  o.globalCompositeOperation = "destination-out";
+  o.strokeStyle = "#000"; o.lineWidth = 4 * u;
+  for (let k = 0; k < 10; k++) for (let p = 0; p < 2; p++){
+    const deg = (10 + k * 36 + p * 9) % 360;
+    const dArm = Math.min(deg % 90, 90 - (deg % 90));
+    if (dArm < 6) continue;
+    const a = deg * Math.PI / 180;
+    o.beginPath();
+    o.moveTo(Math.cos(a) * 97.5 * u, Math.sin(a) * 97.5 * u);
+    o.lineTo(Math.cos(a) * 102.5 * u, Math.sin(a) * 102.5 * u);
+    o.stroke();
+  }
+  o.beginPath();
+  const a0 = 188 * Math.PI / 180, a1 = 258 * Math.PI / 180;
+  for (let i = 0; i <= 40; i++){
+    const t = i / 40, a = a0 + (a1 - a0) * t, r = 87 + 3 * Math.sin(Math.PI * t);
+    o[i ? "lineTo" : "moveTo"](Math.cos(a) * r * u, Math.sin(a) * r * u);
+  }
+  for (let i = 40; i >= 0; i--){
+    const t = i / 40, a = a0 + (a1 - a0) * t, r = 87 - 3 * Math.sin(Math.PI * t);
+    o.lineTo(Math.cos(a) * r * u, Math.sin(a) * r * u);
+  }
+  o.closePath(); o.fill();
+  o.globalCompositeOperation = "source-over";
+  o.strokeStyle = white; o.lineWidth = 7 * u;
+  o.beginPath(); o.arc(0, 0, 58.5 * u, 0, Math.PI * 2); o.stroke();
+  o.lineCap = "round";
+  for (let q = 0; q < 4; q++){
+    const a = q * Math.PI / 2;
+    o.beginPath();
+    o.moveTo(Math.cos(a) * 42 * u, Math.sin(a) * 42 * u);
+    o.lineTo(Math.cos(a) * 110 * u, Math.sin(a) * 110 * u);
+    o.stroke();
+  }
+  o.fillStyle = "#1FA8FF";
+  o.beginPath(); o.arc(0, 0, 15 * u, 0, Math.PI * 2); o.fill();
+  x.drawImage(oc, cx - size / 2, cy - size / 2, size, size);
 }
 /* The line that makes a share findable. Without this a reel is a
    dead end — someone sees it, loves it, and cannot get to the app. */
@@ -7345,6 +7391,40 @@ async function overlayTerritory(ctx, X, Y, minLa, maxLa, minLo, maxLo){
   routeDeepLink();
   registerSW();
   if (navigator.onLine) processQueue();
+})();
+
+/* brand splash: plays the logo animation once per session when it can start
+   instantly (cached / fast connection). Never blocks the app: if the video
+   is not ready within 900ms this open, it is skipped and keeps preloading
+   for the next one. */
+(function(){
+  try{
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (sessionStorage.getItem("th:splashed")) return;
+    var sp = document.getElementById("brandSplash");
+    var sv = document.getElementById("splashV");
+    if (!sp || !sv) return;
+    var shown = false, killed = false;
+    function kill(){
+      if (killed) return; killed = true;
+      sp.classList.add("out");
+      setTimeout(function(){ sp.classList.remove("on","out"); try{ sv.pause(); }catch(e){} }, 340);
+    }
+    function show(){
+      if (shown || killed) return; shown = true;
+      try{ sessionStorage.setItem("th:splashed","1"); }catch(e){}
+      sp.classList.add("on");
+      var p = sv.play();
+      if (p && p.catch) p.catch(kill);
+    }
+    if (sv.readyState >= 4) show();
+    else sv.addEventListener("canplaythrough", show, { once:true });
+    sv.addEventListener("ended", kill);
+    sv.addEventListener("error", kill);
+    sp.addEventListener("click", kill);
+    setTimeout(function(){ if (!shown) killed = true; }, 900);
+    setTimeout(kill, 5600);
+  }catch(e){}
 })();
 </script>
 </body>
