@@ -4269,6 +4269,32 @@ function feedCardHtml(r){
     </div>
   </div>`;
 }
+async function crewSuggestions(){
+  if (!sb || !sbSession) return [];
+  try{
+    const { data } = await sb.from("profiles")
+      .select("id,handle,code,models,spots,supporter,updated_at")
+      .neq("id", sbSession.user.id)
+      .order("updated_at", { ascending: false })
+      .limit(30);
+    const have = new Set(state.crew.map(cc => cc.code));
+    return (data || [])
+      .filter(p => p.handle && !have.has(p.code) && !myBlocks.has(p.id))
+      .sort((a, b) => (b.spots || 0) - (a.spots || 0))
+      .slice(0, 5);
+  }catch(e){ return []; }
+}
+function suggestHtml(list){
+  if (!list.length) return "";
+  return '<div class="sechead" style="margin-top:16px">Grow your crew</div>' +
+    '<p class="pfnote" style="margin-bottom:10px">The most active hunters this week.</p>' +
+    list.map(p =>
+      '<div class="qcard" style="margin-bottom:9px;align-items:center"><div style="flex:1">' +
+      '<button class="fh" data-hunter="' + p.id + '" style="background:none;border:0;padding:0;cursor:pointer;font:700 14px var(--mono);color:var(--ink)">@' + esc(p.handle) + (p.supporter ? ' <b style="color:var(--gold)">\u25CE</b>' : "") + "</button>" +
+      '<div class="qd">' + (p.models || 0) + " models \u00B7 " + (p.spots || 0) + " spots</div></div>" +
+      '<button class="btn" data-addcrew="' + esc(p.code) + '" style="padding:9px 15px;font-size:11px;flex:0 0 auto">ADD</button></div>'
+    ).join("");
+}
 async function renderFeed2(){
   const box = $("feedList");
   if (!box) return;
@@ -4296,6 +4322,7 @@ async function renderFeed2(){
       if (sbSession) crewIds.push(sbSession.user.id);
       if (crewIds.length <= 1){
         box.innerHTML = '<p class="pfnote">Your crew feed. Tap any @handle in the feed and ADD TO CREW — their hunts line up here.</p>';
+        crewSuggestions().then(list => { if (feedMode === "crew") box.insertAdjacentHTML("beforeend", suggestHtml(list)); });
         return;
       }
       q = q.in("user_id", crewIds).limit(40);
@@ -4340,6 +4367,7 @@ async function renderFeed2(){
     }
     box.innerHTML = feedRows.map(feedCardHtml).join("");
     armLazyImages(box);
+    if (feedMode === "crew") crewSuggestions().then(list => { if (feedMode === "crew") box.insertAdjacentHTML("beforeend", suggestHtml(list)); });
   }catch(e){ box.innerHTML = '<p class="pfnote">Feed didn\'t load — pull refresh in a moment.</p>'; }
 }
 $("feedRefresh").addEventListener("click", renderFeed2);
@@ -4368,6 +4396,17 @@ $("feedList").addEventListener("click", e => {
   lastTapAt = now; lastTapId = id;
 });
 $("feedList").addEventListener("click", async e => {
+  const ac = e.target.closest("[data-addcrew]");
+  if (ac){
+    ac.disabled = true; ac.textContent = "\u2026";
+    const d = await sbAddFriend(ac.dataset.addcrew);
+    if (!d){ ac.disabled = false; ac.textContent = "ADD"; toast("Couldn't add"); return; }
+    state.crew.push({ code: d.code, handle: d.handle, models: d.models, id: d.id });
+    await Store.save();
+    ac.textContent = "IN CREW \u2713";
+    toast("@" + d.handle + " added to your crew");
+    return;
+  }
   const lk = e.target.closest("[data-like]");
   if (lk){
     const id = +lk.dataset.like;
@@ -5711,6 +5750,64 @@ async function shareTop8(){
   }catch(e){ toast("Couldn't build the Top 8 card"); }
 }
 $("top8Btn").addEventListener("click", shareTop8);
+
+/* Season Wrapped — the recap card people post unprompted. Everything on it
+   comes from this season's spots; during the final week the label flips
+   from SO FAR to WRAPPED. */
+async function shareWrapped(){
+  try{
+    const si = Math.max(0, seasonIndex());
+    const m = seasonMeta(si);
+    const pre = seasonIndex() < 0; // before launch: wrap everything so far
+    const sStart = pre ? 0 : LAUNCH.getTime() + si * SEASON_MS;
+    const sp = state.spots.filter(s2 => !s2.flagged && new Date(s2.ts).getTime() >= sStart);
+    if (!sp.length){ toast("No spots this season yet"); return; }
+    const RC = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+    const ORD = { legendary:0, rare:1, classic:2, everyday:3 };
+    const rare = sp.slice().sort((a,b) => (ORD[a.rarity] ?? 3) - (ORD[b.rarity] ?? 3))[0];
+    const newModels = sp.filter(s2 => s2.cxNew).length;
+    const best = sp.reduce((mx,s2) => s2.shot && s2.shot.score > mx ? s2.shot.score : mx, 0);
+    const st = hunterStats();
+    const W = 1080, H = 1920;
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    x.fillStyle = "#0A0B0E"; x.fillRect(0, 0, W, H);
+    const g = x.createRadialGradient(W/2, 480, 0, W/2, 480, 900);
+    g.addColorStop(0, "#181B22"); g.addColorStop(1, "#0A0B0E");
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    drawMark(x, W/2, 240, 110, "#F2F3F6");
+    drawWord(x, W/2, 372, 54, "#F2F3F6");
+    x.textAlign = "center";
+    x.fillStyle = "#FFC24B"; x.font = "800 30px 'JetBrains Mono', monospace";
+    x.fillText(pre ? "PRESEASON" : m.name.toUpperCase(), W/2, 486);
+    const finalWeek = seasonEnds(si) - Date.now() < 7 * 864e5;
+    x.fillStyle = "#F2F3F6"; x.font = "900 118px 'Archivo', sans-serif";
+    x.fillText(finalWeek ? "WRAPPED" : "SO FAR", W/2, 606);
+    const rows = [
+      [String(sp.length), "VERIFIED SPOTS"],
+      [String(newModels), "NEW MODELS"],
+      rare ? [(rare.cxName || ((rare.make || "") + " " + (rare.model || "")).trim()).toUpperCase(), "RAREST FIND", RC[rare.rarity] || "#F2F3F6"] : null,
+      best ? [String(best), "BEST SHOT"] : null,
+      state.bestStreak ? [state.bestStreak + " DAYS", "LONGEST STREAK"] : null,
+      [currentRank(st).name, "HUNTER RANK", "#FFC24B"]
+    ].filter(Boolean);
+    let y = 770;
+    rows.forEach(r => {
+      x.fillStyle = r[2] || "#F2F3F6";
+      x.font = "900 " + (r[0].length > 14 ? 54 : 90) + "px 'Archivo', sans-serif";
+      x.fillText(r[0], W/2, y, 950);
+      x.fillStyle = "#98A0AC"; x.font = "700 23px 'JetBrains Mono', monospace";
+      x.fillText(r[1], W/2, y + 42);
+      y += 168;
+    });
+    if (sbPremium){ x.fillStyle = "#FFC24B"; x.font = "800 24px 'Archivo', sans-serif"; x.fillText("\u25CE HUNTER'S EDITION", W/2, H - 192); }
+    x.fillStyle = "#F2F3F6"; x.font = "700 30px 'JetBrains Mono', monospace";
+    if (state.profile && state.profile.handle) x.fillText("@" + state.profile.handle, W/2, H - 142);
+    drawHandle(x, W/2, H - 92, 26, "#98A0AC");
+    x.textAlign = "left";
+    deliverCard(c, "tyrehunt-wrapped.jpg", "My season \u00B7 TYRE HUNT");
+  }catch(e){ toast("Couldn't build the season card"); }
+}
 $("reelBtn").addEventListener("click", () => {
   const favs = state.spots.filter(s => s.fav && !s.flagged);
   const pick = favs.length >= 3 ? favs.slice(0, 8) : state.spots.filter(s => !s.flagged).slice(0, 8);
@@ -6162,6 +6259,7 @@ function renderStanding(){
     </div>
     <div class="sechead">Records</div>
     <div id="recordList"></div>
+    <button class="btn" id="wrapBtn" style="width:100%;margin:12px 0 2px;color:var(--gold);border-color:rgba(255,194,75,.45)"></button>
     <div class="sechead">Titles</div>
     <div id="titleGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
     <div class="sechead">Badges</div>
@@ -6185,6 +6283,18 @@ function renderStanding(){
     + '<div class="redemption"><span>WORLD FIRSTS</span><b id="recWF">' + (sb && sbSession ? "…" : "—") + '</b></div>'
     + '<div class="redemption"><span>REGIONAL FIRSTS</span><b id="recRF">' + (sb && sbSession ? "…" : "—") + '</b></div>';
   fillFirsts();
+  const wb = $("wrapBtn");
+  if (wb){
+    const si = Math.max(0, seasonIndex());
+    const sStart = seasonIndex() < 0 ? 0 : LAUNCH.getTime() + si * SEASON_MS;
+    const sCount = state.spots.filter(s2 => !s2.flagged && new Date(s2.ts).getTime() >= sStart).length;
+    if (!sCount) wb.style.display = "none";
+    else {
+      const finalWeek = seasonEnds(si) - Date.now() < 7 * 864e5;
+      wb.textContent = (finalWeek ? "\u25C9 SEASON WRAPPED" : "\u25C9 MY SEASON SO FAR") + " \u2014 SHARE IT";
+      wb.addEventListener("click", shareWrapped);
+    }
+  }
   const unlocked = titlesUnlocked();
   $("titleGrid").innerHTML = TITLES.map(t => {
     const got = unlocked.includes(t.id), eq = state.title === t.id;
