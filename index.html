@@ -3579,6 +3579,7 @@ async function renderHunts(){
             ? `<button class="btn hot" data-huntjoin="${h.id}">JOIN THE LOBBY</button>`
             : `<button class="btn ${going ? "going" : ""}" data-huntrsvp="${h.id}">${going ? "YOU'RE IN ✓" : "I'M IN"}</button>`}
           <button class="btn" data-huntshare="${h.id}">SHARE</button>
+          <button class="btn" data-huntqr="${h.id}" aria-label="Lobby QR card">\u25A6 QR</button>
         </div>
       </div>`;
     }).join("");
@@ -3637,6 +3638,104 @@ async function shareHunt(id, name, place, iso){
   catch(e){ toast(url); }
 }
 
+/* A lobby spreads by lens, not by link — at a meet you hold up a phone.
+   The QR points at the public board, so a stranger sees a live scoreboard
+   of the cars around them before deciding to install anything. */
+async function qrCanvas(text, size){
+  if (!qrLoaded){ await loadScript("https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"); qrLoaded = true; }
+  const holder = document.createElement("div");
+  holder.style.cssText = "position:absolute;left:-9999px;top:0";
+  document.body.appendChild(holder);
+  new QRCode(holder, { text, width: size, height: size,
+    colorDark: "#0A0B0E", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  const cv = holder.querySelector("canvas");
+  if (cv){ holder.remove(); return cv; }
+  const im = holder.querySelector("img");   // older browsers get an <img> instead
+  if (im){
+    await new Promise(res => { if (im.complete && im.naturalWidth) res(); else { im.onload = res; im.onerror = res; } });
+    holder.remove();
+    return im.naturalWidth ? im : null;
+  }
+  holder.remove();
+  return null;
+}
+function lobbyBoardUrl(code){ return "https://www.tyrehunt.app/lobby.html?c=" + encodeURIComponent(code); }
+async function shareLobbyCard(h){
+  if (!h || !h.lobby_code){ toast("That hunt has no lobby code"); return; }
+  toast("Building the card\u2026");
+  let qr = null;
+  try{ qr = await qrCanvas(lobbyBoardUrl(h.lobby_code), 520); }catch(e){}
+  if (!qr){ toast("Couldn't draw the QR — check your connection"); return; }
+  try{
+    const W = 1080, H = 1920, c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    x.fillStyle = "#0A0B0E"; x.fillRect(0, 0, W, H);
+    const g = x.createRadialGradient(W / 2, 700, 0, W / 2, 700, 1050);
+    g.addColorStop(0, "#191C23"); g.addColorStop(1, "#0A0B0E");
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.textAlign = "center"; x.textBaseline = "top";
+
+    drawMark(x, W / 2, 196, 104, "#F2F3F6");
+    drawWord(x, W / 2, 322, 50, "#F2F3F6");
+    x.fillStyle = "#18B7DC"; x.font = "800 30px 'JetBrains Mono', monospace";
+    x.fillText("\u25CF LIVE LOBBY", W / 2, 372);
+
+    // event name, capped at two lines so the QR never gets pushed off
+    // long event names get a smaller size rather than a squashed one
+    const nm = String(h.name || "Hunt");
+    const size = nm.length > 30 ? 64 : nm.length > 20 ? 76 : 86;
+    const lh = Math.round(size * 1.12);
+    x.fillStyle = "#F2F3F6"; x.font = "900 " + size + "px 'Archivo', sans-serif";
+    const words = nm.split(" ");
+    const lines = [];
+    let ln = "";
+    words.forEach(w => {
+      const t = ln ? ln + " " + w : w;
+      if (x.measureText(t).width > W - 260 && ln){ lines.push(ln); ln = w; } else ln = t;
+    });
+    lines.push(ln);
+    const show = lines.slice(0, 3);
+    if (lines.length > 3) show[2] = show[2].slice(0, 16) + "\u2026";
+    show.forEach((l, i) => x.fillText(l, W / 2, 444 + i * lh, W - 140));
+    let y = 444 + show.length * lh + 10;
+
+    const sub = [h.place, h.starts_at ? huntWhen(h.starts_at) : ""].filter(Boolean).join(" \u00B7 ");
+    if (sub){
+      x.fillStyle = "#98A0AC"; x.font = "600 34px 'JetBrains Mono', monospace";
+      x.fillText(sub.toUpperCase(), W / 2, y, W - 120);
+    }
+
+    // QR on a white plate — a code on dark carbon will not scan
+    const QS = 520, PAD = 34, PW = QS + PAD * 2;
+    const px = (W - PW) / 2, py = 800;
+    x.fillStyle = "#FFFFFF";
+    if (x.roundRect){ x.beginPath(); x.roundRect(px, py, PW, PW, 28); x.fill(); }
+    else x.fillRect(px, py, PW, PW);
+    x.drawImage(qr, px + PAD, py + PAD, QS, QS);
+
+    x.fillStyle = "#F2F3F6"; x.font = "800 40px 'Archivo', sans-serif";
+    x.fillText("SCAN FOR THE LIVE BOARD", W / 2, py + PW + 44);
+    x.fillStyle = "#98A0AC"; x.font = "600 30px 'Archivo', sans-serif";
+    x.fillText("Every spot verified by the judge, in real time", W / 2, py + PW + 98);
+
+    x.fillStyle = "#FFC24B"; x.font = "800 52px 'JetBrains Mono', monospace";
+    x.fillText("LOBBY " + h.lobby_code, W / 2, py + PW + 160, W - 140);
+
+    // the host is whoever created the hunt, not whoever taps share
+    const hostHandle = feedHandles[h.host] ||
+      (sbSession && h.host === sbSession.user.id && state.profile ? state.profile.handle : "");
+    if (hostHandle){
+      x.fillStyle = "#98A0AC"; x.font = "700 32px 'JetBrains Mono', monospace";
+      x.fillText("hosted by @" + hostHandle, W / 2, H - 168);
+    }
+    drawHandle(x, W / 2, H - 106, 34, "#18B7DC");
+    x.textAlign = "left";
+    deliverCard(c, "tyrehunt-lobby-" + h.lobby_code + ".jpg",
+      (h.name || "Live lobby") + " \u00B7 scan for the live board \u00B7 TYRE HUNT");
+  }catch(e){ toast("Couldn't build the lobby card"); }
+}
+
 async function rsvpHunt(id, on){
   if (!sb || !sbSession){ toast("Sign in to join"); return; }
   try{
@@ -3672,6 +3771,12 @@ $("huntList").addEventListener("click", e => {
   if (sh){
     const h = huntRows.find(x => x.id === +sh.dataset.huntshare);
     if (h) shareHunt(h.id, h.name, h.place, h.starts_at);
+    return;
+  }
+  const qb = e.target.closest("[data-huntqr]");
+  if (qb){
+    const h = huntRows.find(x => x.id === +qb.dataset.huntqr);
+    if (h) shareLobbyCard(h);
   }
 });
 
