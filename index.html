@@ -2498,7 +2498,8 @@ $("angleFile").addEventListener("change", async e => {
     // plates are pixelated on the angle shot too (a sign stays legible)
     if (out) { try { mosaicBoxes(c, out.plates_norm || []); } catch(e){} }
     const thumb = document.createElement("canvas");
-    const tr = Math.min(480 / c.width, 480 / c.height, 1);
+    const tmax = slot === "sign" ? 900 : 480;   // a sign must stay readable — that photo IS the listing
+    const tr = Math.min(tmax / c.width, tmax / c.height, 1);
     thumb.width = Math.round(c.width * tr); thumb.height = Math.round(c.height * tr);
     thumb.getContext("2d").drawImage(c, 0, 0, thumb.width, thumb.height);
     if (out && typeof out.matches === "boolean"){
@@ -2576,7 +2577,7 @@ function renderDossierAngles(){
   if (!box || dId == null) return;
   const s = state.spots.find(x => x.id === dId);
   if (!s){ box.innerHTML = ""; return; }
-  const shots = ANGLES.filter(a => s.angles && s.angles[a.id]).map(a => {
+  const shots = anglesFor(s).filter(a => s.angles && s.angles[a.id]).map(a => {
     const g = s.angles[a.id];
     return `<div class="dth ${g.ok === true ? "ok" : ""}" style="background-image:url('${g.img}')"></div>`;
   });
@@ -4512,7 +4513,7 @@ function feedCardHtml(r){
     <div class="frow">
       <button class="flike ${mine ? "on" : ""}" data-like="${r.id}">♥ <span>${likes}</span></button>
       <button class="fcmt" data-cmt="${r.id}">💬 <span>${cmts}</span></button>
-      <span class="fname">${esc(nm)} <span class="fchip" style="${RCHIP[r.rarity] || RCHIP.everyday}">${(r.rarity || "").toUpperCase()}</span>${r.for_sale ? ' ' + saleChipHtml({ forSale: true, price: r.asking_price, priceCur: r.asking_currency || "" }, "fchip sale") : ""}${r.sign_path ? ' <a class="fchip sale" target="_blank" rel="noopener" href="' + thumbUrl(r.sign_path) + '">SEE THE SIGN ↗</a>' : ""}</span>
+      <span class="fname">${esc(nm)} <span class="fchip" style="${RCHIP[r.rarity] || RCHIP.everyday}">${(r.rarity || "").toUpperCase()}</span>${r.for_sale ? ' ' + saleChipHtml({ forSale: true, price: r.asking_price, priceCur: r.asking_currency || "", signPath: r.sign_path || "" }, "fchip sale") : ""}${r.sign_path ? ' <a class="fchip sale" target="_blank" rel="noopener" href="' + thumbUrl(r.sign_path) + '">SEE THE SIGN ↗</a>' : ""}</span>
     </div>
   </div>`;
 }
@@ -6375,7 +6376,7 @@ function lotTap(e){
   $("mapinfo").innerHTML = '<div class="qcard" style="margin-top:14px;align-items:center">' +
     '<div class="fimg" style="width:64px;height:64px;border-radius:12px;background-size:cover;background-position:center;flex:0 0 auto;background-image:url(' + thumbUrl(best.img_path) + ')"></div>' +
     '<div style="flex:1;min-width:0"><div class="qn">' + esc(best.name || "") + '</div>' +
-    '<div class="qd"><span class="salechip">FOR SALE' + (price ? '<span translate="no"> · ' + esc(price) + '</span>' : '') + '</span> · ' + ago(best.created_at) + ' · @' + esc(best.handle || "hunter") + '</div>' +
+    '<div class="qd"><span class="salechip">ON THE LOT' + (price ? '<span translate="no"> · ' + esc(price) + '</span>' : '') + '</span> · ' + ago(best.created_at) + ' · @' + esc(best.handle || "hunter") + '</div>' +
     '<div class="qd" translate="no" style="margin-top:3px">' + Number(best.la).toFixed(2) + ', ' + Number(best.lo).toFixed(2) + ' · ~1 km</div></div>' +
     '<div style="display:flex;flex-direction:column;gap:6px;flex:0 0 auto">' +
     (best.sign_path ? '<a class="btn" style="padding:9px 12px;font-size:10px" target="_blank" rel="noopener" href="' + thumbUrl(best.sign_path) + '">THE SIGN ↗</a>' : '') +
@@ -6686,7 +6687,8 @@ function renderStanding(){
   if (!box) return;
   const st = hunterStats();
   const r = currentRank(st);
-  const nxt = RANKS[RANKS.indexOf(r) + 1];
+  const ladder = ranksFor(st.lane);
+  const nxt = ladder[ladder.indexOf(r) + 1];
   box.innerHTML = `
     <div id="balhero" style="margin-top:4px">
       <div style="display:flex;align-items:center;gap:14px">
@@ -7198,7 +7200,14 @@ async function syncCapture(s){
     }).select("id").single().then(r => {
       // Remember the server row id — matching on phash later is unreliable
       // because phash can be null, and make/model isn't unique.
-      if (r && r.data && r.data.id){ s.rid = r.data.id; Store.save(); }
+      if (r && r.data && r.data.id){
+        s.rid = r.data.id; Store.save();
+        // a sign close-up taken before this row existed is applied now
+        if (s.signPath){
+          sb.from("captures").update({ sign_path: s.signPath, for_sale: true, asking_price: s.price != null ? s.price : null, asking_currency: s.priceCur || null })
+            .eq("id", s.rid).then(() => {}, () => {});
+        }
+      }
       return r;
     });
   }catch(e){}
