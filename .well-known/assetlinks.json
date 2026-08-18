@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.tyrehunt.hunt",
+    "sha256_cert_fingerprints": ["B8:8A:31:3E:25:24:C9:55:37:13:70:71:6D:A8:1D:5E:8A:83:D1:A7:E3:2C:40:61:84:89:4A:6D:78:5F:36:9C"]
+  }
+}]
