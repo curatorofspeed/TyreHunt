@@ -3,6 +3,9 @@
   "target": {
     "namespace": "android_app",
     "package_name": "app.tyrehunt.hunt",
-    "sha256_cert_fingerprints": ["B8:8A:31:3E:25:24:C9:55:37:13:70:71:6D:A8:1D:5E:8A:83:D1:A7:E3:2C:40:61:84:89:4A:6D:78:5F:36:9C"]
+    "sha256_cert_fingerprints": [
+      "9B:A1:38:0B:53:0F:17:E6:CA:20:15:41:91:29:0D:56:53:BE:32:B5:46:AB:1C:E8:84:E8:53:94:75:78:3A:9E",
+      "B8:8A:31:3E:25:24:C9:55:37:13:70:71:6D:A8:1D:5E:8A:83:D1:A7:E3:2C:40:61:84:89:4A:6D:78:5F:36:9C"
+    ]
   }
 }]
