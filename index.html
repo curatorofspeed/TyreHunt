@@ -6929,11 +6929,22 @@ $("dDelete").addEventListener("click", async () => {
     return;
   }
   clearTimeout(delTimer);
+  const gone = state.spots.find(x => x.id === dId);
   state.spots = state.spots.filter(x => x.id !== dId);
   await Store.save();
   $("dossier").classList.remove("on");
   renderGarage(); renderHUD();
   toast("Spot deleted");
+  // the server copy goes too — feed, registry, map and lot all read from it
+  if (gone && sb && sbSession){
+    try{
+      if (gone.rid) await sb.from("captures").delete().eq("id", gone.rid);
+      const files = [];
+      if (gone.rid || gone.img) files.push(sbSession.user.id + "/" + gone.id + ".jpg");
+      if (gone.signPath) files.push(gone.signPath);
+      if (files.length) await sb.storage.from("captures").remove(files);
+    }catch(e){}
+  }
 });
 $("dShare").addEventListener("click", () => shareCard(state.spots.find(x => x.id === dId)));
 
