@@ -1437,7 +1437,16 @@ window.addEventListener("unhandledrejection", (e) => telemetry("promise", e.reas
    steering to web checkout from a Play-installed app, so that build hides
    the storefront entirely — subscriptions live on the open web. */
 try{ if (new URLSearchParams(location.search).get("twa") === "1") localStorage.setItem("th:twa", "1"); }catch(e){}
-const IS_TWA = (() => { try{ return localStorage.getItem("th:twa") === "1"; }catch(e){ return false; } })();
+const IS_TWA = (() => {
+  // store builds hide the storefront: Play launches at /?twa=1; the iOS
+  // Capacitor shell injects window.Capacitor into the page. Same rule for
+  // both — subscriptions live on the open web only.
+  try{
+    if (localStorage.getItem("th:twa") === "1") return true;
+    if (window.Capacitor){ localStorage.setItem("th:twa", "1"); return true; }
+    return false;
+  }catch(e){ return !!window.Capacitor; }
+})();
 if (IS_TWA) document.documentElement.classList.add("twa");
 
 const KEY = "tyrehunt:v1";
