@@ -2186,24 +2186,50 @@ function euroModels(){ return modelsWhere(s => { const a = { make: spotStr(s), m
 function mosaicBoxes(canvas, boxes){
   (boxes || []).forEach(b => {
     const bw = b.x1 - b.x0, bh = b.y1 - b.y0;
-    // The judge finds plates reliably but can land a full box-height off.
-    // Redaction absorbs that: big vertical margin with an absolute floor
-    // (offsets are mostly vertical), generous horizontal. Too big is a
-    // non-event; too small is a readable plate.
-    const exW = Math.max(bw * .6,  .02);
-    const exH = Math.max(bh * 1.4, .03);
-    const X0 = Math.max(0, Math.round((b.x0 - exW) * canvas.width));
-    const Y0 = Math.max(0, Math.round((b.y0 - exH) * canvas.height));
-    const X1 = Math.min(canvas.width, Math.round((b.x1 + exW) * canvas.width));
-    const Y1 = Math.min(canvas.height, Math.round((b.y1 + exH) * canvas.height));
-    if (X1 - X0 < 4 || Y1 - Y0 < 4) return;
-    const t = document.createElement("canvas");
-    t.width = Math.max(7, Math.round((X1 - X0) / 14)); t.height = Math.max(3, Math.round(t.width * (Y1 - Y0) / (X1 - X0)));
-    t.getContext("2d").drawImage(canvas, X0, Y0, X1 - X0, Y1 - Y0, 0, 0, t.width, t.height);
-    const pxc = canvas.getContext("2d");
-    pxc.imageSmoothingEnabled = false;
-    pxc.drawImage(t, 0, 0, t.width, t.height, X0, Y0, X1 - X0, Y1 - Y0);
-    pxc.imageSmoothingEnabled = true;
+    // The judge finds plates reliably but can land a full box-height off, and
+    // real plates run taller than its box. The SAFETY ZONE below must be fully
+    // blurred; a feather OUTSIDE the zone melts it into the photo so the
+    // oversize reads as depth-of-field, not a censor block.
+    const exW = Math.max(bw * .7,  .025);
+    const exH = Math.max(bh * 1.8, .04);
+    const sX0 = Math.round((b.x0 - exW) * canvas.width);
+    const sY0 = Math.round((b.y0 - exH) * canvas.height);
+    const sX1 = Math.round((b.x1 + exW) * canvas.width);
+    const sY1 = Math.round((b.y1 + exH) * canvas.height);
+    const sw = sX1 - sX0, sh = sY1 - sY0;
+    if (sw < 4 || sh < 4) return;
+    const f = Math.max(8, Math.round(Math.min(sw, sh) * .35));
+    const X0 = Math.max(0, sX0 - f), Y0 = Math.max(0, sY0 - f);
+    const X1 = Math.min(canvas.width, sX1 + f), Y1 = Math.min(canvas.height, sY1 + f);
+    const w = X1 - X0, h = Y1 - Y0;
+    // heavy blur of the patch: crush to ~1/16, restore via a mid step
+    const t1 = document.createElement("canvas");
+    t1.width = Math.max(2, Math.round(w / 16)); t1.height = Math.max(2, Math.round(h / 16));
+    t1.getContext("2d").drawImage(canvas, X0, Y0, w, h, 0, 0, t1.width, t1.height);
+    const t2 = document.createElement("canvas");
+    t2.width = Math.max(4, Math.round(w / 4)); t2.height = Math.max(4, Math.round(h / 4));
+    const g2 = t2.getContext("2d"); g2.imageSmoothingEnabled = true;
+    g2.drawImage(t1, 0, 0, t2.width, t2.height);
+    const soft = document.createElement("canvas");
+    soft.width = w; soft.height = h;
+    const sg = soft.getContext("2d");
+    sg.imageSmoothingEnabled = true;
+    sg.drawImage(t2, 0, 0, w, h);
+    // mask on its own canvas: opaque core = the whole safety zone, soft only
+    // in the outer feather band (barely-rounded corners — curves cost coverage)
+    const mask = document.createElement("canvas");
+    mask.width = w; mask.height = h;
+    const mg = mask.getContext("2d");
+    mg.shadowColor = "#fff"; mg.shadowBlur = f; mg.fillStyle = "#fff";
+    const mx = sX0 - X0, my = sY0 - Y0;   // zone position inside the patch (0 at canvas edges)
+    for (let i = 0; i < 2; i++){
+      mg.beginPath();
+      mg.roundRect ? mg.roundRect(mx, my, sw, sh, 6) : mg.rect(mx, my, sw, sh);
+      mg.fill();
+    }
+    sg.globalCompositeOperation = "destination-in";
+    sg.drawImage(mask, 0, 0);
+    canvas.getContext("2d").drawImage(soft, X0, Y0);
   });
 }
 /* "$8,500" / "€12.000" / "8,500" — currency-aware when the judge read one. */
