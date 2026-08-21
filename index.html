@@ -2181,57 +2181,6 @@ function modelsWhere(pred){
 function exoticModels(){ return modelsWhere(s => s.cls === "exotic" || s.rarity === "legendary" || s.rarity === "rare"); }
 function muscleModels(){ return modelsWhere(s => (s.tags || []).includes("american_muscle") || (inSet({ make: spotStr(s), model: "" }, MAKESETS.american) && (s.decade === "1960s" || s.decade === "1970s"))); }
 function euroModels(){ return modelsWhere(s => { const a = { make: spotStr(s), model: "" }; return (inSet(a, MAKESETS.italian) || inSet(a, MAKESETS.british) || spotStr(s).includes("mercedes") || spotStr(s).includes("bmw") || spotStr(s).includes("audi") || spotStr(s).includes("porsche") || spotStr(s).includes("citro") || spotStr(s).includes("volkswagen")) && ["1950s","1960s","1970s","1980s"].includes(s.decade); }); }
-/* Pixelate 0..1-fraction boxes on a canvas. Expanded 35% per side — a blur
-   that clips the edge of a plate or a phone number fails at its one job. */
-function mosaicBoxes(canvas, boxes){
-  (boxes || []).forEach(b => {
-    const bw = b.x1 - b.x0, bh = b.y1 - b.y0;
-    // The judge finds plates reliably but can land a full box-height off, and
-    // real plates run taller than its box. The SAFETY ZONE below must be fully
-    // blurred; a feather OUTSIDE the zone melts it into the photo so the
-    // oversize reads as depth-of-field, not a censor block.
-    const exW = Math.max(bw * .7,  .025);
-    const exH = Math.max(bh * 1.8, .04);
-    const sX0 = Math.round((b.x0 - exW) * canvas.width);
-    const sY0 = Math.round((b.y0 - exH) * canvas.height);
-    const sX1 = Math.round((b.x1 + exW) * canvas.width);
-    const sY1 = Math.round((b.y1 + exH) * canvas.height);
-    const sw = sX1 - sX0, sh = sY1 - sY0;
-    if (sw < 4 || sh < 4) return;
-    const f = Math.max(8, Math.round(Math.min(sw, sh) * .35));
-    const X0 = Math.max(0, sX0 - f), Y0 = Math.max(0, sY0 - f);
-    const X1 = Math.min(canvas.width, sX1 + f), Y1 = Math.min(canvas.height, sY1 + f);
-    const w = X1 - X0, h = Y1 - Y0;
-    // heavy blur of the patch: crush to ~1/16, restore via a mid step
-    const t1 = document.createElement("canvas");
-    t1.width = Math.max(2, Math.round(w / 16)); t1.height = Math.max(2, Math.round(h / 16));
-    t1.getContext("2d").drawImage(canvas, X0, Y0, w, h, 0, 0, t1.width, t1.height);
-    const t2 = document.createElement("canvas");
-    t2.width = Math.max(4, Math.round(w / 4)); t2.height = Math.max(4, Math.round(h / 4));
-    const g2 = t2.getContext("2d"); g2.imageSmoothingEnabled = true;
-    g2.drawImage(t1, 0, 0, t2.width, t2.height);
-    const soft = document.createElement("canvas");
-    soft.width = w; soft.height = h;
-    const sg = soft.getContext("2d");
-    sg.imageSmoothingEnabled = true;
-    sg.drawImage(t2, 0, 0, w, h);
-    // mask on its own canvas: opaque core = the whole safety zone, soft only
-    // in the outer feather band (barely-rounded corners — curves cost coverage)
-    const mask = document.createElement("canvas");
-    mask.width = w; mask.height = h;
-    const mg = mask.getContext("2d");
-    mg.shadowColor = "#fff"; mg.shadowBlur = f; mg.fillStyle = "#fff";
-    const mx = sX0 - X0, my = sY0 - Y0;   // zone position inside the patch (0 at canvas edges)
-    for (let i = 0; i < 2; i++){
-      mg.beginPath();
-      mg.roundRect ? mg.roundRect(mx, my, sw, sh, 6) : mg.rect(mx, my, sw, sh);
-      mg.fill();
-    }
-    sg.globalCompositeOperation = "destination-in";
-    sg.drawImage(mask, 0, 0);
-    canvas.getContext("2d").drawImage(soft, X0, Y0);
-  });
-}
 /* "$8,500" / "€12.000" / "8,500" — currency-aware when the judge read one. */
 function fmtPrice(n, cur){
   if (n == null || !isFinite(n)) return "";
@@ -2528,8 +2477,6 @@ $("angleFile").addEventListener("change", async e => {
   const wasFull = isFullDossier(s);
   try{
     const out = await verifyAngle(c, slot);
-    // plates are pixelated on the angle shot too (a sign stays legible)
-    if (out) { try { mosaicBoxes(c, out.plates_norm || []); } catch(e){} }
     const thumb = document.createElement("canvas");
     const tmax = slot === "sign" ? 900 : 480;   // a sign must stay readable — that photo IS the listing
     const tr = Math.min(tmax / c.width, tmax / c.height, 1);
@@ -5473,11 +5420,10 @@ async function processResult(res, canvas, source, ctx){
     }
   }
 
-  // privacy: pixelate license plates before the shot is thumbed, stored, or
-  // shared. A for-sale sign is left legible on purpose — the seller put it in
-  // a public window to be read; we just never extract it into a field.
+  // plates are left as-shot (Aug 2026 decision: imperfect redaction is worse
+  // than none — every car platform publishes plates; nothing extracts them)
   try{
-    mosaicBoxes(canvas, res.plates_norm || []);
+    void 0;
   }catch(e){}
 
   const spot = {
