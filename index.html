@@ -7082,6 +7082,15 @@ function bindMagic(){
     if (!sb){ toast("Sign-in unavailable right now"); return; }
     const email = ($("pfEmail").value || "").trim();
     if (!email.includes("@")){ toast("Enter an email"); return; }
+    // store-review sandbox: no mailbox on reviewer devices, so this one
+    // account skips the email and verifies a fixed code server-side
+    if (email === "review@tyrehunt.app"){
+      otpEmail = email;
+      const box = $("otpBox");
+      if (box){ box.classList.add("on"); const f = $("otpCode"); if (f) f.focus(); }
+      toast("Enter the review code");
+      return;
+    }
     magic.disabled = true;
     const label = magic.textContent;
     magic.textContent = "SENDING…";
@@ -7115,7 +7124,16 @@ async function verifyOtpCode(){
   if (!email){ toast("Enter your email first"); return; }
   btn.disabled = true; btn.textContent = "SIGNING IN…";
   try{
-    const { error } = await sb.auth.verifyOtp({ email, token, type: "email" });
+    let realToken = token;
+    if (email === "review@tyrehunt.app"){
+      const r = await fetch(CONFIG.supabaseUrl + "/functions/v1/review-login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: token })
+      });
+      if (!r.ok) throw new Error("code rejected");
+      realToken = (await r.json()).otp;
+    }
+    const { error } = await sb.auth.verifyOtp({ email, token: realToken, type: "email" });
     if (error) throw error;
     field.value = "";
     const box = $("otpBox"); if (box) box.classList.remove("on");
