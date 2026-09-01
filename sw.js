@@ -72,11 +72,15 @@ self.addEventListener("push", (e) => {
   const title = d.title || "TYRE HUNT";
   const body = d.body || "";
   const url = typeof d.url === "string" && d.url.startsWith("/") ? d.url : "/";
+  // a sighting push carries the hunter's photo; the sender only ever passes
+  // our own public capture bucket, so nothing else is shown
+  const image = typeof d.image === "string" && d.image.startsWith("https://kokxlzygppakgcebkygc.supabase.co/storage/v1/object/public/captures/") ? d.image : undefined;
 
   e.waitUntil(self.registration.showNotification(title, {
     body,
     icon: "/icon-192.png",
     badge: "/icon-192.png",
+    image,
     data: { url },
     // Collapses repeats: a second like replaces the first rather than
     // stacking six notifications on the lock screen.
