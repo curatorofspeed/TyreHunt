@@ -4587,24 +4587,33 @@ function suggestHtml(list){
    anon RPCs that hand back the same safe columns the www pages use: no
    coordinates, no email, flagged captures and suspended hunters excluded. */
 async function renderPublicFeed(box){
-  const lot = feedMode === "lot";
+  const lot = feedMode === "lot", cotd = feedMode === "cotd", cd = cotd ? carOfTheDay() : null;
   box.innerHTML = skeletonCards(3);
-  $("cotdHead").classList.toggle("on", lot);
+  $("cotdHead").classList.toggle("on", lot || cotd);
+  if (cotd) $("cotdHead").innerHTML = '<div class="k">CAR OF THE DAY</div><div class="n">' + esc(cd.name) + '</div><div class="m">Loading today\'s board…</div>';
   if (lot) $("cotdHead").innerHTML = '<div class="k">THE LOT</div><div class="n">Curbside, for sale</div><div class="m">Cars hunters found wearing a sign. The car, the price, and roughly where — never the seller\'s number.</div>';
   try{
     const { data, error } = lot
       ? await sb.rpc("public_lot", { lim: 40 })
-      : await sb.rpc("public_feed", { lim: 30 });
+      : await sb.rpc("public_feed", { lim: cotd ? 60 : 30 });
     if (error) throw error;
     // the lot RPC keys rows by handle rather than uid; give each a stable
     // synthetic id so the shared card component renders it unchanged
-    const rows = (data || []).map(r => lot
+    let rows = (data || []).map(r => lot
       ? Object.assign({}, r, { user_id: "lot:" + r.id, cx_name: r.name, for_sale: true })
       : r);
+    if (cotd){
+      // same rule the signed-in board uses: today's model, since local midnight
+      const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+      const key = cxKeyOf(cd);
+      rows = rows.filter(r => r.cx_key === key && new Date(r.created_at) >= midnight);
+      $("cotdHead").innerHTML = '<div class="k">CAR OF THE DAY</div><div class="n">' + esc(cd.name) + '</div><div class="m">' +
+        (rows.length ? rows.length + ' hunter' + (rows.length === 1 ? '' : 's') + ' filed one today' : 'Nobody has landed one yet today. First shot takes the board.') + '</div>';
+    }
     feedRows = rows; feedLikes = {}; feedCmts = {}; feedMine = new Set(); feedRank = {}; feedHandles = {};
     rows.forEach(r => { feedHandles[r.user_id] = r.handle; feedSup[r.user_id] = !!r.supporter; });
     if (!rows.length){
-      box.innerHTML = lot
+      box.innerHTML = cotd ? '' : lot
         ? '<p class="pfnote">Nothing on the lot yet — spot a car wearing a sign</p>'
         : '<p class="pfnote">Nothing published yet. Your next verified capture lands here for every hunter to see.</p>';
       return;
