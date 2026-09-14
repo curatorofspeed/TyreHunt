@@ -45,3 +45,43 @@ Live on a static server, real key events unless noted.
 - **Device screen-reader pass:** VoiceOver on the iOS store app and TalkBack on Android. `aria-modal` support varies inside web views.
 - **Stable bounty pill** is now pointer-only; keyboard users reach bounties through the dossier. Making it directly reachable means moving it outside the card button, which is a layout change.
 - **www landing, lobby, privacy and terms** still lack the floor block from the Sep 4 www pass.
+
+---
+
+# Distill pass — 2026-09-13
+**Scope:** same file. **Method:** inventory each screen at phone width (sections, controls, visible words measured with `checkVisibility()`), cut what repeats, fold long walls behind their own heading, then prove nothing was lost.
+
+## Findings → changes
+**Most Wanted list repeated every car's story.** Each list card showed a 132-character excerpt of a story the lead sheet already shows in full. → **Removed** from the list card; the lead sheet still shows the full 315-character story.
+
+**Long walls buried the essentials.** Hunts carried a 42-chip Sets wall; Map stacked 29 calendar events and 16 hunting grounds under the map; the profile sheet put 27 titles and 23 badges between identity and settings. → **Folded** behind each section's existing heading as a native `<details>`: same heading text and translations, a chevron that turns when open, native keyboard and screen-reader expanded state, and open state kept across re-renders (`foldAttr()` + a capture-phase `toggle` listener).
+
+**Duplicate keyboard handlers.** The streak button, Registry pill, verdict photo and full-screen photo kept their own Enter/Space (and Escape) handlers after the shared handler and dialog manager took over. → **Removed**; behavior identical, verified below.
+
+## Measured
+Visible words at 375px:
+
+| Screen | Before | After, folds closed | All folds open |
+|---|---|---|---|
+| Hunts | 640 | 341 | 479 |
+| Map | 577 | 37 | 577 |
+| Profile, with a tag | 520 | 263 | 520 |
+
+Map and Profile lose nothing when opened. Hunts is 161 words lower when fully open only because of the removed excerpts.
+
+## Verified
+- Every fold starts closed; the Most Wanted list renders no excerpts; the lead sheet shows the full story.
+- Opened Sets and Titles folds stay open through a real re-render (a new DOM node confirmed each time); Badges stays closed.
+- A calendar entry inside the opened fold still sets the active event.
+- Enter on the streak button opens the profile with focus inside; Escape closes it and focus returns to the button.
+- Enter on the Registry pill opens Garage.
+- Enter on the verdict photo opens the full-screen photo; Escape closes only that layer and focus returns to the photo.
+- A real Tab lands on a fold heading with the 2px ring; clicking the heading toggles open and closed.
+- No console errors in any run; all inline scripts parse after the edit.
+
+**Preview-pane quirks, not product bugs.** A word counter based on element size counts text inside closed `<details>`, because Chrome hides that content with content-visibility while keeping sizes — measure with `checkVisibility()`. The pane's Enter key sends a keydown only: a plain native button received 0 clicks from it, so native heading toggling by Enter and Space is browser behavior this pass didn't touch, proven here by click.
+
+## Recommended (not done)
+- **Three "wanted" ideas share the Hunts screen:** Wanted this week, the Bounty board and Most Wanted. Merging them is a product decision, not a polish change.
+- **Car of the Day appears on camera, Hunts and Feed.** Each copy does a different job, so all three stay.
+- **46 selectors are declared in more than one CSS rule.** Most are responsive overrides or the dark-scope list; a few are true duplicates such as `body`, `.vhead` and `#vcard .vph`. Merging them changes nothing a user sees, so they were left alone.

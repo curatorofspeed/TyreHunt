@@ -263,6 +263,13 @@ html.twa #planBtn,html.twa #heTop{display:none!important}
 .qcard.done .qpay .v{color:var(--ok)}
 .qpay .u{font-size:8px;letter-spacing:.2em;color:var(--muted)}
 .sechead{font-size:10px;font-weight:800;letter-spacing:.3em;color:var(--muted);text-transform:uppercase;margin:15px 2px 8px}
+/* Distill: long walls fold behind their own section heading. The heading reads as
+   before, with a chevron that turns when open; everything stays one tap away. */
+details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:36px}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .15s ease;margin:0 0 2px 2px}
+details.fold[open]>summary::after{transform:rotate(45deg);margin:0 0 4px 2px}
+@media (prefers-reduced-motion: reduce){ details.fold>summary::after{transition:none} }
 
 /* rewards */
 #balhero{background:linear-gradient(160deg,var(--goldcard-a),var(--goldcard-b) 60%);border:1px solid rgba(var(--gold-rgb),.3);border-radius:var(--r-lg);padding:22px;text-align:center;position:relative;overflow:hidden}
@@ -1014,10 +1021,8 @@ html[data-appearance="light"] #app:has(#tabs .tab.cam.on) .streak{--carbon:#0A0B
       <div id="mapinfo"></div>
       <div class="sechead">Expeditions</div>
       <div id="expList"></div>
-      <div class="sechead">Live event calendar · traditional dates</div>
-      <div id="calList"></div>
-      <div class="sechead">Hunting grounds</div>
-      <div id="groundList"></div>
+      <details class="fold" data-fold="calendar"><summary class="sechead">Live event calendar · traditional dates</summary><div id="calList"></div></details>
+      <details class="fold" data-fold="grounds"><summary class="sechead">Hunting grounds</summary><div id="groundList"></div></details>
     </div>
   </section>
 
@@ -3689,7 +3694,6 @@ function renderWanted(){
     <div class="wcard" data-wanted="${w.key}" role="button" tabindex="0">
       <div class="wn">${esc(w.name)}</div>
       <div class="wy">${esc(w.built)} · ${esc(w.sub)}</div>
-      <div class="wb">${esc(w.body.slice(0, 132))}…</div>
       <div class="wl">${esc(w.last)}</div>
     </div>`).join("");
 }
@@ -5810,7 +5814,6 @@ function openPhotoFull(){
   $("photoFull").classList.add("on");
 }
 $("vPhoto").addEventListener("click", openPhotoFull);
-$("vPhoto").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openPhotoFull(); } });
 $("photoFull").addEventListener("click", () => $("photoFull").classList.remove("on"));
 $("pfSave").addEventListener("click", e => {
   e.stopPropagation();
@@ -5829,7 +5832,6 @@ $("pfSave").addEventListener("click", e => {
   };
   im.src = m[1];
 });
-$("photoFull").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " " || e.key === "Escape") $("photoFull").classList.remove("on"); });
 $("vAgain").addEventListener("click", () => { $("verdict").classList.remove("on"); detectUI("off"); });
 $("vShare").addEventListener("click", () => { if (lastVerdictSpot) shareCard(lastVerdictSpot); else toast("Nothing to share on a miss"); });
 $("vDoc").addEventListener("click", () => {
@@ -5990,7 +5992,6 @@ $("codexPill").addEventListener("click", () => {
   const cb = document.querySelector('#gSeg [data-seg="codex"]');
   if (cb) cb.click();
 });
-$("codexPill").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); $("codexPill").click(); } });
 
 /* ================= CODEX ENTRY SHEET / LORE / TOP 8 ================= */
 let ceKey = null;
@@ -6716,7 +6717,7 @@ function renderQuests(){
        </div>
        <div class="qpay"><div class="v">${state.dayBonus ? "DONE" : "OPEN"}</div><div class="u">${state.dayBonus ? "" : n + " / 3"}</div></div>
      </div>` +
-    '<div class="sechead">Sets</div>' + scards +
+    '<details class="fold" data-fold="sets"' + foldAttr("sets") + '><summary class="sechead">Sets</summary>' + scards + '</details>' +
     `<div class="sechead">Streak</div>
      <div class="qcard">
        <div class="qic" style="color:var(--ember);border-color:rgba(var(--acc-rgb),.4)">
@@ -6819,10 +6820,8 @@ function renderStanding(){
     <div class="sechead">Records</div>
     <div id="recordList"></div>
     <button class="btn" id="wrapBtn" style="width:100%;margin:12px 0 2px;color:var(--gold);border-color:rgba(var(--gold-rgb),.45)"></button>
-    <div class="sechead">Titles</div>
-    <div id="titleGrid"></div>
-    <div class="sechead">Badges</div>
-    <div id="badgeGrid"></div>`;
+    <details class="fold" data-fold="titles"${foldAttr("titles")}><summary class="sechead">Titles</summary><div id="titleGrid"></div></details>
+    <details class="fold" data-fold="badges"${foldAttr("badges")}><summary class="sechead">Badges</summary><div id="badgeGrid"></div></details>`;
   $("rankName").textContent = r.name;
   $("rankStats").textContent = st.models + " models · " + st.rare + " rare · " + st.legend + " legendary";
   if (nxt) $("rankNext").innerHTML = '<b><span>NEXT</span> — <span translate="no">' + nxt.name + '</span>:</b> ' + esc(nxt.req);
@@ -7637,13 +7636,20 @@ async function drawQR(){
 }
 
 $("profileBtn").addEventListener("click", openProfile);
-$("profileBtn").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openProfile(); } });
 $("pfClose").addEventListener("click", () => $("profile").classList.remove("on"));
 function openProfile(){
   $("profile").classList.add("on");
   renderProfile();
   if (sb && sbSession) refreshCrew().then(renderProfile);
 }
+/* Folded sections rendered from templates keep their open state across re-renders. */
+function foldAttr(k){ return (window.__foldOpen && window.__foldOpen.has(k)) ? " open" : ""; }
+document.addEventListener("toggle", e => {
+  const d = e.target;
+  if (!d || !d.matches || !d.matches("details[data-fold]")) return;
+  const open = window.__foldOpen || (window.__foldOpen = new Set());
+  if (d.open) open.add(d.dataset.fold); else open.delete(d.dataset.fold);
+}, true);
 /* ================= DIALOG FLOOR =================
    Every sheet is a layer. Opening one moves focus inside and remembers what
    opened it; closing sends focus back there. Escape closes the topmost layer
