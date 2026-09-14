@@ -510,7 +510,8 @@ button.bdg[disabled]{cursor:default}
 #reelProg .rt{font:900 15px var(--disp);letter-spacing:.14em;margin-bottom:6px}
 #reelProg .rs{font-size:11.5px;color:var(--muted);margin-bottom:14px}
 #reelProg .rbar{height:6px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
-#reelProg .rbar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--ember),var(--gold));transition:width .2s linear}
+#reelProg .rbar i{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:left center;background:linear-gradient(90deg,var(--ember),var(--gold));transition:transform .2s linear}
+html[dir="rtl"] #reelProg .rbar i{transform-origin:right center}
 
 /* car of the day board */
 #cotdHead{background:linear-gradient(180deg,rgba(var(--gold-rgb),.12),rgba(var(--gold-rgb),.02));border:1px solid rgba(var(--gold-rgb),.4);border-radius:var(--r-md);padding:13px 15px;margin-bottom:12px;display:none}
@@ -690,7 +691,8 @@ button.bdg[disabled]{cursor:default}
 /* gestures: swipe-to-dismiss + pull-to-refresh */
 .swipeable{will-change:transform}
 .grabber{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:38px;height:4px;border-radius:2px;background:var(--hair-strong);z-index:5;pointer-events:none}
-#ptr{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:center;height:0;overflow:hidden;color:var(--muted);font:700 10px var(--mono);letter-spacing:.16em;z-index:6;pointer-events:none}
+#ptr{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:center;height:96px;overflow:hidden;color:var(--muted);font:700 10px var(--mono);letter-spacing:.16em;z-index:6;pointer-events:none;transform:translateY(-100%);opacity:0;transition:transform .28s cubic-bezier(.2,.8,.3,1),opacity .2s ease}
+#ptr.pulling{transition:none}
 #ptr .spin{margin-right:7px}
 
 /* one-time code sign-in */
@@ -841,7 +843,7 @@ button.bdg[disabled]{cursor:default}
 @media (orientation: landscape) and (max-height: 520px){ #ticker{bottom:14px;left:12px} .tick{max-width:200px} }
 
 /* toast */
-#toast{position:absolute;left:50%;bottom:120px;transform:translate(-50%,20px);z-index:30;background:#171A22;border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 16px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;max-width:88%}
+#toast{position:absolute;left:50%;bottom:120px;transform:translate(-50%,20px);z-index:30;background:#171A22;border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 16px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;white-space:nowrap;max-width:88%}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 input[type=file]{display:none}
 ::-webkit-scrollbar{width:0;height:0}
@@ -885,6 +887,15 @@ details.fold.opening>summary~*{animation:foldIn .22s ease}
 @media (prefers-reduced-motion: reduce){
   #vcard .vph{transform:none;transition:none}
   #vcard .vph::before{display:none}
+}
+
+/* ================= ANIMATE =================
+   Motion that carries state moves on transform, opacity or paint only, and
+   eases instead of jumping. Declared last so its reduced-motion rules win. */
+#streakArc{transition:stroke-dashoffset .7s cubic-bezier(.2,.8,.3,1)}
+@media (prefers-reduced-motion: reduce){
+  #toast{transform:translate(-50%,0);transition:opacity .3s ease}
+  #ptr,#streakArc,#reelProg .rbar i{transition:none}
 }
 </style>
 </head>
@@ -2754,7 +2765,7 @@ async function makeReel(spots, title, fname){
     toast("This browser can't record video"); return;
   }
   const prog = $("reelProg"), bar = $("reelBar");
-  prog.classList.add("on"); bar.style.width = "0%";
+  prog.classList.add("on"); bar.style.transform = "scaleX(0)";
   try{
     const imgs = await Promise.all(spots.map(s => loadImg(s.img)));
     const W = 1080, H = 1920, FPS = 30;
@@ -2777,7 +2788,7 @@ async function makeReel(spots, title, fname){
     await new Promise(done => {
       function frame(){
         const t = (performance.now() - t0) / 1000;
-        bar.style.width = Math.round(Math.min(t / total, 1) * 100) + "%";
+        bar.style.transform = "scaleX(" + Math.min(t / total, 1).toFixed(3) + ")";
         x.fillStyle = "#0A0B0E"; x.fillRect(0, 0, W, H);
         x.textBaseline = "top";
         if (t < INTRO){
@@ -3313,13 +3324,13 @@ function armPullToRefresh(){
   body.addEventListener("touchmove", e => {
     if (!pulling) return;
     dy = Math.max(0, Math.min(96, e.touches[0].clientY - y0));
-    ind.style.height = dy + "px";
+    ind.classList.add("pulling"); ind.style.transform = "translateY(" + (dy - 96) + "px)"; ind.style.opacity = String(Math.min(1, dy / 60));
   }, { passive: true });
   body.addEventListener("touchend", () => {
     if (!pulling) return;
     pulling = false;
     const fire = dy > 60;
-    ind.style.height = "0px";
+    ind.classList.remove("pulling"); ind.style.transform = ""; ind.style.opacity = "";
     if (!fire) return;
     sfx("tick");
     const seg = document.querySelector("#gSeg button.on");

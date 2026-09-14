@@ -153,3 +153,43 @@ Map and Profile lose nothing when opened. Hunts is 161 words lower when fully op
 - **Feel it on real phones.** Tilt strength, glare intensity and the gyroscope's range are tuned on paper; one pass on an iPhone and an Android phone should confirm they feel right.
 - **iOS gyroscope** would need a permission prompt. Asking only after a legendary find would make the prompt feel earned, but that's a product decision.
 - **Share cards** are exported images and stay still by design.
+
+---
+
+# Animate pass — 2026-09-13
+**Scope:** same file. **Method:** inventory every transition and keyframe animation with the properties it moves, plus the duration and easing spread; move motion that forces layout onto transform or opacity, remove blanket transitions, animate state that jumped, and keep reduced motion complete.
+
+## Findings → changes
+
+### 🟡 Medium
+**The toast transitioned every property.** Its rule said `transition:.3s` with no property, which means all of them, so theme colors or any layout change on it would animate along with the intended fade and slide. → **Fixed:** `opacity` and `transform` only. Under reduced motion it fades without sliding.
+
+**The reel progress bar forced layout on every frame of the app's heaviest task.** Its width was rewritten on each tick while a reel renders. → **Fixed:** the fill stays full width and scales horizontally, anchored left, and right in Arabic so it still fills in reading order. The fill has no rounded ends, so the change is pixel-identical.
+
+**Pull-to-refresh resized on every touch-move and snapped away on release.** → **Fixed:** the indicator follows the finger on a transform with no lag, fades in over the first 60px of pull (the refresh threshold), clamps at 96px, and eases away on release. Reduced motion keeps direct finger tracking and drops the ease.
+
+### 🟢 Low
+**The streak ring's progress arc jumped between values.** → **Added:** it eases to its new length over 0.7s. Paint-only, and off under reduced motion.
+
+### Measured and left alone (correctly)
+- Every keyframe animation already moves only transform, opacity or cheap paint properties: `filter` on the capture bracket glow and `background-position` on the loading shimmer.
+- The motion vocabulary is already coherent: one enter curve, `cubic-bezier(.2,.8,.3,1)`, used 14 times; one overshoot curve for pops; `ease` for fades; `linear` for loops; 0.22s for sheets. A few one-off durations (0.24s verdict, 0.25s feed badge, 0.28s coach) aren't worth churning.
+- The rank progress bar declares a width transition that never runs, because the bar is rebuilt and sized in the same step, so there's nothing to animate.
+
+## Verified
+- The toast computes `transition-property: opacity, transform` at 0.3s each.
+- The streak arc computes a 0.7s `stroke-dashoffset` transition.
+- The reel bar at half progress computes `matrix(0.5, 0, 0, 1, 0, 0)` with its width equal to the 320px track and its origin at the left edge; with `dir="rtl"` the origin moves to the right edge at 320px.
+- Pull-to-refresh at rest computes `translateY(-96px)` at opacity 0, with transform and opacity transitions.
+- A 70px pull sets `translateY(-26px)` at full opacity with no transition while dragging; a 30px pull sets `translateY(-66px)` at opacity 0.5; an over-pull clamps at `translateY(0px)`.
+- Release removes the dragging class, clears the inline values, and hands the return to the 0.28s transform and 0.2s opacity ease.
+- With the reduced-motion rules applied outside their media query, the toast computes an opacity-only transition with no slide offset, and the streak arc, reel bar and pull indicator compute 0s transitions.
+- A walk of the live stylesheet still finds all 38 animated selectors covered by reduced motion.
+- No console errors in any run; all inline scripts parse after the edit.
+
+**Preview-pane quirks, not product bugs.** Transitions are frozen in a hidden pane, so values were read as targets and transition properties rather than watched. Touch was driven with real `Touch` and `TouchEvent` objects at phone size.
+
+## Recommended (not done)
+- **The camera tab's ring morph** animates width, height and margin when switching to and from the camera. It's one small element and only runs on a tab switch, and a transform rewrite would change how its border thins, so it was left.
+- **Sheets animate in but vanish instantly on close.** Exit animations mean delaying each sheet's hide across fifteen layers and the dialog manager's focus return; worth doing deliberately, not as a polish edit.
+- **The one-off durations** could fold into the 0.22s and 0.3s vocabulary if a motion token set is ever introduced.
