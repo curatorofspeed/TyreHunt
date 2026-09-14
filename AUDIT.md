@@ -238,3 +238,77 @@ The first version of the wrap fix let both elements shrink freely and broke text
 - **Read-only fetches** (inbox bell, operator list, comment list, share link) are left unguarded: a repeat is harmless and just refreshes.
 - **Server-side idempotency** is the real backstop for double submits from two devices or a retry after a timeout. Unique constraints or idempotency keys on bounties, comments and hunts would cover what a client guard can't.
 - **Screens not swept at 320px:** Garage, Feed and the sheets. Hunts and Map carry the longest strings and had every measured failure, but a full sweep would close it out.
+
+---
+
+# Onboard pass — 2026-09-14
+**Scope:** same file. **Method:** walk a clean install on a fresh origin (no local storage, no IndexedDB) from the intro to the first shutter tip, then into every signed-out wall; read the coach, camera-fallback and sign-in code behind what showed up; repeat the walk in German and with an existing tag.
+
+## Findings → changes
+
+### 🟠 High
+**Signed-out actions ended at a toast.** Twelve taps a new user reaches early only toasted "Sign in to…" and stopped. Nothing opened, and nothing said sign-in lives behind the streak ring:
+- plan my hunt, schedule a hunt, join a hunt, join
+- post a bounty, report a bounty, file a lead
+- see a hunter, add to crew, crews, activity, upgrade
+
+The Feed's CLAIM TAG button was the only signed-out path that opened the tag sheet. Three notes also sat as dead text: scheduled hunts and the bounty board in Hunts, and Rankings.
+
+→ **Fixed:**
+- **Toasts.** The same toast now also opens the tag sheet, at the right step: claim a handle, or the email step for someone who already has one.
+- **Stacking.** The sheet rises above whatever sheet sent the user there. The upgrade sheet sits at 28, so the tag sheet goes to 29, still under the toast at 30. Closing it returns focus to the button that was tapped.
+- **Notes.** The three notes gain a button: CLAIM TAG, or SECURE YOUR TAG when a handle exists. Both labels reuse strings that were already translated.
+
+**The first-run tips were English in all eight other languages.** The three coach tips are a new user's only guidance, and none of their strings were in the dictionary. German showed "Point at any car" under a translated intro and camera screen. → **Fixed:** five entries per language, using each language's existing terms for Registry, Garage, Car of the Day and the tu/du/tú register. The numbered tip uses the dictionary's digit key, so "That's entry No. 1" renders as "Das ist Eintrag Nr. 1".
+
+### 🟡 Medium
+**The intro wasn't a dialog.** It covers the whole app, but it had no dialog role and no label, and focus stayed on the page body, so Tab reached the camera, tabs and HUD hidden behind it. → **Fixed:**
+- It is a labeled modal dialog in the dialog manager, so focus moves in and Tab is held on START HUNTING.
+- Escape starts the hunt, the only way out.
+- A keyboard or screen-reader start lands focus on the shutter, not on a button that just disappeared.
+
+**The coach tip was silent, keyboard-dead, and lost to its own timer.**
+- **Silent.** The bubble had no live region.
+- **Keyboard-dead.** Only a tap dismissed it.
+- **Lost to its timer.** The 9-second auto-hide recorded the tip as seen, so a new user who looked away from the phone never got "Point at any car" again.
+
+→ **Fixed:**
+- The tip is announced through the app's existing announce channel, read back after translation so it matches the screen.
+- Escape dismisses it, but only when no sheet claimed the key first.
+- The first-shutter tip's timer now only hides it, so it returns each launch until the first capture. The later tips stay one-offs, since they're tied to capture No. 1 and No. 3.
+
+### Measured and left alone (correctly)
+- **Intro.** It already does onboarding right: one screen, a real result card, one rule (the Registry), one button, and the camera and location promise before the permission prompt. No carousel was added.
+- **Camera off.** With the camera denied or unavailable, the viewfinder says so and the shutter falls back to the phone's own camera, so the copy is true and the path works.
+- **Empty states.** Garage, Feed, Map and the leaderboard each say what goes there and how to fill it.
+
+## Verified
+- **Clean install.** The intro opens with `role="dialog"`, `aria-modal="true"`, and a label reading "Tyre Hunt", with focus on the dialog.
+  - Real Tab, Tab, and Shift+Tab all stay on START HUNTING.
+  - Real Escape starts the hunt: the intro closes, the intro is recorded as seen, and focus lands on the shutter button.
+- **Coach, first tip.** It appears about 3 seconds later, and the live region reads "Point at any car. Tap here. It doesn't have to be exotic — the app names whatever you find."
+  - Real Escape hides it and records it.
+  - Re-shown and left alone, it hid after 9.5 seconds with nothing recorded.
+- **Signed-out tap.** Tapping SCHEDULE A HUNT toasts "Sign in to schedule a hunt" and opens the tag sheet at the claim step, at z-index 29 with focus inside.
+  - Real Escape closes the sheet and returns focus to SCHEDULE A HUNT.
+  - The Hunts notes show two CLAIM TAG buttons, computed uppercase. The first opens the tag sheet at its normal z-index of 24, with the raise cleared.
+- **Existing tag.** The same buttons read SECURE YOUR TAG.
+  - With the upgrade sheet open at 28, the tag sheet opens at 29, and the element at the sheet's center belongs to the tag sheet.
+  - Real Escape closes the tag sheet first and leaves the upgrade sheet open.
+- **German.**
+  - The Garage tip renders "Das ist Eintrag Nr. 1" with the translated body, and the live region carries the German text.
+  - The Today's target tip renders "Heutiges Ziel" and "Erwisch das Auto des Tages…".
+  - The note buttons read TAG SICHERN.
+- **Static checks.**
+  - All eight languages have all five coach entries.
+  - The numbered key keeps its digit placeholder.
+  - The dictionary still parses.
+  - No "Sign in" toast remains on a tap path. The two left are background notices, the push prompt and the offline queue, with nothing to tap.
+- No console errors in any run; all inline scripts parse after the edit.
+
+**Preview-pane quirk, not a product bug.** The key tool's Enter doesn't activate native buttons, so the SCHEDULE A HUNT check was re-run with a real click; Escape and Tab were real key presses.
+
+## Recommended (not done)
+- **Resume the interrupted action after sign-in.** Adding someone to your crew already does this (`pendingCrew`). Doing the same for scheduling, posting a bounty and filing a lead would drop the user back where they were.
+- **The two-step account** (claim a handle, then add an email) is the product's design, and the copy explains it. A single email-first step would be a product decision, not polish.
+- **The signed-out map meta line** ("Sign in to see the world map") is a status line inside the map header, so it was left as text.
