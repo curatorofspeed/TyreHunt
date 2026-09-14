@@ -312,3 +312,41 @@ The Feed's CLAIM TAG button was the only signed-out path that opened the tag she
 - **Resume the interrupted action after sign-in.** Adding someone to your crew already does this (`pendingCrew`). Doing the same for scheduling, posting a bounty and filing a lead would drop the user back where they were.
 - **The two-step account** (claim a handle, then add an email) is the product's design, and the copy explains it. A single email-first step would be a product decision, not polish.
 - **The signed-out map meta line** ("Sign in to see the world map") is a status line inside the map header, so it was left as text.
+
+---
+
+# Optimize pass — 2026-09-14
+**Scope:** same file plus its static assets. **Method:** measure production delivery with curl (compression, cache headers, ETag revalidation), take the page apart by weight, read the browser's resource timing on a clean install and on a returning launch, time script compile, and fix only what the numbers justify.
+
+## Findings → changes
+
+### 🟠 High
+**The 3.9 MB splash video downloaded on every launch that can't play it.** `logo-anim.mp4` sat in the page with `preload="auto"`, so the browser began fetching it about 100ms after navigation: 3,845 KB in resource timing. That happened for returning hunters, and for Reduce Motion users whose splash code exits immediately, yet only the first START HUNTING tap ever plays it. Production serves it with `max-age=0` and an ETag. Where a phone's media cache keeps the file, a relaunch costs a 304 revalidation (tested: plain and ranged conditional requests both return 304). A fresh install, a cleared cache or an evicted entry pays the full 3.9 MB on cellular. → **Fixed:** the video element ships with no source and `preload="none"`. The splash script hands boot a loader only when motion is allowed, and boot calls it only when the intro is actually shown. First-run users start the download the moment the intro appears, as before.
+
+### 🟡 Medium
+**Every download of the page carried a photo only first-run users see.** The intro card's Porsche was a 38.5 KB base64 JPEG inlined in the CSS, and base64 barely compresses, so every new deploy's HTML shipped it to every user. → **Fixed:** it's now `intro-911.jpg` (28.9 KB, 420×226). Browsers don't fetch backgrounds of hidden elements, so returning users never request it. The HTML went from 857.4 KB to 819.2 KB raw, and from 204.8 KB to 177.2 KB with Brotli at quality 11, 13.5% smaller.
+
+### Measured and left alone (correctly)
+- **HTML delivery.** Brotli 262 KB from Vercel, ETag revalidation returns 304 with no body, and the service worker is network-first, so deploys land and unchanged launches cost a round trip.
+- **Runtime weight.** About 600 DOM nodes and a 5 MB JS heap after boot. Main script compile is 10.8 ms and the translation dictionary compiles and runs in 6.6 ms cold on the desktop pane (4 cores).
+- **Feed images.** Captures upload at 360×640 and weigh 73–83 KB, and they load lazily with a 400px margin. Supabase's resize endpoint works on this project and would halve them, but each transformed origin image is billed, so it isn't worth it at this size.
+- **Fonts.** Preconnected, `display=swap`, and only the faces the page renders were fetched (Archivo, JetBrains Mono, Racing Sans One). Making the stylesheet non-blocking would flash fallback type on the intro and HUD, a brand trade not worth a few hundred ms on a cold start.
+- **Deferred assets.** The Supabase client loads after first paint, and the world map data and QR library load on demand.
+
+## Verified
+- **Clean install, 375×812.** The intro shows and resource timing lists `logo-anim.mp4` (3,845 KB) and `intro-911.jpg` (29 KB).
+  - The video gets its source with `preload="auto"` and reaches readyState 4.
+  - The intro photo box computes `url(intro-911.jpg)` at 325×139, and the file loads at 420×226. A screenshot shows the card unchanged.
+- **First tap.** START HUNTING with the video ready turns the splash on at the tap, and the intro is recorded as seen.
+- **Returning launch, same origin.** No request for either file, the video has no source, and networkState is 0 (empty).
+- **Returning launch, second origin with existing state.** No request for either file, the video has no source, the loader hook is defined, and the page decodes to 800 KB.
+- **Production.** The video ETag is stable; conditional and ranged conditional requests return 304 with 0 bytes, and the HTML conditional request returns 304.
+- No console errors in any run; all inline scripts parse after the edit.
+
+**Not driven in the pane.** Reduce Motion can't be emulated there. The loader is defined after the reduced-motion early return, so under Reduce Motion nothing loads, but that is from reading the code.
+
+## Recommended (not done)
+- **Re-export the splash video.** It is 720×1280, 4.48 s, H.264 at about 7 Mbps, with an AAC audio track the app always mutes. Exported without audio at 1–1.5 Mbps it would be roughly 0.6–0.9 MB, so first-run users on cellular would more often have it ready by their tap; the splash is skipped if it isn't. macOS `avconvert` offers only fixed presets with no bitrate control, and ffmpeg isn't installed, so this is best done from the source file.
+- **Split the translation dictionary.** It is 317 KB raw, about 38% of the compressed page, needed only by non-English users. Per-language files would save English users about 100 KB per deploy, but non-English first paint would need a fetch and an offline copy, a real architecture change.
+- **Cache capture photos longer.** They serve `cache-control: no-cache`, so each feed view revalidates each image. Uploads use `upsert` on reused paths, so a long lifetime could show a replaced photo stale; a modest `cacheControl` on upload would need that trade decided first.
+- **Crush the store icons.** `icon-1024.png` is 708 KB and `icon-512.png` 222 KB. The OS fetches them only at install, and 512 is the share-preview image, so compressing them would speed link previews slightly.
