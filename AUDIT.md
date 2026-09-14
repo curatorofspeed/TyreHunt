@@ -350,3 +350,49 @@ The Feed's CLAIM TAG button was the only signed-out path that opened the tag she
 - **Split the translation dictionary.** It is 317 KB raw, about 38% of the compressed page, needed only by non-English users. Per-language files would save English users about 100 KB per deploy, but non-English first paint would need a fetch and an offline copy, a real architecture change.
 - **Cache capture photos longer.** They serve `cache-control: no-cache`, so each feed view revalidates each image. Uploads use `upsert` on reused paths, so a long lifetime could show a replaced photo stale; a modest `cacheControl` on upload would need that trade decided first.
 - **Crush the store icons.** `icon-1024.png` is 708 KB and `icon-512.png` 222 KB. The OS fetches them only at install, and 512 is the share-preview image, so compressing them would speed link previews slightly.
+
+---
+
+# Critique pass — 2026-09-14
+**Scope:** same file, both themes. **Method:** the bundled scan (pattern counts and parse check), then a live sweep of every text element on all five views and the tag sheet in dark and light, measuring computed foreground against the surface it sits on; a live inventory of every interactive element for names, hit size and keyboard reach; the dialog manager's ARIA read back from the DOM; a real Tab keypress for the ring.
+
+## Findings → changes
+
+### 🟠 High
+**Light mode erased text inside the dark-scoped areas.** The camera, HUD, intro, verifying overlay, reel progress and toast deliberately keep dark tokens in light mode, but `body` resolves `color:var(--ink)` once, at the light value, and that resolved color is what descendants inherit. Anything in those areas that didn't set its own color drew light-mode ink on a dark surface:
+- The intro's car name "Porsche 911 Targa" and the headline "The Registry is the score." measured 1.04:1 on the card, so a new user whose phone is in light mode (the iOS shell follows the phone) met an intro with two blank lines.
+- The Registry count "0" in the HUD pill, "Verifying…" on the capture overlay, and "CUTTING YOUR REEL" in the reel box were equally invisible.
+
+→ **Fixed:** the light-mode scope rule now also sets `color:var(--ink)`, so inherited color re-resolves inside those containers along with the tokens. Dark mode is unchanged, since there the body value and the scoped value are the same. Screenshots before and after show the intro card blank, then legible.
+
+### 🟡 Medium
+**Feed actions were 16px tall.** The like, comment and @handle buttons on every feed card had no padding, so their hit areas were 15.5–17px high, against the app's own 44px convention and the 24px accessibility minimum. → **Fixed:** 6px of padding with matching negative margins, so each button is now 28–29px tall and nothing on the card moved; the row measures the same 37px.
+
+**Buttons that switched themselves off didn't look off.** Nine actions set `disabled` on themselves while they work or once they're done, such as sign-out sync, delete account, add to crew, sighting confirm, the email-code and sign-in buttons, and the star-car button, and only the shutter and two others had a disabled style. → **Fixed:** disabled buttons and selects dim to 55% with a default cursor. The shutter keeps its own 50%, and a button that is busy through `busyGuard` keeps the 62% busy look rather than stacking both.
+
+**Segmented controls had no state.** Ten `.seg` groups (garage, sort, map, board, lane and more) mark the active segment with a class only, so a screen reader heard five equal buttons. → **Fixed:** every segment button carries `aria-pressed` mirrored from the class, kept in sync by one observer, including groups rendered later such as the lane picker in the tag sheet.
+
+### 🟢 Low
+**The feed badge read as a bare number.** The tab announced "FEED 3". → **Fixed:** the badge labels itself "3 new".
+
+### Measured and left alone (correctly)
+- **Dark theme.** Zero contrast failures across all five views and the tag sheet.
+- **Light theme.** Outside the scoped areas, zero failures. The tag sheet's secure-your-tag card sits on a 13% accent tint over white and passes for its eyebrow and copy.
+- **Floor items already in place from the clarify pass.** Focus ring with a forced-colors variant, sixteen labeled modal dialogs with focus, Escape and trap handling, `role="status"` on the toast and the announcer, reduced motion, 16px inputs, safe-area insets, `::selection`, busy state. The scan found no click-handling `div`s and no `user-scalable=no`.
+- **The full-photo lightbox** is a single labeled button that closes on tap or Escape, which is the right shape for it.
+- **The coach bubble** has no button semantics, and that's fine: it's announced when it appears and Escape puts it away.
+
+## Verified
+- **Light mode.** The intro name, headline, HUD count, verifying title, reel title and toast all compute `rgb(242,243,246)`, and a sweep of every text node inside the scoped containers finds zero at light-mode ink or muted. Screenshot: the intro card is legible.
+- **Dark mode.** The same elements compute the same values as before; body ink, scoped ink and muted are unchanged. The dossier hero's back and star buttons keep explicit dark ink on their glass.
+- **Feed buttons.** Like 29×28, comment 34×28, handle 132×29; the action row is 37px tall; a screenshot matches the pre-change card.
+- **Disabled.** A `.btn` computes opacity 1 enabled, 0.55 and `cursor:default` disabled, 0.62 when disabled and busy; the shutter stays at 0.5.
+- **Segments.** Garage starts SPOTS=true; clicking STABLE flips to STABLE=true and SPOTS=false; the lane picker rendered inside the tag sheet comes up VEHICLES=false, BIKES=false, BOTH=true.
+- **Badge.** With three unseen posts the badge shows "3", labels "3 new" and is on.
+- **Focus ring.** A real Tab keypress lands on the feed's CAR OF THE DAY segment with `:focus-visible` and a 2px solid ring; screenshot taken.
+- **Dialogs.** All sixteen layers read back `role="dialog"`, `aria-modal="true"` and a label.
+- No console errors in any run; all inline scripts parse after the edit.
+
+## Recommended (not done)
+- **Hunter sheet handle button** sets `padding:0` inline, so the new hit-area rule doesn't reach it; it's one button at the top of the sheet with nothing near it.
+- **A skip link** isn't needed for a tab-bar app with one `main`, but if the feed ever grows a long header it would earn one.
