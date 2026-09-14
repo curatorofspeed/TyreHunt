@@ -121,3 +121,35 @@ Map and Profile lose nothing when opened. Hunts is 161 words lower when fully op
 - **Confirming a Star Car sighting** plays a sound but has no visual moment. A brief glow on the confirmed row would fit, but that row only renders for a signed-in owner with a Star Car, so it couldn't be verified here.
 - **The like pop and the gold verdict row** are gated behind signing in and capturing a car in real use; they were verified by computed style and code path, not by a live like or capture.
 - **Reduced motion inside the store apps** depends on the web view honoring the phone's Reduce Motion setting; worth one check on a device.
+
+---
+
+# Overdrive pass — 2026-09-13
+**Scope:** same file. **Method:** pick the one moment that earns ambition, build it transform-only at most once per frame, then prove it never breaks tapping, scrolling or reduced motion.
+
+## What was built
+**The verdict card became a holographic trading card.** The verdict photo is the payoff of every capture. It already flipped in and, on rare and legendary finds, ran a foil sweep on a loop. Now:
+- A finger or pointer tilts the card up to 10° toward the contact point, and a soft glare follows it.
+- On rare and legendary finds the foil stops looping and tracks the finger instead, then resumes its sweep on release.
+- On phones that expose the gyroscope without a permission prompt, tilting the phone moves the card while the verdict is open, relative to how the phone was held when it opened and clamped at 20° of phone tilt. iOS is never prompted.
+- The card springs back flat on release, when the pointer leaves, and when the verdict closes.
+
+**Guardrails.** Painting is batched to one frame, and only `transform` and a gradient position change. `will-change` applies only while tilting. `touch-action: pan-y` keeps vertical scrolling in the sheet, and a tap still opens the full-screen photo. Reduced motion turns it off in both script and CSS: no tilt, no glare, a flat card.
+
+## Verified
+- A touch at 80% across and 20% down sets exactly 6° of tilt on each axis, centers the glare at 80% / 20%, and moves the foil under the finger with its loop paused.
+- With transitions switched off for the reading, the tilted card computes a real 3D rotation (`matrix3d`) and the glare computes opacity 1.
+- Releasing a touch settles the card: 0° tilt, a flat transform, the glare hidden, and the foil loop resumed.
+- A tap still opens the full-screen photo, and the card keeps `touch-action: pan-y`.
+- A mouse tilts on move (−4° at 30% across), keeps tilting after the button comes up, and settles when it leaves.
+- Gyroscope, run from the shipped script source: the first reading sets a 0° baseline; a 10° phone tilt gives 5° of card tilt with the glare at 75% / 25%; an extreme tilt clamps at 10°; closing the verdict settles it.
+- With reduced motion reported, neither touch nor gyroscope tilts the card, and the reduced-motion CSS computes a flat card with the glare hidden.
+- A walk of the live stylesheet still finds all 38 animated selectors covered by reduced motion.
+- No console errors in any run; all inline scripts parse after the edit.
+
+**Preview-pane quirks, not product bugs.** A hidden pane freezes CSS transitions at their starting value, so the card read flat mid-tilt until transitions were disabled for the reading. It pauses animation frames, so painting was checked with a synchronous frame stand-in. It exposes the iOS-style orientation permission without a real sensor, so the prompt-free gyroscope gate stays closed there; to test the math, only that permission check was hidden and the shipped source re-run.
+
+## Recommended (not done)
+- **Feel it on real phones.** Tilt strength, glare intensity and the gyroscope's range are tuned on paper; one pass on an iPhone and an Android phone should confirm they feel right.
+- **iOS gyroscope** would need a permission prompt. Asking only after a legendary find would make the prompt feel earned, but that's a product decision.
+- **Share cards** are exported images and stay still by design.

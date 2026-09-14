@@ -872,6 +872,20 @@ details.fold.opening>summary~*{animation:foldIn .22s ease}
   #signal,#feedBadge.on,#otpBox.on,#opSheet.on,#premSheet.on,#huntSheet.on,#modBox,#angleSheet.on,#cmtSheet.on,#hunterSheet.on,#bountySheet.on,#leadSheet.on,#eventSheet.on,#inboxSheet.on,#coach.on,.flike i.popped,details.fold.opening>summary~*{animation:none}
   .heartburst.go{animation:none;opacity:1;transform:translate(-50%,-50%) scale(1)}
 }
+
+/* ================= OVERDRIVE: HOLO TILT =================
+   The verdict photo tilts like a holographic trading card under a finger, a
+   pointer, or a prompt-free gyroscope. Only transform and a gradient position
+   change, once per frame. Declared last so its reduced-motion rules win. */
+#vcard .vph{transform:rotateX(var(--ty,0deg)) rotateY(var(--tx,0deg));transition:transform .5s cubic-bezier(.2,.9,.3,1);touch-action:pan-y}
+#vcard .vph.tilting{transition:transform .08s linear;will-change:transform}
+#vcard .vph::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:inherit;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.32),rgba(255,255,255,0) 58%);mix-blend-mode:soft-light;opacity:0;transition:opacity .35s ease}
+#vcard .vph.tilting::before{opacity:1}
+#vcard .vph.holo.tilting::after{animation:none;transform:translateX(calc((var(--gxn,.5) - .5) * 110%))}
+@media (prefers-reduced-motion: reduce){
+  #vcard .vph{transform:none;transition:none}
+  #vcard .vph::before{display:none}
+}
 </style>
 </head>
 <body>
@@ -7676,6 +7690,60 @@ document.addEventListener("click", e => {
   d.classList.add("opening");
   setTimeout(() => d.classList.remove("opening"), 400);
 }, true);
+/* ================= OVERDRIVE: HOLO TILT =================
+   The verdict photo behaves like a holographic trading card. A finger or a
+   pointer tilts it toward you and a glare follows; on rare and legendary finds
+   the foil tracks the finger instead of looping. Phones that expose the
+   gyroscope without a permission prompt tilt it too. Painting happens at most
+   once per frame; reduced motion keeps the card still. */
+(function(){
+  const card = document.getElementById("vPhoto"), verdict = document.getElementById("verdict");
+  if (!card || !verdict) return;
+  const MAX = 10;   // degrees of tilt at the edge
+  const still = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  let px = .5, py = .5, raf = 0, active = false, touching = false, base = null;
+  function paint(){
+    raf = 0;
+    card.style.setProperty("--tx", ((px - .5) * 2 * MAX).toFixed(2) + "deg");
+    card.style.setProperty("--ty", ((.5 - py) * 2 * MAX).toFixed(2) + "deg");
+    card.style.setProperty("--gx", (px * 100).toFixed(1) + "%");
+    card.style.setProperty("--gy", (py * 100).toFixed(1) + "%");
+    card.style.setProperty("--gxn", px.toFixed(3));
+  }
+  function aim(x, y){
+    px = Math.min(1, Math.max(0, x)); py = Math.min(1, Math.max(0, y));
+    if (!active){ active = true; card.classList.add("tilting"); }
+    if (!raf) raf = requestAnimationFrame(paint);
+  }
+  function settle(){
+    touching = false;
+    if (!active) return;
+    active = false; px = .5; py = .5;
+    if (raf){ cancelAnimationFrame(raf); raf = 0; }
+    card.classList.remove("tilting");
+    paint();
+  }
+  function fromPointer(e){
+    if (still()) return;
+    const r = card.getBoundingClientRect(); if (!r.width || !r.height) return;
+    if (e.type === "pointerdown" && e.pointerType !== "mouse") touching = true;
+    aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+  }
+  card.addEventListener("pointerdown", fromPointer);
+  card.addEventListener("pointermove", fromPointer);
+  card.addEventListener("pointerleave", settle);
+  card.addEventListener("pointercancel", settle);
+  card.addEventListener("pointerup", e => { if (e.pointerType !== "mouse") settle(); });
+  new MutationObserver(() => { base = null; if (!verdict.classList.contains("on")) settle(); })
+    .observe(verdict, { attributes: true, attributeFilter: ["class"] });
+  const promptless = "ondeviceorientation" in window && !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function");
+  if (promptless) window.addEventListener("deviceorientation", e => {
+    if (touching || still() || !verdict.classList.contains("on") || e.gamma == null || e.beta == null) return;
+    if (!base) base = { g: e.gamma, b: e.beta };
+    const dg = Math.max(-20, Math.min(20, e.gamma - base.g)), db = Math.max(-20, Math.min(20, e.beta - base.b));
+    aim(.5 + dg / 40, .5 + db / 40);
+  });
+})();
 /* ================= DIALOG FLOOR =================
    Every sheet is a layer. Opening one moves focus inside and remembers what
    opened it; closing sends focus back there. Escape closes the topmost layer
