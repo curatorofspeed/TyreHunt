@@ -85,3 +85,39 @@ Map and Profile lose nothing when opened. Hunts is 161 words lower when fully op
 - **Three "wanted" ideas share the Hunts screen:** Wanted this week, the Bounty board and Most Wanted. Merging them is a product decision, not a polish change.
 - **Car of the Day appears on camera, Hunts and Feed.** Each copy does a different job, so all three stay.
 - **46 selectors are declared in more than one CSS rule.** Most are responsive overrides or the dark-scope list; a few are true duplicates such as `body`, `.vhead` and `#vcard .vph`. Merging them changes nothing a user sees, so they were left alone.
+
+---
+
+# Delight pass — 2026-09-13
+**Scope:** same file. **Method:** inventory every animation, sound and haptic call and every moment users earn; add small rewards only where a meaningful moment lacked one; make every animation honor reduced motion.
+
+## Findings → changes
+
+### 🟡 Medium
+**Reduced motion had holes.** Sixteen animations ignored it: the double-tap heart burst, the slide-in on ten sheets (plan, hunts, bounty, inbox, lead, comments, operator, event, hunter, documenting a car), the moderation box, the coach bubble, the camera signal chip, the one-time-code box and the feed badge. → **Fixed:** one reduced-motion block at the very end of the stylesheet, so it outranks every animation declared above it. The heart burst shows briefly as a still heart instead of scaling, so those users still get feedback.
+
+### 🟢 Low — delight
+**Liking from the button felt flat.** Only a double-tap got a heart burst. → **Added:** the heart pops when you like from the button; unliking stays quiet.
+
+**Car of the Day looked like every other verdict row.** → **Added:** gold with a star, matching Rank Up. Text measures 10.09:1 in dark and 5.21:1 in light on its tint over the verdict sheet. Its 45% border is 3.22:1 in dark and 1.98:1 in light; it's decorative and exempt, the same treatment Rank Up already has.
+
+**Folds snapped open.** → **Added:** opening a fold by hand eases its content in. A re-render that restores an open fold stays still, and closing doesn't animate.
+
+**Switching appearance snapped.** → **Added:** a chosen switch crossfades through a view transition where the browser supports one. Startup, following the phone's setting, and reduced motion stay instant.
+
+## Verified
+- A walk of the live stylesheet found 38 animated selectors, and every one has a reduced-motion rule setting it to none.
+- With the reduced-motion rules applied outside their media query, the plan sheet, coach, moderation box, like pop and heart burst compute to no animation; the heart burst computes opacity 1 at scale 1.
+- The like pop computes the `likepop` animation on an inline-block heart.
+- The gold row computes `#FFC24B` on an 8% gold tint in dark and `#8A5C00` on an 8% tint in light.
+- Clicking a closed Sets fold opens it, adds the easing class, its content computes `foldIn`, and the class is gone 650ms later.
+- Re-rendering Hunts restores the open fold with no easing class and no animation; closing adds no easing.
+- The browser supports view transitions; with a spy in place, choosing Light and then Dark each ran exactly one transition, and the attribute and browser theme color flipped both ways.
+- No console errors in any run; all inline scripts parse after the edit.
+
+**Preview-pane quirks, not product bugs.** The pane can't emulate reduced motion, so the media block's rules were loaded unconditionally to read what they compute. The crossfade itself wasn't watched, because a hidden pane doesn't render frames; the spy proves a chosen switch routes through it.
+
+## Recommended (not done)
+- **Confirming a Star Car sighting** plays a sound but has no visual moment. A brief glow on the confirmed row would fit, but that row only renders for a signed-in owner with a Star Car, so it couldn't be verified here.
+- **The like pop and the gold verdict row** are gated behind signing in and capturing a car in real use; they were verified by computed style and code path, not by a live like or capture.
+- **Reduced motion inside the store apps** depends on the web view honoring the phone's Reduce Motion setting; worth one check on a device.

@@ -45,7 +45,9 @@
     if (window.__thApprChanged) window.__thApprChanged();
   }
   window.__thAppearance = function(){ return pref; };
-  window.__thSetAppearance = function(v){ if (lock) return; pref = v; try { localStorage.setItem("th:appearance", v); } catch(e){} apply(); };
+  window.__thSetAppearance = function(v){ if (lock) return; pref = v; try { localStorage.setItem("th:appearance", v); } catch(e){}
+    var still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (document.startViewTransition && !still) document.startViewTransition(apply); else apply(); };
   if (mq){ if (mq.addEventListener) mq.addEventListener("change", apply); else if (mq.addListener) mq.addListener(apply); }
   // people change the phone setting outside the app; re-check on return too,
   // for web views that never fire the media change event
@@ -856,6 +858,20 @@ html[data-appearance="light"] :is(#camwrap,#hud,#huntfoot,#ticker,#detect,#quest
 html[data-appearance="light"] #tabs:has(.tab.cam.on){--carbon:#0A0B0E;--panel:#13151B;--glass:rgba(16,18,24,.86);--line:rgba(255,255,255,.08);--ink:#F2F3F6;--muted:#98A0AC;--ember:#18B7DC;--ember-deep:#0E93B4;--gold:#FFC24B;--pulse:#3D7BFF;--pulse-hi:#6FA5FF;--ok:#3ECF8E;--bad:#FF5D5D;--r-everyday:#8B93A1;--r-classic:#FF8A1E;--r-rare:#5E97FF;--r-legend:#FFC24B;--acc-rgb:24,183,220;--gold-rgb:255,194,75;--ok-rgb:62,207,142;--pulse-rgb:94,151,255;--pulse2-rgb:110,160,255;--bad-rgb:255,93,93;--fill-a:#18B7DC;--fill-b:#0E93B4;--on-fill:#04222A;--fill-gold:#FFC24B;--fill-gold-b:#18B7DC;--on-fill-warm:#04222A;--bar:rgba(10,11,14,.97);--hair:rgba(255,255,255,.15);--hair-18:rgba(255,255,255,.18);--hair-strong:rgba(255,255,255,.22);--hair-28:rgba(255,255,255,.28);--track:rgba(255,255,255,.09);--slot:#0E1013;--slot-photo:#000;--ghost:rgba(255,255,255,.12);--ghost-10:rgba(255,255,255,.1);--sheet:#101218;--pfav-bg:#0B0A08;--shim-a:rgba(255,255,255,.03);--shim-b:rgba(255,255,255,.08);--goldcard-a:#1C1610;--goldcard-b:#12100B;--goldcard2-a:#191512;--goldcard2-b:#100E0B;--sleep:#9DA7B8;--bronze:#C9834A;--rname:#fff;--ring-fill:rgba(10,11,14,.7);--ring-track:rgba(255,255,255,.1);}
 .streak svg circle:first-child{fill:var(--ring-fill);stroke:var(--ring-track)}
 html[data-appearance="light"] #app:has(#tabs .tab.cam.on) .streak{--carbon:#0A0B0E;--panel:#13151B;--glass:rgba(16,18,24,.86);--line:rgba(255,255,255,.08);--ink:#F2F3F6;--muted:#98A0AC;--ember:#18B7DC;--ember-deep:#0E93B4;--gold:#FFC24B;--pulse:#3D7BFF;--pulse-hi:#6FA5FF;--ok:#3ECF8E;--bad:#FF5D5D;--r-everyday:#8B93A1;--r-classic:#FF8A1E;--r-rare:#5E97FF;--r-legend:#FFC24B;--acc-rgb:24,183,220;--gold-rgb:255,194,75;--ok-rgb:62,207,142;--pulse-rgb:94,151,255;--pulse2-rgb:110,160,255;--bad-rgb:255,93,93;--fill-a:#18B7DC;--fill-b:#0E93B4;--on-fill:#04222A;--fill-gold:#FFC24B;--fill-gold-b:#18B7DC;--on-fill-warm:#04222A;--bar:rgba(10,11,14,.97);--hair:rgba(255,255,255,.15);--hair-18:rgba(255,255,255,.18);--hair-strong:rgba(255,255,255,.22);--hair-28:rgba(255,255,255,.28);--track:rgba(255,255,255,.09);--slot:#0E1013;--slot-photo:#000;--ghost:rgba(255,255,255,.12);--ghost-10:rgba(255,255,255,.1);--sheet:#101218;--pfav-bg:#0B0A08;--shim-a:rgba(255,255,255,.03);--shim-b:rgba(255,255,255,.08);--goldcard-a:#1C1610;--goldcard-b:#12100B;--goldcard2-a:#191512;--goldcard2-b:#100E0B;--sleep:#9DA7B8;--bronze:#C9834A;--rname:#fff;--ring-fill:rgba(10,11,14,.7);--ring-track:rgba(255,255,255,.1);}
+
+/* ================= DELIGHT =================
+   Small rewards on moments that earn them. The reduced-motion block sits at the
+   very end of the sheet so it outranks every animation declared above it. */
+@keyframes likepop{0%{transform:scale(1)}35%{transform:scale(1.45)}70%{transform:scale(.92)}100%{transform:scale(1)}}
+.flike i,.fcmt i{display:inline-block}
+.flike i.popped{animation:likepop .38s cubic-bezier(.2,.9,.3,1)}
+#vQuests .qhit.gold{color:var(--gold);border-color:rgba(var(--gold-rgb),.45);background:rgba(var(--gold-rgb),.08)}
+@keyframes foldIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+details.fold.opening>summary~*{animation:foldIn .22s ease}
+@media (prefers-reduced-motion: reduce){
+  #signal,#feedBadge.on,#otpBox.on,#opSheet.on,#premSheet.on,#huntSheet.on,#modBox,#angleSheet.on,#cmtSheet.on,#hunterSheet.on,#bountySheet.on,#leadSheet.on,#eventSheet.on,#inboxSheet.on,#coach.on,.flike i.popped,details.fold.opening>summary~*{animation:none}
+  .heartburst.go{animation:none;opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
 </style>
 </head>
 <body>
@@ -4802,6 +4818,7 @@ $("feedList").addEventListener("click", async e => {
     const cnt = lk.querySelector("span");
     const mine = feedMine.has(id);
     lk.classList.toggle("on", !mine); lk.setAttribute("aria-pressed", String(!mine));
+    if (!mine){ const hi = lk.querySelector("i"); if (hi){ hi.classList.remove("popped"); void hi.offsetWidth; hi.classList.add("popped"); setTimeout(() => hi.classList.remove("popped"), 450); } }
     cnt.textContent = Math.max(0, (feedLikes[id] || 0) + (mine ? -1 : 1));
     try{
       if (mine){
@@ -5727,7 +5744,7 @@ function openVerdict(spot, canvas, raw){
         $("vPayLbl").textContent = "SIGHTING LOGGED · REGISTRY UPDATED";
       }
       const rows = (lastRankUp ? ['<div class="qhit" style="color:var(--gold);border-color:rgba(var(--gold-rgb),.45);background:rgba(var(--gold-rgb),.08)"><span>RANK UP · ' + lastRankUp + '</span><span>★</span></div>'] : [])
-        .concat(lastQuestHits.map(q => '<div class="qhit"><span>' + q.label + ' · ' + q.name.toUpperCase() + '</span><span>✓</span></div>'));
+        .concat(lastQuestHits.map(q => '<div class="qhit' + (q.label === "CAR OF THE DAY" ? ' gold' : '') + '"><span>' + q.label + ' · ' + q.name.toUpperCase() + '</span><span>' + (q.label === "CAR OF THE DAY" ? '★' : '✓') + '</span></div>'));
       $("vQuests").innerHTML = rows.join("");
       $("vMiss").style.display = "none";
       const vl = $("vLot");
@@ -7649,6 +7666,15 @@ document.addEventListener("toggle", e => {
   if (!d || !d.matches || !d.matches("details[data-fold]")) return;
   const open = window.__foldOpen || (window.__foldOpen = new Set());
   if (d.open) open.add(d.dataset.fold); else open.delete(d.dataset.fold);
+}, true);
+// opening a fold by hand eases its content in; a re-render that restores it stays still
+document.addEventListener("click", e => {
+  const sm = e.target.closest && e.target.closest("details.fold>summary");
+  if (!sm) return;
+  const d = sm.parentElement;
+  if (d.open) return;                  // this click is closing it
+  d.classList.add("opening");
+  setTimeout(() => d.classList.remove("opening"), 400);
 }, true);
 /* ================= DIALOG FLOOR =================
    Every sheet is a layer. Opening one moves focus inside and remembers what
