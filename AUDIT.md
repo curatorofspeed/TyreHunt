@@ -193,3 +193,48 @@ Map and Profile lose nothing when opened. Hunts is 161 words lower when fully op
 - **The camera tab's ring morph** animates width, height and margin when switching to and from the camera. It's one small element and only runs on a tab switch, and a transform rewrite would change how its border thins, so it was left.
 - **Sheets animate in but vanish instantly on close.** Exit animations mean delaying each sheet's hide across fifteen layers and the dialog manager's focus return; worth doing deliberately, not as a polish edit.
 - **The one-off durations** could fold into the 0.22s and 0.3s vocabulary if a motion token set is ever introduced.
+
+---
+
+# Harden pass — 2026-09-14
+**Scope:** same file. **Method:** scan every `innerHTML` sink for unescaped user or model text, every click handler that writes to the server for re-entrancy, and every screen at 320px wide in all nine languages for text running off the edge; fix, then prove each fix in the browser.
+
+## Findings → changes
+
+### 🟠 High
+**The model-returned car name reached the page unescaped.** The verdict's quest rows built `'<span>' + q.label + ' · ' + q.name.toUpperCase() + '</span>'` with `innerHTML`. The name comes from the identification model, so a crafted plate or badge in a photo could inject markup. Every other sink scanned was a static constant or already escaped. → **Fixed:** both values go through `esc()`.
+
+**Eleven server actions could fire twice.** A double tap on a slow connection sent a second request before the first returned: send lead, create hunt, post bounty, mark owned, join event, report/block, send comment, claim tag, email me a code, verify code, add crew. The result was duplicate bounties, comments and hunts, or two OTP emails. → **Fixed:** a `busyGuard` wrapper ignores taps while the action runs, sets `aria-busy="true"` so it reads busy to screen readers and dims to 62% with a progress cursor, and always clears afterward, including when the request fails. `verifyOtpCode` and `addCrew` are also wrapped in `singleFlight`, so a call from the keyboard path or code joins the in-flight request instead of starting a second.
+
+### 🟡 Medium
+**Long translations ran off a 320px screen.** Measured overflow past the right edge before the fix:
+
+| Element | de | fr | it | pt | es |
+|---|---|---|---|---|---|
+| Plan my hunt button | +37 | +64 | +52 | +90 | – |
+| Quest status ("AT LARGE") | +6 | – | – | – | +83 |
+| Map legend | +12 | +9 | +2 | – | – |
+
+ja, th and ar were already clean. → **Fixed:**
+- The header title now shrinks, and the Plan button keeps its natural width up to half the row, wrapping only past that.
+- The quest status column is capped at 44% and wraps between words.
+- The legend wraps onto a second row.
+- es "AT LARGE" is now "PRÓFUGO" and de is "FLÜCHTIG", shorter and more natural than the literal translations.
+
+### Caught during verification
+The first version of the wrap fix let both elements shrink freely and broke text anywhere. At 320px in English that turned "PLAN MY HUNT" into three lines and split "TODAY" and "OPEN" mid-word. → Switched to natural width with a cap, and `break-word` in place of `anywhere`, before shipping.
+
+## Verified
+- **Guard, rapid taps.** Three rapid clicks on a guarded button ran the handler once. During the work the button had `data-busy` and `aria-busy="true"` and computed opacity 0.62 with a progress cursor. Afterward both attributes were gone and opacity was back to 1, and a later tap ran the handler again.
+- **Guard, failed request.** An action that throws still clears the busy state.
+- **Single flight.** Three concurrent calls returned the same promise and ran the body once, and a call after it settled ran it again. The live `verifyOtpCode` and `addCrew` are the wrapped versions.
+- **Static checks.** All 11 wrapped registrations are present in the served script, and the verdict row uses `esc(q.name.toUpperCase())` with no unescaped form left.
+- **320px sweep of Hunts and Map** in en, de, fr, es, it, pt and ar found zero elements past the screen edge and zero words split mid-word.
+  - The Plan button takes 1 line in en, es and ar, and 2 lines in de, fr, it and pt.
+  - Only fr "DANS LA NATURE" wraps its status, onto two lines between words.
+- No console errors in any run; all inline scripts parse after the edit.
+
+## Recommended (not done)
+- **Read-only fetches** (inbox bell, operator list, comment list, share link) are left unguarded: a repeat is harmless and just refreshes.
+- **Server-side idempotency** is the real backstop for double submits from two devices or a retry after a timeout. Unique constraints or idempotency keys on bounties, comments and hunts would cover what a client guard can't.
+- **Screens not swept at 320px:** Garage, Feed and the sheets. Hunts and Map carry the longest strings and had every measured failure, but a full sweep would close it out.
