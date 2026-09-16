@@ -741,3 +741,80 @@ This predates the pass: the card measured the same 990px tall and 422px above th
 - **Dates and numbers:** they format with the device locale, not the app language. A German UI on an en-US phone shows "9/16/2026". Passing the chosen language to `toLocaleDateString` and `toLocaleString` would fix that, but it touches every date site.
 - **System font scaling:** not testable here. Android Chrome's text-scaling setting and iOS Dynamic Type (in the Capacitor shell) need a device check at 130% and 200%. Most sizes are in px.
 - **On-screen keyboard:** covering inputs in sheets can't be emulated in the preview pane. The existing visualViewport handler should cover it; worth a device check on the dossier and schedule forms.
+
+# Clarify pass — 2026-09-16
+
+**Scope:** `index.html` messaging: all 144 toasts, the 12 sign-in prompts, empty-state and error copy, plus the toast component that displays them. **Method:**
+- Extracted every toast and prompt with its line number.
+- Read each error in context.
+- Sorted the raw errors the app surfaced into kinds the hunter can act on.
+- Drove every changed path in the preview with stubbed failures.
+- Checked German and Japanese rendering, and swept all 128 distinct toast strings for overflow at 375px (English) and 320px (German).
+
+## Findings → changes
+
+### 🟠 High
+**Seven failures showed the raw system error.** Plan my hunt, schedule a hunt, delete account, sending the sign-in code, checking the code, verifying queued shots, and naming a Star Car all appended `e.message`. People saw strings like "plan 502 · planner upstream 529", "Email rate limit exceeded", "hunt plan timed out" or "duplicate key value violates unique constraint". None of these are translatable, and none say what to do. → **Fixed:**
+- **One sorting step** (`errorKind`/`plainError`) turns an error into one of five actionable sentences:
+  - no connection
+  - too many tries
+  - check the email address
+  - wrong or expired code
+  - server busy
+- **Anything else** gets a fallback written for that screen ("Couldn't schedule the hunt — try again").
+- **Raw errors** now go to the console only.
+- **The verify queue** says whether shots will retry when you're back online.
+- **The Star Car trigger's own sentence** ("Only a car in your Stable can be a Star Car.") is kept, because it was written for people.
+
+**Toasts ran off both sides of the screen.** `#toast` was `white-space:nowrap`. 11 of 128 English messages overflowed the pill at 375px (by up to 177px), and translations are longer. Toasts also vanished after a fixed 2.6s, whatever their length. → **Fixed:**
+- Toasts wrap: at most 88% wide, centred, lines balanced.
+- They stay up about 55ms per character, between 2.6s and 7s.
+
+### 🟡 Medium
+**Sign-in prompts that led nowhere, or used a different word.**
+
+| Before | After |
+|---|---|
+| "Sign in first" (notifications) | "Sign in to turn on notifications", opens sign-in, then turns them on afterwards |
+| "Duels need an account" | "Sign in to start a duel", opens sign-in |
+| "Lobby codes need an account — host by name instead" | "Sign in to join a lobby by code — or host one by name" |
+| "You're not signed in on this copy of the app" | "Sign in on this phone to delete your account", with no resume, because it's destructive |
+| "Claim a tag to join in" (like/comment on the public feed) | "Sign in to like, comment and add hunters to your crew" |
+| "Sign in first — tap the streak ring…", on every launch and reconnect | On its own: "Your shots are saved — sign in to verify them", with no sheet. A tap on the queue pill opens sign-in and verifies afterwards. |
+
+**Messages that didn't say what or why.**
+
+| Before | After |
+|---|---|
+| "Sign-in unavailable — library blocked" (×2) and "…right now" | "Sign-in couldn't load — check your connection or content blocker, then reopen the app" |
+| "That date didn't parse" | "Pick a date and a start time" (an existing, already translated sentence) |
+| "Couldn't add" (×2) | "Couldn't add them to your crew — try again" |
+| "Couldn't update that" (×2) | "Couldn't save your RSVP — try again" / "Couldn't update that sighting — try again" |
+| "Export failed" | "Couldn't export your garage — try again" |
+| "Storage is full — new spots may not survive a reload" | "…export your garage from Your Tag › Account so nothing is lost" |
+| Feed with sign-in not loaded: "Sign in (tap the streak ring)…", which is impossible in that state | "The community feed couldn't load — check your connection, then reopen the app" |
+
+All 28 new sentences are translated into French, Spanish, German, Italian, Portuguese, Japanese, Thai and Arabic.
+
+## Verified
+- **Error sorting:** `Failed to fetch` and Safari's `Load failed` → no connection; a 429 or "Email rate limit exceeded" → too many tries; "Token has expired or is invalid" → code; "invalid format" → email; "upstream 529" and "timed out" → busy; a duplicate-key error → fallback.
+- **Plan my hunt, driven:** a rejected fetch gives the no-connection sentence; a 502 with "planner upstream 529" gives the busy sentence; a malformed 200 gives the fallback.
+- **Sign-in code, driven:** a stubbed rate-limit error shows "Too many tries — wait a minute, then try again".
+- **Sign-in prompts, each opening the sign-in sheet with its sentence:**
+  - notifications (resume set)
+  - duel
+  - lobby code
+  - delete account: the button resets to DELETE ACCOUNT and no resume is set
+  - like on the public feed
+
+  The queue opens nothing when it runs on its own, and opens sign-in with a resume on a tap.
+- **Leftovers:** none of the old phrasings and no `toast(...message...)` remain; all 28 new keys are used in code.
+- **Translations:** German showed the no-connection, storage, saved-shots and sign-in-load sentences; Japanese showed too-many-tries, duel and Star Car.
+- **Toast sweep, English, 375px:** 128 strings, 0 overflow, at most 2 lines.
+- **Toast sweep, German, 320px:** 0 overflow, at most 4 lines (the sign-in-load message), and the toast sits above the tab bar (top 411 vs 507).
+- **Durations:** 2600ms for "Dossier saved", 4675ms for the longest English message.
+
+## Recommended (not done)
+- **Game labels that can read as buttons:** "OPEN" on Hunts cards, "AT LARGE · BADGE" on Wanted, "×1". They're product voice, but "OPEN" in the accent colour at a card's right edge can read as a button. Worth a copy decision ("TO FIND"?) before changing, since it ripples through 8 languages.
+- **Same number, two names:** the AI confidence reads "88% MATCH" in the dossier and "VERIFIED · 88%" on the verdict. Pick one.
+- **Untranslated toasts, pre-existing:** "Enter the review code" is store-reviewer only. "Sign in and we'll add … to your crew" and "Sign in to see @…" have a name joined on, so no dictionary key matches them; they'd need a placeholder-aware lookup.
