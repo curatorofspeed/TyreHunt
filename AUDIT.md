@@ -423,3 +423,39 @@ Lore is identical for every hunter, so per-user generation was waste even when i
 ## Recommended (not done)
 - **New Registry entries need a lore row**, or they show no field guide. Worth a check when a season volume is added.
 - **The same table pattern fits Car of the Day** — generate once, approve, serve to everyone.
+
+---
+
+# Animate pass II — 2026-09-15
+**Scope:** same file. **Method:** diff the six commits since the first animate pass for new animatable surfaces, then take on the exit animation that pass deferred; drive every change live and read computed styles back rather than watching motion.
+
+## Findings → changes
+
+### 🟡 Medium
+**Sheets flew in and blinked out.** Fourteen layers animate on open — thirteen with `sheetIn`, the verdict with a fade — and every one of them vanished instantly on close, because `.on` is removed in 45 different places and `display:none` takes effect on the same frame. → **Fixed:** the dialog floor already observes every open and close in one place, so the exit lives there: it adds `.closing`, CSS runs `sheetOut` (0.18s, opacity and transform only) or `fadeOutLayer` for the verdict, and the class is dropped on `animationend`. A 400ms timer runs alongside as a safety net, so a sheet can never be stranded on screen if the event is missed. No call site changed, and the enter animation is untouched.
+- **Why not `@starting-style` / `allow-discrete`:** this browser supports both, but converting the sheets to a transition model would have traded a reliable enter animation on older iOS for an exit on newer iOS. The `.closing` class works everywhere CSS animations do.
+- **`pointer-events:none` while closing**, so a sheet on its way out can't be tapped.
+
+**State added since the last pass jumped.** Four surfaces introduced by the harden, onboard, critique and lore work had no transition at all:
+- the busy state (`aria-busy`, opacity 0.62) and the disabled state (opacity 0.55) snapped between values,
+- segment buttons changed background and colour instantly,
+- lore blocks appeared about 260ms after the sheet opened, popping in with no entrance.
+→ **Fixed:** 0.16s opacity easing on busy and disabled, 0.16s background and colour on segments, and the existing `foldIn` keyframes reused for lore so it rises the same way folded sections do.
+
+### Measured and left alone (correctly)
+- **`modSheet`, `photoFull` and the intro** get no exit, because none of them has an enter animation either — adding one to the exit alone would be inconsistent.
+- **The first animate pass's other deferral, the camera tab ring morph**, still animates width and height; it runs once per tab switch and a transform rewrite would change how its border thins.
+
+## Verified
+- **Real Escape on the tag sheet:** `.on` gone, `.closing` present, still `display:flex`, `animation-name: sheetOut`, `0.18s`, `fill-mode: both`, `pointer-events: none`.
+- **Focus contract intact:** focus was already back on the trigger *during* the exit, and still there after it — a closing sheet never holds focus, and the floor doesn't count it as open.
+- **After the exit:** `.closing` cleared, `display: none`, no animation left running.
+- **Re-opened mid-exit:** `.closing` dropped, `.on` restored, `animation-name: sheetIn`, and it settles to `display:none` afterwards — no half-dead sheet.
+- **New easing computes:** disabled `opacity 0.16s`, segments `background-color 0.16s, color 0.16s`, lore `foldIn 0.24s`.
+- **Reduced motion:** with the same declarations applied outside the media query, closing sheets compute `display:none` / `animation:none`, lore's animation is none, and busy, disabled and segment transitions are all `none 0s`.
+- **Coverage:** 14 layers have an exit, 3 deliberately don't; `animationend` was confirmed to fire in the hidden preview pane, and the timer covers the case where it doesn't.
+- No console errors; all inline scripts parse after the edit.
+
+## Recommended (not done)
+- **`viewIn` on tab switches** has no exit either, but views swap instantly by design — an exit there would delay every tab tap.
+- **The 400ms safety timer** could be derived from the computed animation duration if the exit timing is ever tuned per layer.

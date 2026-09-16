@@ -920,6 +920,22 @@ details.fold.opening>summary~*{animation:foldIn .22s ease}
 .flike,.frow .fcmt{padding:6px 5px;margin:-6px -5px;border-radius:8px}
 .fhead .fh{padding:6px 8px;margin:-6px -8px;border-radius:8px}
 button:disabled:not(#shutter):not(.rbtn):not(.bdg):not([aria-busy="true"]),select:disabled{opacity:.55;cursor:default}
+
+/* ================= ANIMATE II =================
+   A sheet now leaves the way it arrived, and state that used to jump eases
+   instead. Declared last so the reduced-motion rules below outrank everything. */
+@keyframes sheetOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(10px)}}
+@keyframes fadeOutLayer{from{opacity:1}to{opacity:0}}
+#profile.closing,#dossier.closing,#cxSheet.closing,#premSheet.closing,#huntSheet.closing,#opSheet.closing,#angleSheet.closing,#inboxSheet.closing,#cmtSheet.closing,#hunterSheet.closing,#bountySheet.closing,#leadSheet.closing,#eventSheet.closing{display:flex;animation:sheetOut .18s cubic-bezier(.4,0,1,1) both;pointer-events:none}
+#verdict.closing{display:flex;animation:fadeOutLayer .16s ease both;pointer-events:none}
+.lore{animation:foldIn .24s ease}
+[aria-busy="true"],button:disabled,select:disabled{transition:opacity .16s ease}
+.seg button{transition:background-color .16s ease,color .16s ease}
+@media (prefers-reduced-motion: reduce){
+  #profile.closing,#dossier.closing,#cxSheet.closing,#premSheet.closing,#huntSheet.closing,#opSheet.closing,#angleSheet.closing,#inboxSheet.closing,#cmtSheet.closing,#hunterSheet.closing,#bountySheet.closing,#leadSheet.closing,#eventSheet.closing,#verdict.closing{display:none;animation:none}
+  .lore{animation:none}
+  [aria-busy="true"],button:disabled,select:disabled,.seg button{transition:none}
+}
 </style>
 </head>
 <body>
@@ -7852,13 +7868,29 @@ addCrew = singleFlight(addCrew);
     return open[open.length - 1] || null;
   }
   const focusables = layer => [...layer.querySelectorAll(FOCUSABLE)].filter(visible);
+  /* A sheet that flew in shouldn't blink out. The floor already sees every open
+     and close in one place, so the exit lives here rather than in the 45 call
+     sites that drop the class: add .closing, let the CSS run, then drop it.
+     The timer is the safety net — a sheet must never be stranded on screen. */
+  const EXIT = new Set(["profile","dossier","cxSheet","premSheet","huntSheet","opSheet","angleSheet",
+    "inboxSheet","cmtSheet","hunterSheet","bountySheet","leadSheet","eventSheet","verdict"]);
+  function playExit(layer){
+    if (!EXIT.has(layer.id)) return;
+    layer.classList.add("closing");
+    let t = 0;
+    const done = () => { clearTimeout(t); layer.removeEventListener("animationend", done); layer.classList.remove("closing"); };
+    t = setTimeout(done, 400);
+    layer.addEventListener("animationend", done, { once: true });
+  }
   function onOpen(layer){
+    layer.classList.remove("closing");
     const prev = document.activeElement;
     if (prev && prev !== document.body && !layer.contains(prev)) returnTo.set(layer, prev);
     if (!layer.hasAttribute("tabindex")) layer.setAttribute("tabindex", "-1");
     setTimeout(() => { if (isOpen(layer) && !layer.contains(document.activeElement)) layer.focus({ preventScroll: true }); }, 0);  // a timer, not rAF: frames pause in backgrounded web views
   }
   function onClose(layer){
+    playExit(layer);
     const back = returnTo.get(layer); returnTo.delete(layer);
     const next = topLayer();
     if (back && document.contains(back) && visible(back) && (!next || next.contains(back))) back.focus({ preventScroll: true });
