@@ -530,3 +530,47 @@ Lore is identical for every hunter, so per-user generation was waste even when i
 ## Recommended (not done)
 - **Archivo is requested at six weights** (400–900). A count of which weights the CSS actually selects would likely let two go, but each is only fetched when used, so the saving is CSS bytes rather than font downloads.
 - **A type scale** would be worth defining if the app ever gets a design refresh — the half-pixel neighbours suggest sizes were chosen per component rather than from a ramp.
+
+---
+
+# Onboard pass II — 2026-09-15
+**Scope:** same file. **Method:** re-walk a genuinely clean install (storage and IndexedDB wiped) against the six passes that landed since the first onboard pass, then take on the item that pass deferred — resuming what a signed-out tap was actually trying to do.
+
+## Findings → changes
+
+### 🟡 Medium
+**Signing in forgot what you were doing.** The first onboard pass made twelve signed-out taps open the tag sheet instead of dying in a toast. But only one of them — add to crew — remembered the intent (`state.pendingCrew`) and finished the job afterwards. The other eleven dropped it: you tap Schedule a Hunt, claim a handle, wait for an email code, and land back on the Hunts list with nothing open and no hint of what you were mid-way through. Reproduced on a clean install: the toast reads "Sign in to schedule a hunt", the tag sheet rises, **and the hunt sheet never opens** — before or after signing in.
+
+→ **Fixed:** `needTag(msg, resume)` now takes what to do afterwards, and `restoreProfile` runs it once on the same sign-in funnel that already resumes a pending crew add. Six taps now finish their own job:
+- **Plan my hunt** → re-plans.
+- **Activity inbox** → opens the inbox.
+- **A shared hunt link** → replays the link. This is the one that mattered most: `routeDeepLink` wipes the query string *before* prompting, so a friend's link was gone for good. The parameters are now captured at tap time and replayed, so the hunt still opens after sign-in.
+- **A shared hunter link** (`@handle`) → replays the same way.
+- **Schedule a hunt** → opens the sheet.
+- **RSVP** → completes the RSVP for the hunt you tapped, via a closure over its id.
+
+**Deliberately not resumed**, which matters as much as what is:
+- **The Hunter's Edition upgrade** starts a Stripe checkout. Auto-resuming would drop someone on a payment page they didn't ask for after an unrelated sign-in. Excluded on purpose.
+- **File a lead, post a bounty, report a bounty** submit a form that is still on screen behind the tag sheet — closing it reveals their typed work, so a resume would risk double-posting to solve a problem that doesn't exist.
+- **Dispute a bounty** captures a button element that is stale after a re-render.
+- **Add to crew** keeps its existing persisted path.
+
+**The intent is memory-only and self-cancelling.** It is a module-level binding, never written into `state`, so `Store.save()` cannot carry it across a relaunch — a stale intent firing days later would be worse than none. Closing the tag sheet while still signed out discards it, and the runner clears it before running so it cannot fire twice.
+
+### Measured and left alone (correctly)
+- **The clean-install walk found no regressions** from the optimize, critique, lore, animate, colorize and typeset passes.
+
+## Verified
+- **Clean install (storage and IndexedDB wiped):** intro opens as a labelled dialog with focus inside, the externalised `intro-911.jpg` loads, the splash video is fetched only now (`preload` auto, readyState 4) and **plays on the START tap**, the intro closes, the coach tip appears and is announced to the screen reader.
+- **Intent recorded:** a signed-out Schedule a Hunt tap stores the intent with its reason, and raises the tag sheet with focus inside.
+- **Abandon:** closing the sheet without signing in clears it; tapping again sets it afresh.
+- **Resume:** running exactly what `restoreProfile` runs clears the intent first (so it cannot double-fire) and **opens the Schedule a Hunt sheet**, date prefilled, focus inside.
+- **Deep-link replay:** a saved parameters object drives the hunt branch with no URL present — the quests view opens and the hunt is looked up.
+- **Structure:** the runner sits inside `restoreProfile` immediately after the pending-crew block; `pendingIntent` appears nowhere in the persisted state.
+- No console errors in any run; all inline scripts parse.
+
+**Simulated, not driven.** A real sign-in needs an email round trip against production auth, which this pass would not drive. The resume was exercised by invoking it exactly as `restoreProfile` does, with an in-memory session stub that was reverted immediately afterwards.
+
+## Recommended (not done)
+- **A visible cue in the tag sheet** naming what is waiting ("Claim your tag to schedule your hunt") would make the resume feel intentional rather than surprising. That is copy plus nine translations, so it belongs in its own pass.
+- **Form-submit resumes** would need a draft model rather than a replayed tap, to avoid double-posting.

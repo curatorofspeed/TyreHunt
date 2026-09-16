@@ -2466,7 +2466,7 @@ async function planHunt(force){
       + '; registry gaps worth weighing: ' + (missing.join(", ") || "none")
       + '; open daily hunts: ' + (openQ.join("; ") || "none") + '.';
 
-    if (!sb || !sbSession){ needTag("Sign in to have a hunt planned for you"); return; }
+    if (!sb || !sbSession){ needTag("Sign in to have a hunt planned for you", () => planHunt(true)); return; }
     const r = await withTimeout(fetch(CONFIG.supabaseUrl + "/functions/v1/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sbSession.access_token },
@@ -3175,7 +3175,7 @@ async function pollInbox(){
   }catch(e){}
 }
 $("inboxBell").addEventListener("click", async () => {
-  if (!sb || !sbSession){ needTag("Sign in and your activity lands here"); return; }
+  if (!sb || !sbSession){ needTag("Sign in and your activity lands here", () => $("inboxBell").click()); return; }
   $("inboxSheet").classList.add("on");
   const box = $("ibList");
   box.innerHTML = '<p class="pfnote"><span class="spin"></span>&nbsp; Loading…</p>';
@@ -3223,9 +3223,9 @@ function lobbyLink(code){ return deepLink({ lobby: code }); }
 
 /* Read the address on arrival, then clear it so a refresh doesn't
    re-trigger and the URL stays clean. */
-async function routeDeepLink(){
+async function routeDeepLink(saved){
   let q;
-  try{ q = new URLSearchParams(location.search); }catch(e){ return; }
+  try{ q = saved || new URLSearchParams(location.search); }catch(e){ return; }
   if (!q || ![...q.keys()].length) return;
   const crew = q.get("crew"), h = q.get("h"), c = q.get("c"), lobby = q.get("lobby"), hunt = q.get("hunt");
   try{ history.replaceState(null, "", location.origin + location.pathname); }catch(e){}
@@ -3234,7 +3234,7 @@ async function routeDeepLink(){
   setTimeout(async () => {
     if (hunt){
       show("quests");
-      if (!sb || !sbSession){ needTag("Sign in to join this hunt"); return; }
+      if (!sb || !sbSession){ needTag("Sign in to join this hunt", () => routeDeepLink(new URLSearchParams({ hunt }))); return; }
       await renderHunts();
       const row = huntRows.find(x => String(x.id) === String(hunt));
       if (!row){ toast("That hunt has finished or was cancelled"); return; }
@@ -3261,7 +3261,7 @@ async function routeDeepLink(){
       return;
     }
     if (h){
-      if (!sb || !sbSession){ needTag("Sign in to see @" + h); return; }
+      if (!sb || !sbSession){ needTag("Sign in to see @" + h, () => routeDeepLink(new URLSearchParams({ h }))); return; }
       try{
         const { data } = await sb.from("profiles").select("id").eq("handle", h).maybeSingle();
         if (data && data.id){ show("garage"); openHunter(data.id); }
@@ -3906,7 +3906,7 @@ async function renderHunts(){
 }
 
 function openHuntSheet(){
-  if (!sb || !sbSession){ needTag("Sign in to schedule a hunt"); return; }
+  if (!sb || !sbSession){ needTag("Sign in to schedule a hunt", openHuntSheet); return; }
   const d = new Date(Date.now() + 24 * 3600 * 1000);
   $("huntDate").value = d.toISOString().slice(0, 10);
   $("huntTime").value = "09:00";
@@ -4054,7 +4054,7 @@ async function shareLobbyCard(h){
 }
 
 async function rsvpHunt(id, on){
-  if (!sb || !sbSession){ needTag("Sign in to join"); return; }
+  if (!sb || !sbSession){ needTag("Sign in to join", () => rsvpHunt(id, on)); return; }
   try{
     if (on) await sb.from("hunt_rsvps").insert({ hunt_id: id, user_id: sbSession.user.id });
     else await sb.from("hunt_rsvps").delete().eq("hunt_id", id).eq("user_id", sbSession.user.id);
@@ -7621,6 +7621,11 @@ async function restoreProfile(){
         const pc = state.pendingCrew; state.pendingCrew = null; await Store.save();
         setTimeout(() => addCrewByCode(pc), 600);
       }
+      if (pendingIntent){
+        const pi = pendingIntent; pendingIntent = null;
+        // let the welcome toast land first, then pick up where they left off
+        setTimeout(() => { try { pi.run(); } catch(e){} }, 900);
+      }
       if (!before) toast("Welcome back, @" + data.handle);
       else if (before !== data.handle) toast("Signed in as @" + data.handle);
       state.ownerUid = sbSession.user.id;
@@ -7764,11 +7769,20 @@ async function drawQR(){
 }
 
 $("profileBtn").addEventListener("click", openProfile);
-$("pfClose").addEventListener("click", () => $("profile").classList.remove("on"));
+$("pfClose").addEventListener("click", () => {
+  // closed without signing in — they changed their mind, so nothing fires later
+  if (!sbSession) pendingIntent = null;
+  $("profile").classList.remove("on");
+});
 /* A signed-out tap on something that needs an account opens the tag sheet
    above whatever sheet it came from, instead of ending at a toast. */
-function needTag(msg){
+/* What the hunter was trying to do when the tag sheet interrupted them. Held in
+   memory only: sign-in finishes in this same sheet, so it never needs to survive
+   a reload, and a stale intent firing days later would be worse than none. */
+let pendingIntent = null;
+function needTag(msg, resume){
   toast(msg);
+  pendingIntent = typeof resume === "function" ? { run: resume, why: msg } : null;
   openProfile();
   $("profile").classList.add("over");
 }
