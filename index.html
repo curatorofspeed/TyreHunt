@@ -1036,9 +1036,45 @@ details.pffold[open]{padding-bottom:10px}
 #hallSeg[data-more="both"]{-webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent)}
 html[dir="rtl"] #hallSeg[data-more="end"]{-webkit-mask-image:linear-gradient(270deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(270deg,#000 calc(100% - 40px),transparent)}
 html[dir="rtl"] #hallSeg[data-more="start"]{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
+/* ===== ADAPT =====
+   Other screens, orientations and inputs; each rule names what it fixes. */
+@media (orientation: landscape) and (max-height: 520px){
+  /* The camera controls go absolute in landscape, which took away the flow
+     that pushed the tab bar down: it sat at y 97 of 375, across the camera HUD
+     and over every view's list. */
+  #tabs{margin-top:auto}
+  /* Headers with a segment control spent 150px of a 375px screen (content got
+     44%). Landscape has the width, so the control sits beside the title:
+     88px, content 60%. */
+  :is(#view-garage,#view-map,#view-rewards) .vhead{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;align-items:start}
+  :is(#view-garage,#view-map,#view-rewards) .vhead>:is(.eyebrow,h2,.meta){grid-column:1}
+  :is(#view-garage,#view-map,#view-rewards) .vhead>.seg{grid-column:2;grid-row:1 / span 3;align-self:center;margin-top:0!important}
+  #view-map .vhead>#mapTime{grid-row:4;margin-top:6px!important}
+  #view-rewards .vhead>.seg{margin-right:100px;max-width:min(360px,48vw)}
+  /* right-to-left puts the control on the left, where the streak ring sits */
+  html[dir="rtl"] :is(#view-garage,#view-map,#view-rewards) .vhead>.seg{margin-left:66px}
+  html[dir="rtl"] #view-rewards .vhead>.seg{margin-right:0}
+  /* The page sets viewport-fit=cover and landscape lets the app fill the width,
+     so a notched phone put the streak ring, the cards' left edge and the first
+     tab under the notch. The app frame now stops at the safe area (the black
+     page shows behind the notch); the camera footer's own right inset would
+     double up, so it drops back to plain padding. */
+  #app{margin-left:env(safe-area-inset-left,0px);margin-right:env(safe-area-inset-right,0px)}
+  #huntfoot{padding-right:10px}
+}
+/* Small targets people hit constantly: like, comment, the handle on a feed
+   card, Plan my hunt, the profile's Close, the camera's activity bar and the
+   back pills measured 28-33px tall. An invisible extension takes each to at
+   least 44x44 without moving anything. */
+.frow .flike,.frow .fcmt,.fhead .fh,#huntPlanBtn,#pfClose{position:relative}
+#agBack{position:relative!important}  /* its inline position:static would anchor the extension elsewhere; #ceBack is already absolute */
+:is(.frow .flike,.frow .fcmt,.fhead .fh,#huntPlanBtn,#pfClose,#signal,#ceBack,#agBack)::before{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+/* the profile's fold headers were 36px; same height on screen, 44px to tap */
+details.pffold>summary.sechead{padding:16px 2px;margin:-4px 0}
 </style>
 </head>
 <body>
+<noscript><div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:#0A0B0E;color:#F2F3F6;font:600 16px/1.5 system-ui,sans-serif;text-align:center">Tyre Hunt needs JavaScript to run the camera and your Registry. Turn it on in your browser settings, then reload.</div></noscript>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><mask id="thmcut" maskUnits="userSpaceOnUse" x="-110" y="-110" width="220" height="220"><rect x="-110" y="-110" width="220" height="220" fill="#fff"/><path d="M96.02 16.93L100.94 17.8M92.19 31.74L96.92 33.37M67.73 70.14L71.2 73.73M55.92 79.87L58.79 83.96M13.57 96.55L14.27 101.5M-45.77 86.09L-48.12 90.5M-58.68 77.87L-61.69 81.86M-87.63 42.74L-92.13 44.93M-93.24 28.51L-98.02 29.97M-96.02 -16.93L-100.94 -17.8M-92.19 -31.74L-96.92 -33.37M-67.73 -70.14L-71.2 -73.73M-55.92 -79.87L-58.79 -83.96M-13.57 -96.55L-14.27 -101.5M45.77 -86.09L48.12 -90.5M58.68 -77.87L61.69 -81.86M87.63 -42.74L92.13 -44.93M93.24 -28.51L98.02 -29.97" fill="none" stroke="#000" stroke-width="4"/><path d="M-86.15 -12.11A75.9 75.9 0 0 1 -18.09 -85.1A104.4 104.4 0 0 0 -86.15 -12.11Z" fill="#000"/></mask><symbol id="thm" viewBox="-110 -110 220 220"><circle r="86" fill="none" stroke="currentColor" stroke-width="28" mask="url(#thmcut)"/><circle r="58.5" fill="none" stroke="currentColor" stroke-width="7"/><path d="M42 0H110M-42 0H-110M0 42V110M0 -42V-110" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle r="15" fill="#1FA8FF"/></symbol></defs></svg>
 <div id="app" role="main">
 

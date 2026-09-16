@@ -670,3 +670,74 @@ This predates the pass: the card measured the same 990px tall and 422px above th
 - **Segment pills:** they hug their content (`width:max-content`), so Garage, Map and leaderboard pills end at different widths. That looks intentional and was left alone. Equal full-width segments would be a design change.
 - **Verdict content:** it is long by design (a 4:3 photo up to 16:10, the payline, quest hits and the for-sale block), so it now scrolls on most phones for the heaviest captures. Trimming it would be a distill-style decision.
 - **Sheets that need a signed-in account with real data:** hunterSheet, cmtSheet and inbox content were only scanned in their signed-out or empty states.
+
+# Adapt pass — 2026-09-16
+
+**Scope:** `index.html` across screens, orientations, inputs and contexts. **Method:**
+- **Scanner sweeps:** every tab and 11 sheets at nine sizes: 320×568, 375×667, 375×812, 390×844, 667×375, 812×375 and 932×430, plus desktop 1280×800, which renders the same 480px column as a tablet.
+- **New checks:** content that no scroll can reach, and tap targets under 24px and 44px. The unreachable check was validated by switching off today's verdict fix: it found 3 hits, and 0 with the fix back on.
+- **Measured:**
+  - header and tab-bar share of the screen
+  - hover rules on touch
+  - WCAG 1.4.12 text spacing
+  - landscape safe areas
+  - behaviour with JavaScript off
+
+## Findings → changes
+
+### 🟠 High
+**In landscape the tab bar floated across the middle of the screen.** The landscape rules make the camera controls (`#huntfoot`) absolutely positioned, which removed the element that pushed `#tabs` to the bottom of the flex column. At 667×375 the bar sat at y 97, over the camera's top bar and over every tab's list. Views measured −14% visible content. → **Fixed:** `#tabs{margin-top:auto}` in the landscape query. The bar now sits at y 314–375, and no camera control reaches under it.
+
+### 🟡 Medium
+**Landscape headers used 40% of the screen.** Garage, Map and Feed headers were 150px of a 375px-tall screen, leaving content 44%. → **Fixed:**
+- In landscape the segment control sits beside the title (CSS grid), so headers are 88px and content gets 60%.
+- The Feed's control stops before the refresh and bell icons (right edge 551 vs icons at 559).
+- In right-to-left the control reserves the streak ring's space; before that it overlapped the ring (16–287 vs 14–66).
+
+**Landscape content ran under the notch.** The page sets `viewport-fit=cover`, and landscape lets `#app` fill the full width, but only the camera controls honoured `safe-area-inset-right`. There was no left inset anywhere. → **Fixed:**
+- In landscape `#app` takes left and right margins from the safe-area insets, and the camera controls' own inset is dropped so it doesn't double up.
+- With a simulated 47px inset, the app spans 47–765 at 812×375 and no element crosses the edges.
+- Without a notch both margins compute to 0px.
+
+**Small tap targets on the most-used controls.** Nothing measured under 24px (WCAG 2.5.8 passes), but frequent controls were well under 44px:
+
+| Control | Size |
+|---|---|
+| Like | 29×28 |
+| Comment | 34×28 |
+| Feed card handle | 132×29 |
+| Plan my hunt | 121×33 |
+| Profile close | 76×32 |
+| Camera activity bar | 347×29 |
+| ‹ Registry / ‹ Back | 109×32 / 77×32 |
+| Profile fold headers | 36 tall |
+
+→ **Fixed:**
+- **Buttons:** an invisible `::before` extends each hit area to at least 44×44 without moving anything. A tap 6px above each button now hits it.
+- **Fold headers:** already use `::after` for the chevron, so they got padding with an equal negative margin: 44px to tap, same position on screen.
+- **"‹ Back":** its inline `position:static` is overridden, so the extension anchors to the button itself.
+- **Feed card handle:** the card's rounded clipping limits the extension to the card, so it's 41px effective and never steals taps from outside the card.
+
+### 🟢 Low
+**No message with JavaScript off.** The page rendered black. → **Fixed:** a full-screen `<noscript>` explanation. Proven by loading the page into a sandboxed iframe without script permission: the message rendered at 375×600 and no app script ran.
+
+## Verified
+- **Unreachable content:** none at any of the nine sizes after the fixes, and no page-level sideways scroll.
+- **Landscape at 667×375, 812×375 and 932×430:** the tab bar is at the bottom; headers are 88px; no overlaps in the header scan.
+- **Right-to-left landscape:** the segment control clears the ring.
+- **Desktop 1280×800:** a centred 480px column (x 400–880).
+- **Remaining scanner hits:** only text scrolling beneath the verdict's pinned action row, which is intended.
+- **Hover:** the stylesheet has **zero** `:hover` rules, so nothing gets stuck in a hovered state on touch. Interaction feedback uses `:active`.
+- **Text spacing (WCAG 1.4.12):** line-height 1.5, letter-spacing .12em, word-spacing .16em and 2em paragraph spacing on every screen and sheet at 375×812.
+  - No clipped text, no overlaps, and nothing unreachable.
+  - No button, chip, tab or segment label spilling outside its box.
+  - The only other hits: a textarea's own scroll and the verdict's pinned row.
+- **Hit areas:** each `::before` computes to 44px tall. The fold header measures 43px with a −4px margin. The two back pills kept their positions (12,10 and 16,18).
+- **Platform floor, re-confirmed:** `interactive-widget=resizes-content` plus the visualViewport keyboard handler; `orientation:any` in the manifest; pinch zoom allowed (no `user-scalable=no`); 100dvh app height.
+
+## Recommended (not done)
+- **Short desktop windows:** a desktop or laptop window under 520px tall matches the phone-landscape query, so the app spreads to full width. Adding `(pointer:coarse)` to both landscape queries would keep desktops in the column, but touch laptops are the edge case to check first.
+- **Tablets:** the app is a phone-width column with black sides. A tablet layout (two columns, or a wider feed) is a design project, not a polish fix.
+- **Dates and numbers:** they format with the device locale, not the app language. A German UI on an en-US phone shows "9/16/2026". Passing the chosen language to `toLocaleDateString` and `toLocaleString` would fix that, but it touches every date site.
+- **System font scaling:** not testable here. Android Chrome's text-scaling setting and iOS Dynamic Type (in the Capacitor shell) need a device check at 130% and 200%. Most sizes are in px.
+- **On-screen keyboard:** covering inputs in sheets can't be emulated in the preview pane. The existing visualViewport handler should cover it; worth a device check on the dossier and schedule forms.
