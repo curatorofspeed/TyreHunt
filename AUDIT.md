@@ -574,3 +574,99 @@ Lore is identical for every hunter, so per-user generation was waste even when i
 ## Recommended (not done)
 - **A visible cue in the tag sheet** naming what is waiting ("Claim your tag to schedule your hunt") would make the resume feel intentional rather than surprising. That is copy plus nine translations, so it belongs in its own pass.
 - **Form-submit resumes** would need a draft model rather than a replayed tap, to avoid double-posting.
+
+# Layout pass — 2026-09-16
+
+**Scope:** `index.html`, every tab (with every Garage, Map and Feed segment), the camera screen and 14 sheets, at 375×812 and 320×568, plus 375×667 and 390×844 for the verdict. **Method:** a scripted scan of the rendered screens, then measurements and screenshots of the things a scan can't judge.
+- **What the scan checks:** nested or short scroll panes, anything spilling past the screen edge, text clipped by its container, text drawn over other text, content under the tab bar at full scroll, 1–3px alignment misses, uneven gaps in lists, and empty boxes that take space.
+- **Test data:** six spots loaded into memory, including a 55-character model name, a for-sale price and a long event name.
+- **Scanner checked first:** before its results were trusted, it caught every problem planted in a test fixture.
+
+## Findings → changes
+
+### 🔴 Critical
+**The verdict card could run off the top of the screen, with no way to reach it.** `#verdict` is a bottom sheet with no height cap, and `#vcard` never scrolled, so a card taller than the screen lost its top: the photo, then the car's name. This is the screen after every capture.
+
+| Screen | Ordinary capture | Long name + for-sale sign |
+|---|---|---|
+| 375×667 (iPhone SE, 8) | 96px hidden | 308px hidden |
+| 390×844 | fits | 150px hidden |
+| 320×568 | 169px hidden | 422px hidden |
+
+This predates the pass: the card measured the same 990px tall and 422px above the screen with this pass's rules switched off.
+→ **Fixed:**
+- The card is capped at the screen height and scrolls.
+- The Hunt again / Document / Share row is pinned to the bottom while it scrolls.
+- A new verdict always opens at its photo.
+- When the card fits, nothing moves: button and photo positions measured identical with the new rules on and off.
+
+### 🟠 High
+**Sheet headers stretched CLOSE across the header.** A global `.btn{flex:1}` (meant for rows of equal buttons) made CLOSE 195–271px wide on all eight `.sheethead` sheets, squeezing titles to as little as 72px ("Activity"). → **Fixed:** `.sheethead>.btn{flex:0 0 auto}`, and CLOSE is now 69px everywhere.
+
+**Four sheets used the verdict card's styles but never got them.** `.vmk`, `.vyr`, `.vrow` and `.vbtns` were styled only inside `#vcard`, but the same markup is reused in the dossier, the Registry entry, the bounty sheet and the document-the-car sheet.
+- The Registry entry's car name rendered at 16px regular weight instead of 21px/900.
+- The dossier's meta line flowed inline, so a line began with a stray "·" and the FOR SALE chip split across lines.
+- Button rows had no layout.
+
+→ **Fixed:**
+- The four rules are unscoped, with the same values.
+- The meta text wraps in its own column beside the chip, and `.salechip` never breaks.
+- The dossier's four actions sit two to a row (168px each).
+
+**Two of the Feed's five tabs were off screen with no sign they existed.** The tab pill scrolls sideways; "The Lot" was cut to "TH" and "Rankings" was invisible. → **Fixed:**
+- The edge with more tabs behind it fades (`data-more` start/end/both, mirrored for right-to-left).
+- Choosing a tab scrolls it fully into view.
+
+**The Registry entry's back button was nearly invisible.** It inherited the hero's placeholder colour (`--ghost-10`, 10% white). → **Fixed:** `#ceHero .back{color:var(--ink)}`. It is now #F2F3F6 on the dark pill, in both themes.
+
+### 🟡 Medium
+**Grid card footers drifted.** In the Spots grid a long name pushed one card's chip row 77px below its neighbour's. Registry status lines were off by up to 6px in 5 of 23 rows. → **Fixed:** card bodies are flex columns with the footer pinned to the bottom; offsets now measure 0px in both grids.
+
+**The Schedule-a-hunt form was cramped and misaligned.**
+- The intro note was centred above a left-aligned form, with 0px before the first label.
+- The date and time row left 0px before the next field, where every other field gets 11px.
+
+→ **Fixed:** the note is left-aligned with 14px below it, and `.whenrow` gets the same 11px.
+
+### 🟢 Low
+**Header controls ended 2px short of the cards.** Headers used 18px side padding and bodies 16px, so the right edges sat at 357px versus 359px. → **Fixed:** `.vhead` uses 16px, and both measure 359px.
+
+**Empty status lines left dead space.** `#mapinfo` (12px) and `#lbNote` (10px) took space while empty. → **Fixed:** they are hidden while empty.
+
+**One-day expeditions read "SEP 16–16".** → **Fixed:** `fmtRange` returns "SEP 16" when start and end match. Multi-day ranges within a month and across months are unchanged, and were checked.
+
+## Verified
+- **Scanner sweep:**
+  - Before the fixes, it reported no clipping, overlap, spills, nested scrolls or content under the tab bar on any tab at either width. The problems above came from measurement and screenshots.
+  - After the fixes, at 320×568, it reported only three things, none a new problem:
+    - the pre-existing verdict overflow, now fixed
+    - the 2px inset that section headers use everywhere by design
+    - a content-width pill
+
+  No script errors.
+- **CLOSE buttons:** 69px on premSheet, huntSheet, bountySheet, inboxSheet, opSheet, cmtSheet, eventSheet and hunterSheet.
+- **Registry entry:** title computes to 21px/900, meta row to flex, and the back label to rgb(242,243,246), with a light-mode check too.
+- **Dossier:** meta row is flex; the sale chip sits on one line beside the LEGENDARY chip; buttons form 2 rows of 168px.
+- **Grids:** Spots chip rows and Registry status lines both measure 0px offset per row.
+- **Schedule a hunt:** note is left-aligned with a 14px gap; the date row is followed by an 11px gap.
+- **Header edges and empty lines:** header and card right edges both measure 359px; the empty `#mapinfo` computes `display:none`.
+- **Feed tabs:**
+  - At load, only the end edge fades.
+  - Choosing Rankings requests a +180px scroll that brings it fully into view, and the fade flips to the start edge.
+  - Car of the Day in the middle fades both edges; Latest resets.
+  - In right-to-left, scrollLeft reaches −159 and the fade gradient flips direction.
+  - Smooth scrolling was proven by capturing the `scrollBy` request, because the hidden preview pane doesn't animate scrolls.
+- **Verdict at 375×667 (heavy card):**
+  - The card top sits at 10px and the photo is fully visible.
+  - Hunt again is visible and hit-testable at scroll 0.
+  - At full scroll the last block ends 4px above the pinned row.
+  - A swipe down mid-scroll leaves it open; a swipe from the top closes it, driven with touch events.
+  - Reopening after scrolling to 300px starts at 0.
+- **Verdict at 390×844 (ordinary card):** positions identical with and without the new rules.
+- **Dates:** "SEP 16", "SEP 16–18" and "SEP 30 – OCT 2".
+
+## Recommended (not done)
+- **Feed "↻ REFRESH" row:** a full-width button takes the first 56px of the feed. An icon beside the inbox bell would reclaim it, but it moves a control people already use, so that's a product call.
+- **Segment pills:** they hug their content (`width:max-content`), so Garage, Map and leaderboard pills end at different widths. That looks intentional and was left alone. Equal full-width segments would be a design change.
+- **Verdict content:** it is long by design (a 4:3 photo up to 16:10, the payline, quest hits and the for-sale block), so it now scrolls on most phones for the heaviest captures. Trimming it would be a distill-style decision.
+- **Sheets that need a signed-in account with real data:** hunterSheet, cmtSheet and inbox content were only scanned in their signed-out or empty states.

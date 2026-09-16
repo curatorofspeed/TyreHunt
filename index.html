@@ -970,6 +970,64 @@ details.pffold[open]{padding-bottom:10px}
 #cotdHead .h{font:800 14px var(--disp);color:var(--gold);margin-top:6px;letter-spacing:.01em;text-wrap:balance}
 #cotdHead .cotdshare{margin-top:11px;padding:9px 14px;font-size:11px}
 #cotdHead .w{font-size:12.5px;line-height:1.5;color:var(--ink);margin:6px 0 0;text-wrap:pretty}
+
+/* ===== LAYOUT =====
+   Measured at 375 and 320 wide; each rule names what it fixes. */
+/* The verdict card's title, meta row and button row are reused by the dossier,
+   the Registry entry and the bounty and document sheets, but were only styled
+   inside #vcard: those sheets showed a 16px regular-weight title and a meta
+   row that wrapped chips mid-sentence. Same values, no longer scoped. */
+.vmk{font-size:21px;font-weight:900;margin-top:14px;letter-spacing:.01em}
+.vyr{font:600 12px var(--mono);color:var(--muted);margin-top:3px}
+.vrow{display:flex;align-items:center;gap:9px;margin-top:11px;flex-wrap:wrap}
+.vbtns{display:flex;gap:10px;margin-top:16px}
+/* The verdict is a bottom sheet with no height cap. When the card was taller
+   than the screen its top (the photo and the car's name) ran off the top edge
+   with no way to reach it: 96px for an ordinary capture on a 375x667 phone,
+   308px with a long name and a for-sale sign, 150px even at 390x844. Cap it to
+   the screen and let it scroll; the actions stay pinned to the bottom while it
+   does (sticky has no effect when the card fits). Swipe-to-dismiss already
+   waits for scrollTop 0. */
+#vcard{max-height:calc(100% - env(safe-area-inset-top,0px) - 10px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#vcard .vbtns{position:sticky;bottom:calc(-1 * (env(safe-area-inset-bottom,0px) + 20px));z-index:2;margin-top:4px;margin-left:-20px;margin-right:-20px;padding:12px 20px calc(env(safe-area-inset-bottom,0px) + 20px);margin-bottom:calc(-1 * (env(safe-area-inset-bottom,0px) + 20px));background:linear-gradient(180deg,transparent,var(--sheet) 14px)}
+/* chip beside the meta text, which wraps in its own column; the sale chip
+   (price inside) never splits across lines */
+#dossier .vrow>.vyr,#ceBody .vrow>.vyr{flex:1 1 0;min-width:0;margin-top:0}
+.salechip{white-space:nowrap;display:inline-block}
+/* The Registry entry's back pill inherited the hero's placeholder colour
+   (--ghost-10, 10% white) and read as an empty pill. */
+#ceHero .back{color:var(--ink)}
+/* four actions in the dossier: two to a row, a fifth (bounty) takes a full row */
+#dossier .vbtns{flex-wrap:wrap;gap:8px}
+#dossier .vbtns .btn{flex:1 1 calc(50% - 4px)}
+/* .btn{flex:1} is for rows of equal buttons; in a sheet header it stretched
+   CLOSE to 195-271px and squeezed the title to as little as 72px. */
+.sheethead>.btn{flex:0 0 auto}
+.sheethead h3{min-width:0}
+/* Grid cards: the footer sits on the card's bottom edge, so chips and status
+   lines line up across a row however many lines the name takes (a long name
+   pushed one Spots chip 77px below its neighbour). */
+.gcard .in{flex:1;display:flex;flex-direction:column}
+.gcard .row{margin-top:auto;padding-top:8px}
+.cxcard{display:flex;flex-direction:column}
+.cxcard .cin{flex:1;display:flex;flex-direction:column}
+.cxcard .cpop{margin-top:auto;padding-top:3px}
+/* A form's intro note reads with the form: left-aligned, with room above the
+   first label (it sat centred and 0px from it). */
+.sheetbody>.pfnote:first-child{text-align:left;margin-bottom:14px}
+/* the date + start row gave the next field 0px where every other field gets 11px */
+.whenrow{margin-bottom:11px}
+/* Header controls end on the same edge as the cards below (18px vs 16px). */
+.vhead{padding-left:16px;padding-right:16px}
+/* Empty status lines left 10-12px of dead space under the map and leaderboard. */
+#mapinfo:empty,#lbNote:empty{display:none}
+/* The Feed's five tabs scroll sideways on a phone; fade the edge that has more
+   behind it (set by the script beside the tab handler). */
+#hallSeg[data-more="end"]{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
+#hallSeg[data-more="start"]{-webkit-mask-image:linear-gradient(270deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(270deg,#000 calc(100% - 40px),transparent)}
+#hallSeg[data-more="both"]{-webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent)}
+html[dir="rtl"] #hallSeg[data-more="end"]{-webkit-mask-image:linear-gradient(270deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(270deg,#000 calc(100% - 40px),transparent)}
+html[dir="rtl"] #hallSeg[data-more="start"]{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
 </style>
 </head>
 <body>
@@ -5807,6 +5865,7 @@ function rollOdo(el, target){
 function openVerdict(spot, canvas, raw){
   const v = $("verdict");
   lastVerdictSpot = spot || null;
+  $("vcard").scrollTop = 0;   // the card now scrolls; a new verdict starts at its photo
   $("vDoc").style.display = (spot && !spot.flagged) ? "" : "none";
   $("vPhoto").style.backgroundImage = "url(" + canvas.toDataURL("image/jpeg", .8) + ")";
   $("vPhoto").style.aspectRatio = String(Math.max(.8, Math.min(1.6, canvas.width / Math.max(1, canvas.height))));
@@ -6060,6 +6119,29 @@ function renderStable(){
 }
 
 /* ================= FEED: LATEST / COTD / RANKINGS ================= */
+/* The Feed's five tabs don't fit a phone, so the pill scrolls sideways and
+   "The Lot" and "Rankings" started off screen with nothing to say so. Mark
+   which edge has more behind it (CSS fades that edge) and keep the chosen tab
+   in view. Logical start/end so Arabic fades the correct side. */
+(function(){
+  const seg = $("hallSeg");
+  if (!seg) return;
+  const mark = () => {
+    const max = seg.scrollWidth - seg.clientWidth, x = Math.abs(seg.scrollLeft);
+    const start = x > 2, end = x < max - 2;
+    seg.dataset.more = max <= 2 ? "" : start && end ? "both" : start ? "start" : end ? "end" : "";
+  };
+  seg.addEventListener("scroll", mark, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(mark).observe(seg);
+  seg.addEventListener("click", e => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    const calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const sr = seg.getBoundingClientRect(), br = b.getBoundingClientRect();
+    if (br.left < sr.left || br.right > sr.right) seg.scrollBy({ left: br.left < sr.left ? br.left - sr.left - 24 : br.right - sr.right + 24, behavior: calm ? "auto" : "smooth" });
+  });
+  mark();
+})();
 $("hallSeg").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
@@ -8524,6 +8606,7 @@ function eventDates(e, y){
 const MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
 function fmtRange(a, b){
   const s = MON[a.getMonth()] + " " + a.getDate();
+  if (a.getMonth() === b.getMonth() && a.getDate() === b.getDate()) return s;
   return a.getMonth() === b.getMonth() ? s + "–" + b.getDate() : s + " – " + MON[b.getMonth()] + " " + b.getDate();
 }
 function calendarList(){
