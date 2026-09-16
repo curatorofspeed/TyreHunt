@@ -396,3 +396,30 @@ The Feed's CLAIM TAG button was the only signed-out path that opened the tag she
 ## Recommended (not done)
 - **Hunter sheet handle button** sets `padding:0` inline, so the new hit-area rule doesn't reach it; it's one button at the top of the sheet with nothing near it.
 - **A skip link** isn't needed for a tab-bar app with one `main`, but if the feed ever grows a long header it would earn one.
+
+---
+
+# Registry lore moved server-side — 2026-09-15
+**Scope:** `index.html` plus a new `registry_lore` table. **Method:** trace the field-guide call path, prove it fails in production, replace per-user generation with one curated table.
+
+## The bug
+**The field guide never loaded for anyone.** `loreFor()` called `api.anthropic.com` directly on every Registry entry open. The key only exists server-side, so in production the request went out with no credentials, died at CORS preflight, and the `catch` swallowed it. Every entry open cost one doomed cross-origin request and two console errors, and the text never appeared. It failed silently, which is why it went unnoticed. Confirmed live with an empty `CONFIG.apiKey`: request sent, preflight blocked, `loreFor` returned null, nothing cached.
+
+## The fix
+Lore is identical for every hunter, so per-user generation was waste even when it worked.
+- **`registry_lore` table**, keyed by lane and name, holding `matters`, `numbers` and `note`. RLS: read granted to anon and authenticated, no write policy at all, so only the service role can change it.
+- **132 rows written once** — 60 base cars, 42 season-volume cars, 30 bikes — covering every Registry entry including volumes that unlock in later seasons.
+- **The app reads the table** and caches into `state.lore`, so a second open is instant and works offline. Non-Registry captures and missing rows are marked in a `loreMissed` set, so a card with nothing on file shows no block instead of a spinner that never resolves, and never re-requests.
+- **Keyed by name, not by `cxKeyOf`**, because `n1..nN` is positional and shifts when a season appends a volume.
+
+## Verified
+- A real tap on the Ferrari F40 tile opens the sheet with all three sections rendered: 0 requests to Anthropic, 1 read of `registry_lore`, no console errors on a tab that never ran the old code.
+- Signed out, lore still loads (anon policy), first read about 260 ms, second read 0 ms from cache.
+- An anon write is refused: `42501 new row violates row-level security policy`.
+- A non-Registry key shows no lore block, no spinner, and issues no request.
+- All 132 app entry names match a row exactly, both directions, accents included.
+- Copy scan across all rows: no doubled words, no double spaces, no lowercase sentence starts. One typo found and fixed in the Stratos note ("Wraparound wrapround").
+
+## Recommended (not done)
+- **New Registry entries need a lore row**, or they show no field guide. Worth a check when a season volume is added.
+- **The same table pattern fits Car of the Day** — generate once, approve, serve to everyone.

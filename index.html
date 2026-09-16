@@ -6118,7 +6118,7 @@ function renderEntry(){
     <div class="lore"><div class="lh">WHY IT MATTERS</div><p>${esc(lore.matters || "")}</p></div>
     <div class="lore"><div class="lh">THE NUMBERS</div><p>${esc(lore.numbers || "")}</p></div>
     <div class="lore"><div class="lh">SPOTTER'S NOTE</div><p>${esc(lore.note || "")}</p></div>`
-    : '<div class="lore"><div class="lh">FIELD GUIDE</div><p><span class="spin"></span>&nbsp; Writing the entry…</p></div>';
+    : loreMissed.has(ceKey) ? "" : '<div class="lore"><div class="lh">FIELD GUIDE</div><p><span class="spin"></span>&nbsp; Writing the entry…</p></div>';
   $("ceBody").innerHTML = `
     <div class="vrow" style="margin:0 0 6px">
       <span class="chip ${info.tier}">${info.tier.toUpperCase()}</span>
@@ -6133,8 +6133,8 @@ function renderEntry(){
     ${info.spots.length ? `<div class="sechead">Your sightings</div>
       <div class="sights">${info.spots.map(sp => `<button data-sight="${sp.id}" aria-label="View this sighting" style="background-image:url('${sp.img}')"></button>`).join("")}</div>` : ""}
     ${info.c ? `<div class="vbtns" style="margin-top:14px"><button class="btn hot" id="ceShare">SHARE BEST SHOT</button></div>` : ""}`;
-  if (!lore) loreFor(ceKey, info.name, info.tier, info.spots[0] ? info.spots[0].year : "").then(l => {
-    if (l && ceKey && state.lore[ceKey] && $("cxSheet").classList.contains("on")) renderEntry();
+  if (!lore && !loreMissed.has(ceKey)) loreFor(ceKey, info.name).then(() => {
+    if (ceKey && $("cxSheet").classList.contains("on")) renderEntry();
   });
   fillGlobal();
 }
@@ -6153,28 +6153,23 @@ $("ceBody").addEventListener("click", e => {
     }
   }
 });
-async function loreFor(key, name, tier, yearHint){
+const loreMissed = new Set();   // keys with nothing on file — never ask twice in a session
+/* Field-guide text is the same for every hunter, so it is written once into
+   registry_lore and read from there. Readable signed out, cached on the phone
+   after the first open, and no key ever needs to reach the client. */
+async function loreFor(key, name){
   if (state.lore[key]) return state.lore[key];
+  if (!sb || !key || key.startsWith("x:")){ loreMissed.add(key); return null; }
   try{
-    const prompt = 'Field-guide entry for the ' + name + (yearHint ? ' (' + yearHint + ')' : '') + ', a ' + tier + '-tier car in a car-spotting game registry. Respond ONLY with minified JSON, no markdown fences: {"matters":string,"numbers":string,"note":string}. matters: why this car matters, 2 sentences. numbers: production run, era, and one key spec in a single line. note: how a spotter recognizes one in the wild, 1 sentence. Enthusiast voice, no emoji, under 90 words total.';
-    const headers = { "Content-Type": "application/json" };
-    if (CONFIG.apiKey){
-      headers["x-api-key"] = CONFIG.apiKey;
-      headers["anthropic-version"] = "2023-06-01";
-      headers["anthropic-dangerous-direct-browser-access"] = "true";
-    }
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST", headers,
-      body: JSON.stringify({ model: CONFIG.model, max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
-    });
-    if (!r.ok) throw new Error("api " + r.status);
-    const data = await r.json();
-    const text = (data.content || []).map(b => b.type === "text" ? b.text : "").join("").replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(text);
-    state.lore[key] = parsed;
+    const lane = key.charAt(0) === "m" ? "moto" : "car";
+    const { data } = await sb.from("registry_lore")
+      .select("matters,numbers,note")
+      .eq("lane", lane).eq("name", name).maybeSingle();
+    if (!data){ loreMissed.add(key); return null; }
+    state.lore[key] = { matters: data.matters, numbers: data.numbers, note: data.note };
     await Store.save();
-    return parsed;
-  }catch(e){ return null; }
+    return state.lore[key];
+  }catch(e){ loreMissed.add(key); return null; }
 }
 
 async function shareTop8(){
