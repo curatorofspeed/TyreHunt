@@ -557,8 +557,8 @@ html[dir="rtl"] #reelProg .rbar i{transform-origin:right center}
 #inboxBell{position:absolute;top:14px;right:16px;width:42px;height:42px;border:1px solid var(--line);border-radius:999px;background:var(--panel);display:flex;align-items:center;justify-content:center;color:var(--muted)}
 #inboxDot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:var(--fill-a);color:var(--on-fill);font:800 10px var(--mono);display:none;align-items:center;justify-content:center;padding:0 4px}
 #inboxDot.on{display:inline-flex}
-#cmtSheet,#hunterSheet,#bountySheet,#leadSheet,#eventSheet,#inboxSheet{position:absolute;inset:0;z-index:25;display:none;flex-direction:column;background:var(--carbon)}
-#cmtSheet.on,#hunterSheet.on,#bountySheet.on,#leadSheet.on,#eventSheet.on,#inboxSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
+#cmtSheet,#hunterSheet,#bountySheet,#eventSheet,#inboxSheet{position:absolute;inset:0;z-index:25;display:none;flex-direction:column;background:var(--carbon)}
+#cmtSheet.on,#hunterSheet.on,#bountySheet.on,#eventSheet.on,#inboxSheet.on{display:flex;animation:sheetIn .22s cubic-bezier(.2,.8,.3,1)}
 .sheethead{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 12px;border-bottom:1px solid var(--line)}
 .sheethead h3{font-size:16px;font-weight:900;letter-spacing:.04em}
 .sheetbody{flex:1;overflow-y:auto;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 20px)}
@@ -813,11 +813,6 @@ html[dir="rtl"] #reelProg .rbar i{transform-origin:right center}
 .btag.mine{color:var(--pulse-hi);border:1px solid rgba(var(--pulse-rgb),.5)}
 .btag.found{color:var(--ok,#3ECF8E);border:1px solid rgba(var(--ok-rgb),.45)}
 .bmeta{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5}
-.wcard{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:var(--r-md);padding:13px 15px;margin-bottom:10px}
-.wcard .wn{font:800 14px var(--disp);color:var(--ink)}
-.wcard .wy{font:700 10px var(--mono);color:var(--gold);letter-spacing:.08em;margin-top:2px}
-.wcard .wb{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.55}
-.wcard .wl{font-size:10.5px;color:var(--muted);margin-top:6px;font-family:var(--mono);letter-spacing:.04em}
 .sleepchip{font:800 8.5px var(--disp);letter-spacing:.14em;padding:3px 8px;border-radius:999px;color:var(--sleep);border:1px solid rgba(157,167,184,.45);background:rgba(157,167,184,.08)}
 
 /* moderation sheet */
@@ -866,7 +861,7 @@ html[data-appearance="light"] #app:has(#tabs .tab.cam.on) .streak{--carbon:#0A0B
 @keyframes foldIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 details.fold.opening>summary~*{animation:foldIn .22s ease}
 @media (prefers-reduced-motion: reduce){
-  #signal,#feedBadge.on,#otpBox.on,#opSheet.on,#premSheet.on,#huntSheet.on,#modBox,#angleSheet.on,#cmtSheet.on,#hunterSheet.on,#bountySheet.on,#leadSheet.on,#eventSheet.on,#inboxSheet.on,#coach.on,.flike i.popped,details.fold.opening>summary~*{animation:none}
+  #signal,#feedBadge.on,#otpBox.on,#opSheet.on,#premSheet.on,#huntSheet.on,#modBox,#angleSheet.on,#cmtSheet.on,#hunterSheet.on,#bountySheet.on,#eventSheet.on,#inboxSheet.on,#coach.on,.flike i.popped,details.fold.opening>summary~*{animation:none}
   .heartburst.go{animation:none;opacity:1;transform:translate(-50%,-50%) scale(1)}
 }
 
@@ -921,13 +916,13 @@ button:disabled:not(#shutter):not(.rbtn):not(.bdg):not([aria-busy="true"]),selec
    instead. Declared last so the reduced-motion rules below outrank everything. */
 @keyframes sheetOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(10px)}}
 @keyframes fadeOutLayer{from{opacity:1}to{opacity:0}}
-#profile.closing,#dossier.closing,#cxSheet.closing,#premSheet.closing,#huntSheet.closing,#opSheet.closing,#angleSheet.closing,#inboxSheet.closing,#cmtSheet.closing,#hunterSheet.closing,#bountySheet.closing,#leadSheet.closing,#eventSheet.closing{display:flex;animation:sheetOut .18s cubic-bezier(.4,0,1,1) both;pointer-events:none}
+#profile.closing,#dossier.closing,#cxSheet.closing,#premSheet.closing,#huntSheet.closing,#opSheet.closing,#angleSheet.closing,#inboxSheet.closing,#cmtSheet.closing,#hunterSheet.closing,#bountySheet.closing,#eventSheet.closing{display:flex;animation:sheetOut .18s cubic-bezier(.4,0,1,1) both;pointer-events:none}
 #verdict.closing{display:flex;animation:fadeOutLayer .16s ease both;pointer-events:none}
 .lore{animation:foldIn .24s ease}
 [aria-busy="true"],button:disabled,select:disabled{transition:opacity .16s ease}
 .seg button{transition:background-color .16s ease,color .16s ease}
 @media (prefers-reduced-motion: reduce){
-  #profile.closing,#dossier.closing,#cxSheet.closing,#premSheet.closing,#huntSheet.closing,#opSheet.closing,#angleSheet.closing,#inboxSheet.closing,#cmtSheet.closing,#hunterSheet.closing,#bountySheet.closing,#leadSheet.closing,#eventSheet.closing,#verdict.closing{display:none;animation:none}
+  #profile.closing,#dossier.closing,#cxSheet.closing,#premSheet.closing,#huntSheet.closing,#opSheet.closing,#angleSheet.closing,#inboxSheet.closing,#cmtSheet.closing,#hunterSheet.closing,#bountySheet.closing,#eventSheet.closing,#verdict.closing{display:none;animation:none}
   .lore{animation:none}
   [aria-busy="true"],button:disabled,select:disabled,.seg button{transition:none}
 }
@@ -938,7 +933,7 @@ button:disabled:not(#shutter):not(.rbtn):not(.bdg):not([aria-busy="true"]),selec
    so a last line keeps company, short headings balance across their lines, and
    the quest descriptor gets the leading its siblings already had. */
 .qd{line-height:1.5}
-.qd,.pfnote,.empty p,.lore p,.ibeat p,.scopy,.wl,.wy{text-wrap:pretty}
+.qd,.pfnote,.empty p,.lore p,.ibeat p,.scopy{text-wrap:pretty}
 .sechead,.e1,.qn,.cnm,.vmk,.stitle,h2,h3{text-wrap:balance}
 
 /* ================= TAG SHEET =================
@@ -1166,9 +1161,6 @@ details.pffold[open]{padding-bottom:10px}
       <div id="huntList"></div>
       <div class="sechead">Bounty board · owners want to be found</div>
       <div id="bountyList"></div>
-      <div class="sechead">Most wanted · built, then lost</div>
-      <p class="pfnote" style="margin:-4px 0 10px">Cars the record says exist but nobody can find. Spot something that fits — file a lead, don't claim a capture.</p>
-      <div id="wantedList"></div>
     </div>
     </div>
   </section>
@@ -1411,27 +1403,11 @@ details.pffold[open]{padding-bottom:10px}
     <div class="sheetbody" id="ibList"></div>
   </section>
 
-  <!-- ============ FILE A LEAD ============ -->
-  <section id="leadSheet" role="dialog" aria-modal="true" data-layer aria-labelledby="lTitle">
-    <div class="sheethead"><h3 id="lTitle">File a lead</h3><button class="btn" id="lBack" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
-    <div class="sheetbody">
-      <div id="lCar"></div>
-      <p class="pfnote" style="margin-top:10px">Leads go to the operator, not the Registry — a photo can't verify a chassis number. Tell us what you saw and where you saw it. Good leads get credited.</p>
-      <div class="dfield"><label>What you saw</label><textarea id="lBody" maxlength="600" placeholder="Under a tarp behind a body shop off Route 9. Riveted spine down the roof, no engine. Owner said it came from an estate in the 70s."></textarea></div>
-      <button class="btn hot" id="lSend" style="width:100%;margin-top:8px">SEND LEAD</button>
-      <div id="lMine" style="margin-top:16px"></div>
-    </div>
-  </section>
-
   <!-- ============ OPERATOR CONSOLE ============ -->
   <section id="opSheet" role="dialog" aria-modal="true" data-layer aria-labelledby="opSheetTitle">
     <div class="sheethead"><h3 id="opSheetTitle">Operator</h3><button class="btn" id="opBack" style="padding:8px 14px;font-size:10px">CLOSE</button></div>
     <div class="sheetbody">
       <div class="opstats" id="opStats"></div>
-      <div class="seg" id="opSeg" style="margin-bottom:12px">
-        <button data-op="reports" class="on">REPORTS</button>
-        <button data-op="leads">LEADS</button>
-      </div>
       <div id="opList"></div>
     </div>
   </section>
@@ -3466,7 +3442,7 @@ function makeDismissable(id, onClose){
   });
 }
 function armSheetGestures(){
-  [["cmtSheet"], ["hunterSheet"], ["bountySheet"], ["leadSheet"], ["premSheet"], ["inboxSheet"],
+  [["cmtSheet"], ["hunterSheet"], ["bountySheet"], ["premSheet"], ["inboxSheet"],
    ["angleSheet"], ["opSheet"], ["cxSheet"], ["dossier"], ["profile"], ["eventSheet"]]
     .forEach(([id]) => makeDismissable(id));
   // the verdict card slides too — closing it must also clear the detect chip
@@ -3564,27 +3540,20 @@ async function openOperator(){
 }
 $("opBack").addEventListener("click", () => $("opSheet").classList.remove("on"));
 document.addEventListener("click", e => { if (e.target.closest("#opBtn")) openOperator(); });
-$("opSeg").addEventListener("click", e => {
-  const b = e.target.closest("button");
-  if (!b) return;
-  opMode = b.dataset.op;
-  document.querySelectorAll("#opSeg button").forEach(x => x.classList.toggle("on", x === b));
-  renderOpList();
-});
 async function renderOpStats(){
   const box = $("opStats");
-  box.innerHTML = '<div class="opstat"><b>…</b><span>Hunters</span></div><div class="opstat"><b>…</b><span>Open reports</span></div><div class="opstat"><b>…</b><span>New leads</span></div>';
+  box.innerHTML = '<div class="opstat"><b>…</b><span>Hunters</span></div><div class="opstat"><b>…</b><span>Open reports</span></div><div class="opstat"><b>…</b><span>Spots today</span></div>';
   try{
     const midnight = new Date(); midnight.setHours(0,0,0,0);
     const [h, r, l] = await Promise.all([
       sb.from("profiles").select("id", { count: "exact", head: true }),
       sb.from("reports").select("id", { count: "exact", head: true }).eq("status", "new"),
-      sb.from("leads").select("id", { count: "exact", head: true }).eq("reviewed", false)
+      sb.from("captures").select("id", { count: "exact", head: true }).gte("created_at", midnight.toISOString())
     ]);
     box.innerHTML =
       '<div class="opstat"><b>' + (h.count ?? 0) + '</b><span>Hunters</span></div>' +
       '<div class="opstat"><b>' + (r.count ?? 0) + '</b><span>Open reports</span></div>' +
-      '<div class="opstat"><b>' + (l.count ?? 0) + '</b><span>New leads</span></div>';
+      '<div class="opstat"><b>' + (l.count ?? 0) + '</b><span>Spots today</span></div>';
   }catch(e){ box.innerHTML = '<p class="pfnote">Stats unavailable.</p>'; }
 }
 async function renderOpList(){
@@ -3630,19 +3599,6 @@ async function renderOpList(){
           '</div>' +
         '</div>';
       }).join("");
-    } else {
-      const { data: leads } = await sb.from("leads")
-        .select("id,hunter,wanted_key,body,created_at")
-        .eq("reviewed", false).order("created_at", { ascending: false }).limit(40);
-      if (!leads || !leads.length){ box.innerHTML = '<p class="pfnote">No new leads.</p>'; return; }
-      box.innerHTML = leads.map(l => {
-        const w = MOST_WANTED.find(x => x.key === l.wanted_key);
-        return '<div class="opcard"><div class="obody">' +
-          '<div class="orsn" style="color:var(--gold)">' + esc(w ? w.name : l.wanted_key) + '</div>' +
-          '<div class="ometa">' + ago(l.created_at) + '</div>' +
-          '<div class="otext">' + esc(l.body) + '</div>' +
-        '</div><div class="opacts"><button class="ok" data-opread="' + l.id + '">MARK REVIEWED</button></div></div>';
-      }).join("");
     }
   }catch(e){ box.innerHTML = '<p class="pfnote">Couldn\'t load — check the admin policies are applied.</p>'; }
 }
@@ -3650,7 +3606,6 @@ $("opList").addEventListener("click", async e => {
   const d = e.target.closest("[data-opdismiss]");
   const dc = e.target.closest("[data-opdelcap]");
   const dm = e.target.closest("[data-opdelcmt]");
-  const rd = e.target.closest("[data-opread]");
   try{
     if (d){ await sb.from("reports").update({ status: "dismissed" }).eq("id", +d.dataset.opdismiss); toast("Dismissed"); }
     else if (dc){
@@ -3663,7 +3618,6 @@ $("opList").addEventListener("click", async e => {
       await sb.from("reports").update({ status: "actioned" }).eq("id", +dm.dataset.rep);
       toast("Comment removed");
     }
-    else if (rd){ await sb.from("leads").update({ reviewed: true }).eq("id", +rd.dataset.opread); toast("Lead reviewed"); }
     else return;
   }catch(err){ toast("Action failed — check permissions"); return; }
   renderOpStats();
@@ -3889,74 +3843,6 @@ function renderThemes(){
     </button>`;
   }).join("");
 }
-/* ================= MOST WANTED (built, then lost) ================= */
-const MOST_WANTED = [
-  { key:"atlantic", name:"Bugatti Type 57 SC Atlantic", sub:"chassis 57453 · \u201cLa Voiture Noire\u201d", built:"1936 · one of four",
-    body:"Jean Bugatti's personal Atlantic and the most valuable missing car on earth. Three of the four survive as concours royalty; this one has no confirmed sighting since the late 1930s, when it was reportedly loaded onto a train out of Alsace ahead of the German advance. Bugatti's own history says the trail ends there.",
-    last:"Last trace: en route to Bordeaux, France · c. 1938–41" },
-  { key:"aerolithe", name:"Bugatti A\u00e9rolithe", sub:"the Elektron show car", built:"1935 · one built",
-    body:"The magnesium-alloy prototype that gave the Atlantic its shape and its riveted spine. It vanished around 1936 — dismantled for parts, lost to the war, or quietly parked somewhere. Only recreations exist today.",
-    last:"Last trace: France · c. 1936" },
-  { key:"375mm", name:"Ferrari 375 MM", sub:"chassis 0378AM · Pinin Farina Berlinetta", built:"1953 · one of 26",
-    body:"Every other 375 MM is accounted for. This one was sold to a collector in Genoa in 1953 and simply stopped appearing. The Ferrari world's long-standing suspicion is that somebody, somewhere, knows exactly where it is.",
-    last:"Last known: Genoa, Italy · 1953" },
-  { key:"sj506", name:"Duesenberg SJ", sub:"chassis 506", built:"1930s · one of ~36 supercharged",
-    body:"One of the supercharged Duesenbergs — the fastest American cars of their era — and one of the few whose chassis has never been traced through the registries that track the rest.",
-    last:"Last known: United States" },
-  { key:"littlebastard", name:"Porsche 550 Spyder", sub:"James Dean's \u201cLittle Bastard\u201d", built:"1955 · the wreck",
-    body:"After Dean's crash the remains toured as a highway-safety exhibit for years. In 1960 the car was crated for shipment to Los Angeles and never arrived. Parts have surfaced over the decades; the hulk never has.",
-    last:"Last trace: in transit, Miami \u2192 Los Angeles · 1960" },
-  { key:"motorama", name:"GM Motorama dream cars", sub:"several unaccounted", built:"1950s · show cars",
-    body:"GM's Motorama concepts were mostly ordered destroyed, but a stubborn number escaped the crusher and were last seen in salvage yards decades ago. Cars like the 1953 Buick Wildcat and the fastback Corvette Corvair remain unlocated — the most findable entries on this board.",
-    last:"Last trace: Michigan salvage yards · 1970s" },
-  { key:"btf-b", name:"DeLorean DMC-12 \u2018B\u2019 car", sub:"Back to the Future", built:"1980s · film hero car",
-    body:"One of the DeLoreans used for the film's most famous shots. It disappeared after production wrapped and only fragments have ever resurfaced. Most believe the complete car no longer exists — most is not all.",
-    last:"Last trace: studio backlot, California" }
-];
-let wantedKey = null, myLeads = [];
-function renderWanted(){
-  const box = $("wantedList");
-  if (!box) return;
-  box.innerHTML = MOST_WANTED.map(w => `
-    <div class="wcard" data-wanted="${w.key}" role="button" tabindex="0">
-      <div class="wn">${esc(w.name)}</div>
-      <div class="wy">${esc(w.built)} · ${esc(w.sub)}</div>
-      <div class="wl">${esc(w.last)}</div>
-    </div>`).join("");
-}
-$("wantedList").addEventListener("click", e => {
-  const c = e.target.closest("[data-wanted]");
-  if (c) openLead(c.dataset.wanted);
-});
-async function openLead(key){
-  wantedKey = key;
-  const w = MOST_WANTED.find(x => x.key === key);
-  if (!w) return;
-  $("lTitle").textContent = "Lead · " + w.name;
-  $("lCar").innerHTML = `<div class="wcard" style="margin:0"><div class="wn">${esc(w.name)}</div><div class="wy">${esc(w.built)} · ${esc(w.sub)}</div><div class="wb">${esc(w.body)}</div><div class="wl">${esc(w.last)}</div></div>`;
-  $("lBody").value = "";
-  $("leadSheet").classList.add("on");
-  $("lMine").innerHTML = "";
-  if (sb && sbSession){
-    try{
-      const { data } = await sb.from("leads").select("body,created_at").eq("wanted_key", key).eq("hunter", sbSession.user.id).order("created_at", { ascending: false }).limit(5);
-      if (data && data.length) $("lMine").innerHTML = '<div class="sechead">Your leads on this car</div>' + data.map(l => `<p class="pfnote">${ago(l.created_at)} · ${esc(l.body.slice(0, 90))}</p>`).join("");
-    }catch(e){}
-  }
-}
-$("lBack").addEventListener("click", () => $("leadSheet").classList.remove("on"));
-$("lSend").addEventListener("click", busyGuard(async () => {
-  const v = $("lBody").value.trim();
-  if (!v){ toast("Tell us what you saw first"); return; }
-  if (!sb || !sbSession){ needTag("Sign in to file a lead"); return; }
-  try{
-    const latest = state.spots.find(x => !x.flagged);
-    await sb.from("leads").insert({ hunter: sbSession.user.id, wanted_key: wantedKey, body: v.slice(0, 600), capture_id: null });
-    sfx("classic");
-    toast("Lead filed — the operator reviews every one");
-    $("leadSheet").classList.remove("on");
-  }catch(e){ toast("Lead didn't send — try again"); }
-}));
 
 /* ================= SCHEDULED HUNTS =================
    The mechanic that turns a lobby from a coincidence into a meeting. */
@@ -6865,7 +6751,6 @@ function worldTap(e){
 
 /* ================= QUESTS ================= */
 function renderQuests(){
-  renderWanted();
   renderBounties();
   renderHunts();
   ensureDay();
@@ -8016,7 +7901,7 @@ addCrew = singleFlight(addCrew);
    back in. */
 (function(){
   const LAYERS = { verdict:"vAgain", cxSheet:"ceBack", profile:"pfClose", dossier:"dBack", premSheet:"premBack", huntSheet:"huntBack",
-    bountySheet:"bBack", inboxSheet:"ibBack", leadSheet:"lBack", opSheet:"opBack", modSheet:"modCancel", cmtSheet:"cmtBack",
+    bountySheet:"bBack", inboxSheet:"ibBack", opSheet:"opBack", modSheet:"modCancel", cmtSheet:"cmtBack",
     eventSheet:"evClose", hunterSheet:"hBack", angleSheet:"agBack", photoFull:"", intro:"introGo" };
   const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
   const returnTo = new Map();
@@ -8034,7 +7919,7 @@ addCrew = singleFlight(addCrew);
      sites that drop the class: add .closing, let the CSS run, then drop it.
      The timer is the safety net — a sheet must never be stranded on screen. */
   const EXIT = new Set(["profile","dossier","cxSheet","premSheet","huntSheet","opSheet","angleSheet",
-    "inboxSheet","cmtSheet","hunterSheet","bountySheet","leadSheet","eventSheet","verdict"]);
+    "inboxSheet","cmtSheet","hunterSheet","bountySheet","eventSheet","verdict"]);
   function playExit(layer){
     if (!EXIT.has(layer.id)) return;
     layer.classList.add("closing");
