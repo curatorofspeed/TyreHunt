@@ -21,7 +21,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Racing+Sans+One&family=Outfit:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Racing+Sans+One&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://kokxlzygppakgcebkygc.supabase.co" crossorigin>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -76,7 +76,6 @@
   --r-rare:#5E97FF;
   --r-legend:#FFC24B;
   --disp:'Archivo',system-ui,-apple-system,sans-serif;
-  --brand:'Outfit','Archivo',system-ui,sans-serif;
   --mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace;
   --r-sm:10px;   /* chips, thumbs, small icons */
   --r-md:14px;   /* cards, panels, inputs, buttons */
@@ -936,6 +935,15 @@ button:disabled:not(#shutter):not(.rbtn):not(.bdg):not([aria-busy="true"]),selec
   .lore{animation:none}
   [aria-busy="true"],button:disabled,select:disabled,.seg button{transition:none}
 }
+
+/* ================= TYPESET =================
+   Measured at 375px: nine blocks of copy ended on a line under a third of the
+   width of the line above it, the worst at 9%. Prose now wraps with `pretty`
+   so a last line keeps company, short headings balance across their lines, and
+   the quest descriptor gets the leading its siblings already had. */
+.qd{line-height:1.5}
+.qd,.pfnote,.empty p,.lore p,.ibeat p,.scopy,.wl,.wy{text-wrap:pretty}
+.sechead,.e1,.qn,.cnm,.vmk,.stitle,h2,h3{text-wrap:balance}
 </style>
 </head>
 <body>

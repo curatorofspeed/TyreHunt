@@ -494,3 +494,39 @@ Lore is identical for every hunter, so per-user generation was waste even when i
 ## Recommended (not done)
 - **Canvas can't read CSS tokens cheaply**, so the four always-dark share surfaces still need a manual edit if the dark palette ever changes. The single constant makes that one edit instead of four.
 - **Separating classic from legendary for colour-blind hunters** wants a non-colour channel rather than a hue change — a ring or fill treatment on legendary, which is a design decision, not polish.
+
+---
+
+# Typeset pass — 2026-09-15
+**Scope:** same file. **Method:** inventory the type scale, the font request and every fallback stack; measure wrapped copy line by line at phone width with range rectangles; measure numeral jitter directly rather than assuming it.
+
+## Findings → changes
+
+### 🟡 Medium
+**A whole font family was requested that nothing renders.** The Google Fonts URL asked for Outfit at three weights. Measured: the stylesheet is **19,177 bytes with Outfit and 16,651 without — 2,526 bytes (13%) of a render-blocking request**, and 6 of its 44 `@font-face` blocks. → **Fixed:** Outfit is out of the request, and so is the dead `--brand` token that named it.
+- **The near miss worth recording:** my first guard aborted the patch because Outfit appeared twice, not once. The second occurrence was `--brand:'Outfit','Archivo',…` — a family reachable through a token rather than a `font-family` declaration. `var(--brand)` turned out to be used zero times and, unlike every live token, was never re-declared in the light or dark-scope blocks. Removing the request while leaving the token would have been worse than doing nothing: the next use of `var(--brand)` would have fallen back to Archivo silently.
+
+**Wrapped copy was leaving orphans.** Measuring every visible text block at 375px by its line boxes, **nine blocks ended on a line under a third of the width of the line above, the worst at 9%** — quest descriptions, the "Bounty board · owners want to be found" heading, two Most Wanted trace lines, and the feed's claim-a-tag copy. → **Fixed:** `text-wrap: pretty` on prose and `balance` on short headings. After: **six blocks, worst case 14%**, the quest descriptors moved from 16–19% to 27%, and the heading and one Most Wanted line left the list entirely. `pretty` improves the last line; it cannot rescue a block that ends in one long unbreakable token, which is why six remain.
+
+### 🟢 Low
+**One descriptor had no leading.** `.qd` sets 11.5px text that routinely wraps to two lines, with no `line-height`, while every sibling descriptor has 1.5–1.55. → **Fixed:** 1.5, computing to 17.25px. Verified it doesn't push quest cards into overflow at 320px.
+
+### Measured and rejected
+- **Tabular numerals.** The premise was that counters, streaks and prices jitter as digits change. Measured: Archivo's proportional figures differ by **0.04px** between `000000` and `111111` — imperceptible — and almost every numeric display in the app (`.amt`, `.num`, `.qpay .v`, `.rk`, `.cno`) is already set in JetBrains Mono, which is monospaced and therefore tabular by construction. The only Archivo-set numeral is a leaderboard position, which doesn't tick in place. Applying `font-variant-numeric` would have been a no-op shipped on a theory.
+
+### Measured and left alone (correctly)
+- **The type scale is wide** — about 25 distinct sizes including half-pixel neighbours (8/8.5, 11/11.5, 12/12.5, 14/14.5). Consolidating them into a ratio-based scale would move type on nearly every screen; that is a redesign, not a polish pass.
+- **Ten micro-labels at 8–8.5px** (`.qpay .u`, `.ctl .cs`, `.chip`, `.cxcard .cno` and similar) are tracked uppercase labels sitting beside a larger value that carries the meaning — consistent with the product's design language, and nothing measured says they fail.
+- **Fallback stacks are sound:** `--disp` falls back to system-ui, `--mono` to ui-monospace/SF Mono, and the one Racing Sans One use falls back to `--disp`.
+
+## Verified
+- **Fonts still load and apply:** three families resolve (Archivo, JetBrains Mono, Racing Sans One), 38 faces instead of 44, Outfit absent. Display elements compute `Archivo, system-ui…`, mono elements `"JetBrains Mono", ui-monospace…`, and the wordmark `"Racing Sans One", Archivo…` — no unexpected fallback anywhere.
+- **The request in the file resolves:** HTTP 200, 16,651 bytes, 38 `@font-face` blocks, exactly three families, `display=swap` intact.
+- **Wrap rules compute:** `.qd` and `.pfnote` return `pretty`, `.sechead` returns `balance`.
+- **Leading:** `.qd` computes 17.25px at 11.5px — 1.5 — and a 320px sweep of the Hunts view finds zero elements past the screen edge.
+- **Orphan count 9 → 6** at 375px, measured the same way before and after.
+- Leftovers at zero: no `Outfit`, no `--brand`. No console errors; all inline scripts parse.
+
+## Recommended (not done)
+- **Archivo is requested at six weights** (400–900). A count of which weights the CSS actually selects would likely let two go, but each is only fetched when used, so the saving is CSS bytes rather than font downloads.
+- **A type scale** would be worth defining if the app ever gets a design refresh — the half-pixel neighbours suggest sizes were chosen per component rather than from a ramp.
