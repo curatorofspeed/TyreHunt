@@ -1154,8 +1154,12 @@ details.pffold[open]{padding-bottom:10px}
       </div>
       <button id="huntPlanBtn" style="background:linear-gradient(145deg,var(--fill-a),var(--fill-b));color:var(--on-fill);border-radius:999px;padding:10px 14px;font-weight:800;font-size:10px;letter-spacing:.12em;flex:0 0 auto">PLAN MY HUNT</button>
     </div>
-    <div class="vbody" id="questList"></div>
-    <div class="vbody" id="boardBody" style="padding-top:0">
+    <!-- One scroll for the whole tab. These used to be two stacked .vbody
+         panes, each flex:1 with its own overflow, so today's hunts and the
+         board each got half the screen and scrolled separately. -->
+    <div class="vbody">
+    <div id="questList"></div>
+    <div id="boardBody">
       <div class="sechead">Scheduled hunts</div>
       <p class="pfnote" style="margin:-4px 0 10px">Pick a time and place, share the link, and everyone lands in the same lobby when it starts.</p>
       <button class="btn hot" id="huntNewBtn" style="width:100%;margin-bottom:12px">SCHEDULE A HUNT</button>
@@ -1165,6 +1169,7 @@ details.pffold[open]{padding-bottom:10px}
       <div class="sechead">Most wanted · built, then lost</div>
       <p class="pfnote" style="margin:-4px 0 10px">Cars the record says exist but nobody can find. Spot something that fits — file a lead, don't claim a capture.</p>
       <div id="wantedList"></div>
+    </div>
     </div>
   </section>
 
