@@ -1076,6 +1076,14 @@ details.pffold>summary.sechead{padding:16px 2px;margin:-4px 0}
    past both edges of the pill at 375px, more in German and French. Wrap to
    at most the old 88% width, centred, balanced across lines. */
 #toast{white-space:normal;width:max-content;max-width:88%;text-align:center;text-wrap:balance;line-height:1.4}
+/* ===== POLISH =====
+   Light theme. --pulse-hi (#6FA5FF) is a dark-surface blue: on white it
+   measured 2.47:1 as text (the verdict's MATCH label and condition chips) and
+   as the keyboard focus ring (needs 3:1). Those take the light theme's accent
+   blue (#1D4FE0, 6.47:1). Surfaces that stay dark in light mode re-declare
+   --ember, so they keep a light ring. Dark theme unchanged. */
+html[data-appearance="light"] #vcard .conf,html[data-appearance="light"] .chip.cond{color:var(--ember)}
+html[data-appearance="light"] :is(button,a,select,input,textarea,summary,[tabindex]:not([tabindex="-1"])):focus-visible{outline-color:var(--ember)}
 </style>
 </head>
 <body>
@@ -1658,6 +1666,10 @@ const RARITIES = { everyday:1, classic:1, rare:1, legendary:1 };
 const ERR_MAX = 8, errSeen = new Set();
 function telemetry(kind, err){
   try{
+    if (/^(localhost|127\.|\[::1\]|0\.0\.0\.0)/.test(location.hostname)) return;
+    // 73 of 74 reports in two weeks were "camera: Permission denied"
+    const nm = err && err.name;
+    if (kind === "camera" && (nm === "NotAllowedError" || nm === "NotFoundError" || nm === "SecurityError" || /permission denied|not allowed|requested device not found/i.test(String(err && err.message)))) return;
     const raw = err && (err.message || (err.reason && err.reason.message)) || String(err || "unknown");
     const msg = ((kind ? kind + ": " : "") + raw).slice(0, 500);
     if (/ResizeObserver/.test(msg)) return;
@@ -7600,8 +7612,10 @@ function wrapText(x, text, lx, ly, maxW, lh){
 /* ================= PROFILE / CREW / ACCOUNTS ================= */
 function genCode(){ const r4 = () => Math.random().toString(36).slice(2, 6).toUpperCase(); return "TH-" + r4() + "-" + r4(); }
 function loadScript(src){ return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
-function copyText(t){
-  try{ navigator.clipboard.writeText(t); toast("Copied"); }
+async function copyText(t){
+  // wait for the write: it can fail (no focus, no permission), and then the
+  // hunter needs the text itself, not a "Copied" that isn't true
+  try{ await navigator.clipboard.writeText(t); toast("Copied"); }
   catch(e){ toast(t); }
 }
 

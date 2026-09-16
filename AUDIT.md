@@ -818,3 +818,67 @@ All 28 new sentences are translated into French, Spanish, German, Italian, Portu
 - **Game labels that can read as buttons:** "OPEN" on Hunts cards, "AT LARGE · BADGE" on Wanted, "×1". They're product voice, but "OPEN" in the accent colour at a card's right edge can read as a button. Worth a copy decision ("TO FIND"?) before changing, since it ripples through 8 languages.
 - **Same number, two names:** the AI confidence reads "88% MATCH" in the dossier and "VERIFIED · 88%" on the verdict. Pick one.
 - **Untranslated toasts, pre-existing:** "Enter the review code" is store-reviewer only. "Sign in and we'll add … to your crew" and "Sign in to see @…" have a name joined on, so no dictionary key matches them; they'd need a placeholder-aware lookup.
+
+# Polish pass — 2026-09-16
+
+**Scope:**
+- **App:** `index.html`, focusing on what shipped after the Sept 13 floor: Car of the Day header and share button, morning-push toggle, Feed refresh icon, Feed tab fade, the verdict's pinned actions, and the MATCH label.
+- **Website:** today's two new pages, `today.html` and `lost.html`.
+
+**Method:**
+- `scan.sh` on all three, plus `car.html` as the reference.
+- Contrast computed from each element's resolved text colour and composited background, in dark and light app themes and on the website. Gradients were checked with `contrast.py` at their stops.
+- Detail sweep: console errors and failed requests on a fresh load, debug logging, theme-color, internal links and the OG image.
+- Read the app's own telemetry table.
+
+## Findings → changes
+
+### 🟠 High
+**Light theme: two text colours and the focus ring were below the bar.** `--pulse-hi` (#6FA5FF) is a blue meant for dark surfaces:
+- **"88% MATCH" on the verdict:** 2.47:1 on the white card.
+- **Condition chips ("GOLDEN HOUR"):** 2.47:1.
+- **Keyboard focus ring on every control:** 2.47:1 against white, where a focus indicator needs 3:1.
+
+→ **Fixed:** in light mode those two components and the ring use the theme's accent `--ember` (#1D4FE0, 6.47:1). Surfaces that stay dark inside light mode (camera, HUD) re-declare `--ember` as #18B7DC, so their ring stays light. Dark theme unchanged.
+
+**"Copied" was shown whether or not the copy happened.** `copyText` (COPY CODE on your tag, and the crew invite copy) didn't wait for `clipboard.writeText`. A failed write, for example with the document unfocused, still said "Copied" and escaped as an unhandled rejection. It shows up once in field telemetry. → **Fixed:** it waits for the write; on failure the toast shows the code itself so it can be copied by hand, which is how the three other copy actions already behaved.
+
+### 🟢 Low
+**Telemetry was mostly noise.** 73 of 74 `client_errors` rows in 14 days were "camera: Permission denied". That's a person declining the camera, or a device without one, and most came from local preview sessions. Real errors would have been hard to spot. → **Fixed:** declined camera, missing camera and security errors aren't reported, and nothing is sent from localhost or loopback. A camera that's in use (`NotReadableError`) and every other error still report.
+
+## Verified
+- **Floor scan:** `today.html` and `lost.html` carry the same floor as `car.html`:
+  - `:focus-visible` rule plus a forced-colors variant
+  - reduced-motion rule
+  - `::selection`
+  - status regions with `role="status"`
+
+  No `outline:none` and no clickable divs. The app's inline scripts parse.
+- **Website contrast:**
+  - `today.html`: lowest 6.66:1 (muted text on the gold-tinted story box, #98A0AC on #1B1912). "Start hunting" measures 9.88 and 6.98:1 at its gradient stops.
+  - `lost.html`: lowest 6.98:1.
+- **App contrast, dark:**
+  - Car of the Day eyebrow and headline: 12.25:1
+  - status line: 7.46
+  - share button: 16.45
+  - refresh and bell icons: 6.92
+  - toast: 15.68
+  - MATCH: 7.58
+- **App contrast, light:**
+  - gold headline on the worst point of its tint (#8A5C00 on #E7E4DC): 4.58:1
+  - status line: 5.86
+  - icons: 6.34
+  - MATCH after the fix: #1D4FE0 on white, 6.47
+- **Light-theme fix:** MATCH label and condition chip compute to rgb(29,79,224); in dark theme both remain rgb(111,165,255). The light focus rule is present and `--ember` resolves to #1D4FE0 on app surfaces and #18B7DC inside `#hud`.
+- **Focus ring coverage:** the global `button:focus-visible` rule covers today's new buttons (share, refresh, push toggle, Feed tabs). A real Tab press couldn't show a ring, because the pane was hidden (`document.hidden` true, no focus), so the proof is the rule plus its resolved colour.
+- **copyText:** with `writeText` rejecting ("Document is not focused"), the toast shows "TH-ABCD-EFGH" and no unhandled rejection fires; resolving shows "Copied".
+- **Telemetry:** the shipped function was re-run with a production hostname and a fetch spy. Permission-denied and device-not-found camera errors send nothing; "Could not start video source" and a real verify error are sent. On localhost nothing is sent.
+- **Detail sweep:**
+  - A fresh load has no console errors and no failed resources; its only request is the telemetry row now filtered.
+  - Zero `console.log` calls.
+  - theme-color follows the appearance (#F4F6FA / #0A0B0E).
+  - Every internal link on the two new pages resolves; `og.png` returns 200 live.
+
+## Recommended (not done)
+- **Clear the test noise:** delete the existing camera-denial rows (`delete from client_errors where message = 'camera: Permission denied'`) so the table starts clean. It's a data change, so it's left for you.
+- **Light focus ring on a real device:** the pane can't render it, so glance at a Tab press in light mode on a laptop.
