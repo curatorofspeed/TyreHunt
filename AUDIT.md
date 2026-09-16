@@ -882,3 +882,63 @@ All 28 new sentences are translated into French, Spanish, German, Italian, Portu
 ## Recommended (not done)
 - **Clear the test noise:** delete the existing camera-denial rows (`delete from client_errors where message = 'camera: Permission denied'`) so the table starts clean. It's a data change, so it's left for you.
 - **Light focus ring on a real device:** the pane can't render it, so glance at a Tab press in light mode on a laptop.
+
+# Normalize pass — 2026-09-16
+
+**Scope:** `index.html` design scale: font sizes, border radii, repeated inline styles and a duplicated component. **Method:**
+- Inventory every font-size (property and `font:` shorthand), radius, letter-spacing, z-index, hex literal and inline `style=""`.
+- Before patching, simulate the type change in the live stylesheet at 320×568: count text blocks whose line count changes across garage, Registry, hunts, feed, camera, profile and dossier (438 blocks), and scan for overflow. Rounding down, up, split and two mixed variants were compared.
+- After patching, re-inventory, read computed values back, and re-run the layout/adapt sweep at 375 (English) and 320 (German), plus the 128-string toast sweep.
+
+## Findings → changes
+
+### 🟡 Medium
+**The type scale had eight half-pixel sizes beside their whole neighbours.** 8.5, 9.5, 10.5, 11.5, 12.5, 13.5, 14.5 and 16.5px appeared 79 times across chips, tab labels, eyebrows, field labels, notes, card names and toasts, giving 30 distinct CSS sizes. → **Fixed:** rounded to whole pixels by role:
+- 8.5→9 and 9.5→10: the smallest labels round up for legibility.
+- 10.5→10.
+- 11.5 and 12.5 both → 12: one body size where there were two.
+- 13.5→13, 14.5→14, 16.5→16.
+
+22 CSS sizes remain and none are half-pixel. Chosen because it moved the fewest lines: 5 of 438 blocks changed, all losing a line (two-line Registry names and a hunts line fitting on one); no block gained a line and nothing overflowed. The "round up" variant made Registry names wrap to 3 lines.
+
+**Radii drifted off the token scale.**
+- **Verdict card:** asymmetric top corners (`var(--r-lg) 24px 0 0`: 18px left, 24px right).
+- **Pills:** `99px` beside `999px`.
+- **Literal duplicates of token values:** `14px` ×2 (= `--r-md`) and `10px` ×2 (= `--r-sm`).
+- **Near-misses:** `12px` ×2 and `16px`.
+- **Scattered 8px:** focus ring, tap chips, viewfinder corners.
+
+→ **Fixed:**
+- The verdict card is 18px on both top corners.
+- Pills are all `999px`.
+- Literals use their tokens.
+- 12px thumbnails take `--r-sm` (10px); the intro's sample verdict card takes `--r-lg` (18px), matching the real card.
+- A new `--r-xs: 8px` names the 8px family.
+
+The remaining radius values are tokens, pills, circles and 2–3px progress-bar ends.
+
+### 🟢 Low
+**Eight identical inline styles.** Every `.sheethead` CLOSE button carried `style="padding:8px 14px;font-size:10px"`. → **Fixed:** one `.sheethead>.btn` rule; the attributes are gone. The buttons compute exactly as before (8px 14px, 10px, 69×44).
+
+**The same back pill came in two sizes.** The dossier's "‹ GARAGE" pill was 44px tall; the Registry entry's identical "‹ REGISTRY" pill was 32px. → **Fixed:** the Registry pill matches at 44px.
+
+## Verified
+- **Re-inventory:** 0 half-pixel sizes in CSS or inline styles; 22 CSS font sizes; 14 radius values, all tokens, pills, circles or bar ends.
+- **Computed readback:**
+  - chip 9px; tab label 10px; eyebrow 10px; note 12px; toast 12px
+  - verdict card corners 18px / 18px / 0
+  - Registry and dossier back pills both 44px
+  - schedule-sheet CLOSE: padding 8px 14px, 10px, 69×44, no inline style
+  - `--r-xs` resolves to 8px
+- **Sweeps:**
+  - Adapt sweep at 375×812 (English) and 320×568 (German): no spills, clipping or unreachable content. The only hits are verdict text scrolling beneath its pinned action row, which is intended.
+  - Toast sweep, German, 320px: 128 strings, 0 overflow, at most 3 lines (was 4 at 12.5px).
+- **Screenshots:** Registry grid and Hunts at 375 unchanged in layout.
+
+## Recommended (not done)
+- **Near-duplicate whole sizes:** 16/17, 19/20, 21/22 and 24/25/26px. Merging them is a visible 1px change to headings and needs a type-scale decision.
+- **Letter-spacing:** 21 values between .01em and .34em on uppercase labels. Tracking is tuned per size, so snapping it is a design decision.
+- **Two CLOSE styles:** sheet headers use a rounded-rectangle `.btn`; the Your Tag sheet uses a pill. Pick one.
+- **Spacing:** inline margins use 2/3/9/10/12/14px. A spacing token scale would come before converting them.
+- **z-index:** it already falls into bands (1–8 local, 20–30 sheets, 40–60 overlays), but as literals. Tokens would stop future collisions.
+- **Colour literals:** most hex literals are the always-dark surface re-declarations, which the colorize pass deliberately kept. Not a normalize target.
