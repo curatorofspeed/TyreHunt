@@ -459,3 +459,38 @@ Lore is identical for every hunter, so per-user generation was waste even when i
 ## Recommended (not done)
 - **`viewIn` on tab switches** has no exit either, but views swap instantly by design — an exit there would delay every tab tap.
 - **The 400ms safety timer** could be derived from the computed animation duration if the exit timing is ever tuned per layer.
+
+---
+
+# Colorize pass — 2026-09-15
+**Scope:** same file, both themes. **Method:** inventory every colour token and raw literal, measure the rarity ladder for contrast and for colour-vision separability, then trace every surface that paints rarity — CSS, inline styles and canvas — and check each one against the theme it actually sits on.
+
+## Findings → changes
+
+### 🟡 Medium
+**The feed painted rarity in the wrong colours.** `RCHIP`, used for every feed card chip, mapped classic to `--ember` (the cyan accent) and rare to `--pulse-hi`, while chips everywhere else use `--r-classic` (orange) and `--r-rare`. The same car read as one rarity colour in the Feed and another in the Registry, and "classic" collided with the app's primary accent, blunting what the accent means. → **Fixed:** the feed uses the rarity tokens, with borders derived from the same token via `color-mix`.
+
+**The map ignored the theme it sits on.** `#mapc` takes `background:var(--panel)`, so the map is white in light mode, and its legend dots are CSS-driven and switch palettes correctly — but the spots painted into the canvas came from a hardcoded dark palette. Measured with a seeded legendary spot in light mode: **542 pixels of `255,194,75`** (dark gold) on a white map while the legend dot beside it computed `rgb(138,92,0)`. The key and the map disagreed. → **Fixed:** `renderMap` reads the live `--r-*` tokens at paint time, falling back to the dark constant. The appearance switch already calls a repaint hook, so a toggle re-paints without leaving the view.
+
+### 🟢 Low
+**Chip borders were frozen in the dark palette.** `.chip.everyday` and `.chip.classic` hardcoded `rgba(139,147,161,.45)` and `rgba(255,138,30,.5)`, so in light mode their text switched palette but their borders did not. (`.chip.legendary` and `.chip.rare` already derived theirs from tokens.) → **Fixed:** both derive from their own token with `color-mix`, which resolves correctly inside the dark-scoped areas too — the reason for not adding separate rgb tokens, which those scopes would not have re-declared.
+
+**The rarity palette was written out five times.** Identical literals in `makeReel`, `shareTop8`, `shareWrapped`, `shareCard` and `renderMap`; a change in CSS would have left five canvases disagreeing. → **Fixed:** one `RARITY_DARK` constant. The four share surfaces reference it deliberately — they paint their own `#0A0B0E` card and must stay dark whatever the app's appearance — and `renderMap` uses it only as a fallback.
+
+### Measured and left alone (correctly)
+- **Classic and legendary sit close together for red-green colour blindness in light mode.** Simulated channel distance is 17 (protanopia) and 23 (deuteranopia) between `#B93F0B` and `#8A5C00`; dark mode's worst pair is the same two at 115 and 114. A palette search for a separable replacement returned only muddy browns (`#5a3c37`, `#6e6955`) — that is not legendary gold, and this pass does not redesign the identity. It is not a WCAG 1.4.1 failure either: **rarity is never colour-only** — registry tiles print the tier word, every chip carries its rarity label, and each legend dot sits beside its name. Left as measured, with the shape of a future fix noted below.
+- **All eight rarity colours clear AA.** Dark on panel: everyday 5.90, classic 7.74, rare 6.38, legendary 11.36. Light on white: 5.89, 5.56, 6.70, 5.81.
+- **198 raw hex literals, none theme-breaking.** Every one sits inside a dark-scoped block or is a deliberate constant (`#000` photo wells, `#04222a` on-fill).
+
+## Verified
+- **Light map:** 542 pixels of the light gold `138,92,0`, zero pixels of the dark gold; legend dot matches at `rgb(138,92,0)`.
+- **Toggled to dark while still on the map:** 536 pixels of `255,194,75`, legend matches — the repaint hook fires without leaving the view.
+- **Feed chips:** CLASSIC computes `rgb(255,138,30)` with a matching derived border; nothing in the feed still paints rarity with the accent.
+- **Chip borders differ per theme:** classic `srgb 1 0.541 0.118 / 0.5` dark versus `srgb 0.725 0.247 0.043 / 0.5` light; everyday likewise.
+- **Structure:** `RARITY_DARK` defined once at line 2806 before all five uses; four share painters reference it; one palette literal remains in the file, the constant itself.
+- `color-mix` support confirmed in-browser, including with `var()`.
+- Probe data removed — 0 spots after reload; no console errors in any run; all inline scripts parse.
+
+## Recommended (not done)
+- **Canvas can't read CSS tokens cheaply**, so the four always-dark share surfaces still need a manual edit if the dark palette ever changes. The single constant makes that one edit instead of four.
+- **Separating classic from legendary for colour-blind hunters** wants a non-colour channel rather than a hue change — a ring or fill treatment on legendary, which is a design decision, not polish.

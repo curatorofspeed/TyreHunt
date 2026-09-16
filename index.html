@@ -230,8 +230,8 @@ html.twa #planBtn,html.twa #heTop{display:none!important}
 .gcard .yr{font:600 10.5px var(--mono);color:var(--muted);margin-top:2px}
 .gcard .row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
 .chip{font-size:8.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:3.5px 8px;border-radius:999px;border:1px solid}
-.chip.everyday{color:var(--r-everyday);border-color:rgba(139,147,161,.45)}
-.chip.classic{color:var(--r-classic);border-color:rgba(255,138,30,.5)}
+.chip.everyday{color:var(--r-everyday);border-color:color-mix(in srgb, var(--r-everyday) 45%, transparent)}
+.chip.classic{color:var(--r-classic);border-color:color-mix(in srgb, var(--r-classic) 50%, transparent)}
 .chip.rare{color:var(--r-rare);border-color:rgba(var(--pulse-rgb),.5)}
 .chip.legendary{color:var(--r-legend);border-color:rgba(var(--gold-rgb),.55);background:rgba(var(--gold-rgb),.08)}
 .gtyres{font:700 12px var(--mono);color:var(--gold)}
@@ -2800,6 +2800,10 @@ function drawWord(x, cx, cy, height, color){
 }
 
 /* ================= REEL ENGINE (vertical video from captures) ================= */
+/* The reel, the share card, the wrapped card and the top-eight card all paint
+   their own dark canvas, so they keep the dark rarity palette whatever the app's
+   appearance is. One constant, so the four can never drift apart. */
+const RARITY_DARK = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
 async function makeReel(spots, title, fname){
   spots = (spots || []).filter(s => s && s.img);
   if (spots.length < 2){ toast("Need at least 2 spots for a reel"); return; }
@@ -2823,7 +2827,7 @@ async function makeReel(spots, title, fname){
     rec.start(250);
     const INTRO = 1.1, PER = 1.5, OUTRO = 1.8;
     const total = INTRO + spots.length * PER + OUTRO;
-    const RC = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+    const RC = RARITY_DARK;
     const st = hunterStats();
     const t0 = performance.now();
     const ease = v => v < .5 ? 2*v*v : 1 - Math.pow(-2*v + 2, 2) / 2;
@@ -4671,7 +4675,10 @@ async function liveCapture(r){
 }
 
 /* ================= COMMUNITY FEED / LIKES / COMMENTS / HUNTERS ================= */
-const RCHIP = { everyday:"color:var(--r-everyday);border:1px solid rgba(139,147,161,.4)", classic:"color:var(--ember);border:1px solid rgba(var(--acc-rgb),.5)", rare:"color:var(--pulse-hi);border:1px solid rgba(var(--pulse-rgb),.5)", legendary:"color:var(--gold);border:1px solid rgba(var(--gold-rgb),.55)" };
+const RCHIP = { everyday:"color:var(--r-everyday);border:1px solid color-mix(in srgb, var(--r-everyday) 45%, transparent)",
+  classic:"color:var(--r-classic);border:1px solid color-mix(in srgb, var(--r-classic) 50%, transparent)",
+  rare:"color:var(--r-rare);border:1px solid color-mix(in srgb, var(--r-rare) 50%, transparent)",
+  legendary:"color:var(--r-legend);border:1px solid color-mix(in srgb, var(--r-legend) 55%, transparent)" };
 let feedRows = [], feedLikes = {}, feedMine = new Set(), feedCmts = {}, feedHandles = {}, feedSup = {};
 let feedMode = "all", feedRank = {}, hunterFeedUid = null;
 function feedCardHtml(r){
@@ -6202,7 +6209,7 @@ async function shareTop8(){
     x.fillText("THE COLLECTION", 64, 40);
     x.fillStyle = "#F2F3F6"; x.font = "900 76px 'Archivo', sans-serif";
     x.fillText("TOP 8", 64, 74);
-    const RC = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+    const RC = RARITY_DARK;
     const gw = W / 2, gh = 250, gy0 = 176;
     favs.forEach((s, i) => {
       const im = imgs[i];
@@ -6307,7 +6314,7 @@ async function shareWrapped(){
     const sStart = pre ? 0 : LAUNCH.getTime() + si * SEASON_MS;
     const sp = state.spots.filter(s2 => !s2.flagged && new Date(s2.ts).getTime() >= sStart);
     if (!sp.length){ toast("No spots this season yet"); return; }
-    const RC = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+    const RC = RARITY_DARK;
     const ORD = { legendary:0, rare:1, classic:2, everyday:3 };
     const rare = sp.slice().sort((a,b) => (ORD[a.rarity] ?? 3) - (ORD[b.rarity] ?? 3))[0];
     const newModels = sp.filter(s2 => s2.cxNew).length;
@@ -6479,7 +6486,13 @@ function renderMap(){
   });
   const nc = Object.keys(cells).length;
   $("mapMeta").textContent = pts.length + " located spot" + (pts.length===1?"":"s") + " · " + nc + " cell" + (nc===1?"":"s") + " claimed";
-  const col = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+  // Unlike the share surfaces, this canvas sits on a themed panel and its
+  // legend below is drawn in CSS — so the dots read the live tokens, or the
+  // key and the map disagree the moment someone switches to light.
+  const cs = getComputedStyle(document.documentElement);
+  const tok = (n, fb) => ((cs.getPropertyValue(n) || "").trim() || fb);
+  const col = { everyday: tok("--r-everyday", RARITY_DARK.everyday), classic: tok("--r-classic", RARITY_DARK.classic),
+                rare: tok("--r-rare", RARITY_DARK.rare), legendary: tok("--r-legend", RARITY_DARK.legendary) };
   pts.forEach(p=>{
     const x = pad + (p.lng - minLo)/spanLo * (w - pad*2);
     const y = h - pad - (p.lat - minLa)/spanLa * (h - pad*2);
@@ -7359,7 +7372,7 @@ async function shareCard(s){
     const g = x.createLinearGradient(0, ph - 240, 0, ph);
     g.addColorStop(0, "rgba(10,11,14,0)"); g.addColorStop(1, "rgba(10,11,14,1)");
     x.fillStyle = g; x.fillRect(0, ph - 240, W, 240);
-    const RC = { everyday:"#8B93A1", classic:"#FF8A1E", rare:"#5E97FF", legendary:"#FFC24B" };
+    const RC = RARITY_DARK;
     x.fillStyle = RC[s.rarity] || RC.everyday; x.fillRect(0, ph, W, 8);
     x.textBaseline = "top";
     x.fillStyle = RC[s.rarity] || RC.everyday;
