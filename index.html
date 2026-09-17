@@ -2118,11 +2118,36 @@ function haversine(la1, lo1, la2, lo2){
 }
 
 /* ================= CODEX / SETS / WANTED ================= */
-function spotStr(s){ return ((s.make || "") + " " + (s.model || "")).toLowerCase(); }
+/* The text a capture is matched on. The judge sometimes hedges in brackets
+   ("3 Series (M340i/M3-styled)"); a bracket that says styled, replica, kit and
+   so on describes what the car is NOT, so it is left out of the match. */
+const HEDGE = /\([^)]*\b(styled?|replica|kit|look|lookalike|clone|tribute|inspired|badged|possibly|probably|likely|maybe|or)\b[^)]*\)/g;
+function spotStr(s){ return ((s.make || "") + " " + (s.model || "")).toLowerCase().replace(HEDGE, " ").replace(/\s+/g, " "); }
+/* A token must sit on its own in the text, not inside a longer code. Plain
+   substring matching credited an M340i as a BMW M3, a Kia Stinger and an
+   Austin-Healey as a Subaru WRX ("sti"), an SLK as a Mercedes SL and an M135i
+   as the BMW M1. The neighbour on each side may not be the same kind of
+   character as the token's edge (letter beside letter, digit beside digit), so
+   SL500, FH16 and R1250GS still match; words longer than three letters may run
+   on ("trattor" finds Trattori). */
+const _tokRe = {};
+function tokenIn(str, t){
+  const tt = String(t).trim();
+  if (!tt) return false;
+  let re = _tokRe[tt];
+  if (!re){
+    const esc = tt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const first = tt[0], last = tt[tt.length - 1];
+    const before = /[a-z]/.test(first) ? "(?<![a-z])" : /[0-9]/.test(first) ? "(?<![0-9])" : "";
+    const after = /[0-9]/.test(last) ? "(?![0-9])" : (/[a-z]/.test(last) && tt.length <= 3) ? "(?![a-z])" : "";
+    re = _tokRe[tt] = new RegExp(before + esc + after);
+  }
+  return re.test(str);
+}
 function hasTokens(str, m){
   if (!m || !m.length) return false;
-  if (Array.isArray(m[0])) return m.some(g => g.every(t => str.includes(t)));
-  return m.every(t => str.includes(t));
+  if (Array.isArray(m[0])) return m.some(g => g.every(t => tokenIn(str, t)));
+  return m.every(t => tokenIn(str, t));
 }
 function entryMatches(en, s){ return hasTokens(spotStr(s), en.m); }
 function matcherTest(mt, s){
@@ -2308,7 +2333,7 @@ const SEASON_THEMES = [
       { name:"Lamborghini Diablo", tier:"rare", m:[["diablo"]] },
       { name:"Jaguar XJ220", tier:"legendary", m:[["xj220"]] },
       { name:"Maserati MC12", tier:"legendary", m:[["mc12"]] },
-      { name:"Ferrari 512 BB", tier:"rare", m:[["512","bb"],["berlinetta boxer"]] },
+      { name:"Ferrari 512 BB", tier:"rare", m:[["512","bb"],["512","bbi"],["berlinetta boxer"]] },
       { name:"Lamborghini Espada", tier:"rare", m:[["espada"]] },
       { name:"Aston Martin Vulcan", tier:"legendary", m:[["vulcan"]] },
       { name:"Ferrari 456", tier:"classic", m:[["456"]] } ] },
