@@ -942,3 +942,49 @@ The remaining radius values are tokens, pills, circles and 2–3px progress-bar 
 - **Spacing:** inline margins use 2/3/9/10/12/14px. A spacing token scale would come before converting them.
 - **z-index:** it already falls into bands (1–8 local, 20–30 sheets, 40–60 overlays), but as literals. Tokens would stop future collisions.
 - **Colour literals:** most hex literals are the always-dark surface re-declarations, which the colorize pass deliberately kept. Not a normalize target.
+
+# Design calls — 2026-09-16
+
+**Scope:** the four decisions the normalize pass left open, made on Drew's behalf. **Method:**
+- Map every value to the elements that use it and decide by role.
+- Simulate size and tracking changes together in the live stylesheet and inline styles in German at 320×568 (611 text blocks across 13 screens and sheets): line-count diffs plus overflow and label-spill scans against a baseline.
+- Patch, read computed values back, and re-sweep at 375 (English) and 320 (German).
+
+## Decisions → changes
+
+**1. Near-duplicate heading sizes → two heading steps.** The 1px pairs were the same roles at different sizes. → **Decided:**
+- **Car titles, 20px** (was 19 and 21): Car of the Day name, verdict and Registry title, bounty and document car names, stat values, plan price.
+- **Hero titles and handles, 24px** (was 22, 25 and 26): Hunter's Edition hero, tag-card title, profile handle, angle-slot glyph, next to the existing 24px view titles.
+- **16px** for the camera wordmark and badge titles (was 17).
+
+CSS sizes go from 22 to 16. The profile handle is fluid within the two steps (`clamp(20px,7vw,24px)`), and the Your Tag title's clamp floor moves from 19 to 20. A fixed 24px handle made 14-character handles like "@curatorofspeed" truncate at 320px, where they had fit at 22px. The fluid size keeps them fitting (22.4px at 320, 24px at 375).
+
+**2. Letter-spacing → seven steps by role** (was 21 values from .01em to .46em):
+
+| Step | Role |
+|---|---|
+| −.01em | tight display |
+| .02em | titles and handles |
+| .05em | mono numbers and body |
+| .1em | buttons and pills |
+| .16em | chips, tab and segment labels |
+| .22em | small-caps labels |
+| .32em | eyebrows and section heads |
+
+Every value moved by at most .02em, except the intro's one-off .46em subtitle, which joins the eyebrow step.
+
+**3. Two close-button styles → the pill.** Every other header control is a pill (back buttons, Plan my hunt, segments, round icons); the eight rectangular sheet CLOSE buttons were the exception. → **Decided:** one rule gives all nine CLOSE buttons Your Tag's pill: 9px 14px, 11px/800, .1em, panel fill, hairline border, 32px tall, with an invisible 44×44 hit area. Your Tag's inline styling moved into the rule.
+
+**4. Spacing and layering.**
+- **Layering → named tokens, values unchanged.** The z-index values already formed bands. They're now named `--z-*` tokens in `:root`, listed bottom to top: `--z-view`, `--z-tabs`, `--z-verdict`, `--z-entry`, the sheet layers, `--z-toast`, `--z-flash`, `--z-photo`, `--z-intro` and `--z-busy`. The camera's internal 1–8 stay local.
+- **Spacing → left as tuned, deliberately.** 192 of 681 spacing values are odd pixels (3/5/7/9/11/13/15), spread through nearly every component: chip padding, card insets, row gaps. Snapping to an even grid would move almost everything by 1px, with nothing a person could see, and it risks rewraps in tight chips. It's per-component tuning, not drift.
+
+## Verified
+- **Simulation** (German, 320×568, sizes and tracking together): 72 rule changes; 0 of 611 text blocks changed line count; no new spills or clipping. The only differences were the verdict's intended pinned-row overlaps shifting a few pixels because titles went from 21 to 20px.
+- **Inventory after patch:** tracking values are exactly [−.01, .02, .05, .1, .16, .22, .32]em; 16 CSS font sizes.
+- **Layering:** all 22 layered elements keep their exact computed z-index (verdict 20, entry 21, dossier and coach 22, angles 23, profile 24, social sheets 25, hunt 26, moderation 27, premium 28, operator 29, profile-over 29, toast 30, flash 40, photo 46, intro 50, reel 60, tabs 8, views 6).
+- **Close buttons:** schedule-sheet CLOSE and Your Tag CLOSE compute identically (9px 14px, 11px, 800, 1.1px tracking, 999px radius, 32px tall, panel fill), each with a 44px `::before` hit area.
+- **Computed readback:** verdict title 20px; eyebrow tracking 3.2px (.32em at 10px); chip tracking 1.44px (.16em at 9px).
+- **Sweeps:** adapt sweep at 375×812 (English) is completely clean; at 320×568 (German), only the intended verdict pinned-row overlaps.
+- **Handle fit at 320px:** 12, 13 and 14 characters fit at 22.4px (14 had truncated at a fixed 24px); at 375px the handle is 24px and fits.
+- **Screenshots:** schedule-sheet and Your Tag headers show the same CLOSE pill.
