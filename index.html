@@ -2164,7 +2164,14 @@ const MOTO_BASE = [
   { name:"Harley-Davidson Street Glide", tier:"everyday", m:[["street glide"],["road glide"]] },
   { name:"KTM Enduro", tier:"everyday", m:[["ktm"]] },
   { name:"Kawasaki Ninja", tier:"everyday", m:[["ninja"]] },
-  { name:"Custom Chopper", tier:"everyday", m:[["chopper"],["bobber"]] }
+  { name:"Custom Chopper", tier:"everyday", m:[["chopper"],["bobber"]] },
+  // everyday depth (Sept 2026), appended so m1-m30 keep their keys
+  { name:"Honda Rebel", tier:"everyday", late:1, m:[["rebel"]] },
+  { name:"Yamaha MT-07", tier:"everyday", late:1, m:[["mt-07"],["mt07"],["mt-09"],["mt09"]] },
+  { name:"BMW GS", tier:"everyday", late:1, m:[["bmw","gs"]] },
+  { name:"Honda Grom", tier:"everyday", late:1, m:[["grom"],["msx125"]] },
+  { name:"Suzuki SV650", tier:"everyday", late:1, m:[["sv650"],["sv 650"]] },
+  { name:"Triumph Street Triple", tier:"everyday", late:1, m:[["street triple"],["speed triple"]] }
 ];
 
 /* ================= SEASONS (procedural — infinite from CONFIG.launch) ================= */
@@ -2184,7 +2191,36 @@ const SEASON_THEMES = [
       { name:"Toyota Chaser", tier:"classic", m:[["chaser"]] },
       { name:"Mazda Cosmo", tier:"legendary", m:[["cosmo"]] },
       { name:"Lexus LFA", tier:"legendary", m:[["lfa"]] },
-      { name:"Datsun 510", tier:"classic", m:[["datsun","510"]] } ] },
+      { name:"Datsun 510", tier:"classic", m:[["datsun","510"]] },
+      /* Working metal + everyday depth (Sept 2026): trucks, semis, RVs and
+         tractors join the car lane, and the everyday tier gets the cars that
+         are actually parked on every street. Appended here so no existing
+         key moves; list order still decides a match, so base entries win. */
+      { name:"Kenworth W900", tier:"classic", late:1, m:[["w900"],["kenworth","w9"]] },
+      { name:"Peterbilt 379", tier:"classic", late:1, m:[["peterbilt","379"],["peterbilt","389"],["peterbilt","359"]] },
+      { name:"Mack", tier:"classic", late:1, m:[["mack"]] },
+      { name:"Freightliner Cascadia", tier:"everyday", late:1, m:[["freightliner"],["cascadia"]] },
+      { name:"Volvo FH / VNL", tier:"everyday", late:1, m:[["volvo","fh"],["volvo","vnl"],["volvo","vnr"]] },
+      { name:"Mercedes Unimog", tier:"rare", late:1, m:[["unimog"]] },
+      { name:"Ford F-100", tier:"classic", late:1, m:[["f-100"],["f100"]] },
+      { name:"Chevrolet C10", tier:"classic", late:1, m:[["chevrolet","c10"],["chevy","c10"],["c-10"]] },
+      { name:"Ram 1500", tier:"everyday", late:1, m:[["ram","1500"],["ram","2500"],["ram","3500"]] },
+      { name:"Chevrolet Silverado", tier:"everyday", late:1, m:[["silverado"]] },
+      { name:"Airstream", tier:"classic", late:1, m:[["airstream"]] },
+      { name:"GMC Motorhome", tier:"rare", late:1, m:[["gmc","motorhome"]] },
+      { name:"Winnebago Brave", tier:"classic", late:1, m:[["winnebago"]] },
+      { name:"Mercedes Sprinter", tier:"everyday", late:1, m:[["sprinter"]] },
+      { name:"Ford Transit", tier:"everyday", late:1, m:[["transit"]] },
+      { name:"John Deere", tier:"everyday", late:1, m:[["deere"]] },
+      { name:"Massey Ferguson", tier:"classic", late:1, m:[["massey"]] },
+      { name:"Fordson", tier:"classic", late:1, m:[["fordson"]] },
+      { name:"Lamborghini Trattori", tier:"rare", late:1, m:[["lamborghini","tractor"],["lamborghini","trattor"]] },
+      { name:"Honda Civic", tier:"everyday", late:1, m:[["civic"]] },
+      { name:"Toyota Corolla", tier:"everyday", late:1, m:[["corolla"]] },
+      { name:"Toyota RAV4", tier:"everyday", late:1, m:[["rav4"],["rav 4"]] },
+      { name:"Tesla Model 3 / Y", tier:"everyday", late:1, m:[["model 3"],["model y"]] },
+      { name:"Honda CR-V", tier:"everyday", late:1, m:[["cr-v"],["crv"]] },
+      { name:"Subaru Outback", tier:"everyday", late:1, m:[["outback"]] } ] },
   { key:"prewar", name:"Pre-War", tag:"BRASS & IRON", goal:"pre-1946 machines", need:2, metric:prewarModels,
     volume:[
       { name:"Bugatti Type 35", tier:"legendary", m:[["type 35"]] },
@@ -2597,24 +2633,42 @@ function cotdLaneRoll(s, h){
   x = Math.imul(x ^ (x >>> 16), 0x45d9f3b) >>> 0;
   return ((x ^ (x >>> 16)) >>> 0) / 4294967296;
 }
-/* Which list entry a day gets. The first version used the day hash modulo the
-   list length; consecutive dates hash to consecutive numbers, so days walked
-   the list in order, and the list is grouped by tier (Sept 10-15 were six
-   legendaries in a row; bikes repeated within a week 180 times a year). From
-   COTD_PICK_FROM each day steps a golden-ratio stride through the list: every
-   entry once per cycle, neighbours far apart, tiers interleaved. Integer maths
-   only, mirrored exactly by SQL cotd_stride/cotd_rotation. */
+/* Which entry a day gets. Days before COTD_PICK_FROM used the day hash modulo
+   the list length (consecutive dates walked the tier-grouped list in order).
+   From then on the tier comes from a 100-day pattern weighted toward cars
+   people can actually find (everyday 40, classic 35, rare 18, legendary 7;
+   no tier twice in a row, a legendary about every two weeks), and within
+   that tier the day steps a golden-ratio stride so every entry cycles before
+   any repeats. Integer maths only, mirrored exactly by SQL cotd_rotation. */
 const COTD_PICK_FROM = "2026-09-19";
-function cotdPick(s, h, n){
-  if (n <= 1) return 0;
-  if (s < COTD_PICK_FROM) return h % n;
+const COTD_TIER_PATTERN = "eCReCLeCReCeCeRCeCeRLeCeCReCeCReCeLCeRCeeCReCeRCeCLeCReCeRCeeCLeCReCeRCeCeRCeLCeReCeCReCeCeRCeLCeRCe";
+const COTD_TIER_NAME = { e: "everyday", C: "classic", R: "rare", L: "legendary" };
+function cotdStride(n){
   const gcd = (a, b) => { while (b){ const t = a % b; a = b; b = t; } return a; };
   let k = Math.max(1, Math.floor((n * 618 + 500) / 1000));
   while (gcd(k, n) !== 1) k++;
+  return k;
+}
+function cotdPickEntry(s, h, list){
+  const n = list.length;
+  if (!n) return null;
+  if (s < COTD_PICK_FROM){
+    // the old formula divides by the list length, so entries added later
+    // (late:1) are left out of it or every past day would change
+    const old = list.filter(e => !e.late);
+    return old[h % old.length];
+  }
   const t = Math.round((Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) - Date.UTC(2026, 8, 19)) / 864e5);
+  const c = COTD_TIER_PATTERN[t % 100];
+  const sub = list.filter(e => e.tier === COTD_TIER_NAME[c]);
+  const m = sub.length;
+  if (!m) return list[h % n];
+  let per = 0, pre = 0;
+  for (let i = 0; i < 100; i++){ if (COTD_TIER_PATTERN[i] === c){ per++; if (i < t % 100) pre++; } }
+  const k = Math.floor(t / 100) * per + pre;
   let h0 = 0;
   for (let i = 0; i < COTD_PICK_FROM.length; i++) h0 = (h0 * 33 + COTD_PICK_FROM.charCodeAt(i)) >>> 0;
-  return (h0 % n + (k * t) % n) % n;
+  return sub[(h0 % m + (cotdStride(m) * k) % m) % m];
 }
 function carOfTheDay(){
   const s = state.day || dayKey();
@@ -2633,7 +2687,7 @@ function carOfTheDay(){
     const hit = list.find(e => e.name === srv[lane].name);
     if (hit) return hit;
   }
-  return list[cotdPick(s, h, list.length)];
+  return cotdPickEntry(s, h, list);
 }
 const TITLES = [
   { id:"rookie-no-more", title:"Rookie No More", req:"5 Registry models", test:st => st.models >= 5 },
