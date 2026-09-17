@@ -988,3 +988,31 @@ Every value moved by at most .02em, except the intro's one-off .46em subtitle, w
 - **Sweeps:** adapt sweep at 375×812 (English) is completely clean; at 320×568 (German), only the intended verdict pinned-row overlaps.
 - **Handle fit at 320px:** 12, 13 and 14 characters fit at 22.4px (14 had truncated at a fixed 24px); at 375px the handle is 24px and fits.
 - **Screenshots:** schedule-sheet and Your Tag headers show the same CLOSE pill.
+
+---
+
+# Bug bash before the beta round (Sep 17 2026)
+**Scope:** app, website, database, edge functions · **Method:** server logs and cron history, security advisors, a fresh-origin walk of the app with the layout scanner, asset checks on both domains, and the first real tester's rows.
+
+## Findings
+### 🟠 High
+**Registry matching used substrings.** A model token could match inside another word or number, and the judge's bracketed hedges ("(M340i/M3-styled)") counted as the model. The first beta tester's BMW 3 Series was credited as an M3. → **Fixed** (32faed2): tokens must stand alone (`tokenIn`), bracket hedges are stripped before matching (`HEDGE`, `spotStr`), and the Ferrari 512 BB tokens were tightened. The tester's capture row (id 100) was corrected in the database to `x:bmw 3 series`.
+
+### 🟡 Medium
+**Make lists used the same substring test.** → **Fixed** (d248d17): `inSet` and the JDM model test use `tokenIn`. Practical changes: a make of exactly "MG" now counts as British; "Ramsey" no longer counts as American.
+**Four Car of the Day SQL functions had a mutable `search_path`.** → **Fixed** in migration `bugbash_search_path_and_miscredited_capture`.
+
+### 🟢 Low / noted
+- `/.well-known/apple-app-site-association` is 404 on the app domain. Only matters for iOS universal links.
+- Advisor items left as they are: security-definer views (safe columns only), pg_net in `public`, leaked-password protection off (email-link sign-in), RLS-enabled tables with no policy (service-role only by design).
+- `client_errors` in the last day: 5 rows, all "camera: Permission denied" from the preview pane on the build before the filter. None from testers.
+
+## Verified
+- 8 cron jobs, 0 failed runs; no failed `pg_net` calls; no edge-function errors.
+- Every admin RPC checks `is_admin()`; trigger functions are not callable by clients.
+- Fresh-origin walk (intro, all tabs, signed-out capture, queue pill to sign-in): no scanner findings, no script errors.
+- Website and app assets all 200 apart from the item above.
+- Both app fixes confirmed live by byte-compare against the repo.
+
+## Recommended (not done)
+- Tell the judge not to put guesses or "X-styled" notes in make/model. The app now strips them, so this is tidiness; it needs a full redeploy of `verify` and was not worth the risk on beta day.
