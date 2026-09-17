@@ -1876,7 +1876,8 @@ const MAKESETS = {
   motoBritish: ["triumph","norton","bsa","royal enfield","brough","vincent","ariel","matchless"],
   motoItalian: ["ducati","mv agusta","moto guzzi","aprilia","benelli","laverda","bimota","vespa","lambretta"]
 };
-const inSet = (a, list) => list.some(m => a.make.includes(m));
+// standalone tokens, like the Registry: "mini" must not find lamborGHINI
+const inSet = (a, list) => list.some(m => tokenIn(String(a.make || "").toLowerCase(), m));
 /* Quest args carry the verifier's tags, so this is the same signal the
    registry and the database trigger use. */
 const isMoto = a => (a.tags || []).includes("motorcycle");
@@ -2628,7 +2629,7 @@ function jdmModels(){
   const set = new Set();
   state.spots.forEach(s => {
     if (s.flagged) return;
-    if (MAKESETS.jdm.some(m => spotStr(s).includes(m))){
+    if (MAKESETS.jdm.some(m => tokenIn(spotStr(s), m))){
       const en = findEntry(s);
       set.add(en ? cxKeyOf(en) : spotStr(s).trim());
     }
