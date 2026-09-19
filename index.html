@@ -103,6 +103,11 @@
   --r-lg:18px;   /* heroes, sheets, big containers */
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* Double-tap is "like" in the Feed; on a phone the browser also reads it as
+   double-tap-to-zoom and the whole app jumps in. manipulation switches that one
+   gesture off everywhere and keeps scrolling and pinch-zoom. Elements with their
+   own touch-action (the verdict photo, the map) keep it: * has no specificity. */
+*{touch-action:manipulation}
 html,body{height:100%}
 body{background:#000;color:var(--ink);font-family:var(--disp);overflow:hidden}
 button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer;transition:transform .08s ease}
