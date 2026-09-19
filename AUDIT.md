@@ -1016,3 +1016,14 @@ Every value moved by at most .02em, except the intro's one-off .46em subtitle, w
 
 ## Recommended (not done)
 - Tell the judge not to put guesses or "X-styled" notes in make/model. The app now strips them, so this is tidiness; it needs a full redeploy of `verify` and was not worth the risk on beta day.
+
+---
+
+# Dossier hero and the missed for-sale sign — 2026-09-19
+**Trigger:** a Studebaker Lark at Cars & Coffee. Portrait photo, car in the upper third: the 16:10 hero cropped the middle of the photo, so the roof was cut and the clock sat on the car. It also had a plain FOR SALE sheet in the window that the judge did not flag, and the app only offered the sign slot when the judge had.
+
+**Hero → Fixed.** `verify` returns `subject_norm` (the vehicle's box). `frameHero()` centres that box in the hero space below the safe-area inset, zooming up to 1.5× when the car is small. Hero height is 16:10 plus the inset; a scrim sits under the status bar; `#dFull` opens the whole photo. Spots without a box call `verify` mode `frame` once (`findSubject`). Garage tiles use `focusPos()`.
+**For sale → Fixed.** `anglesFor()` always offers the sign slot. `verify` returns `sign_seen`; the verdict card asks "is it for sale?" when a sheet was seen but not read. The for-sale rule now counts store-bought FOR SALE signs even when the handwriting is unreadable. A failed sign close-up says so in a toast. Make/model are now names only (no bracketed guesses).
+
+**Verified:** in the preview with the real photo at 375×812, with and without a simulated 59px inset (car centred between the buttons, below the clock); verdict card prompt renders and its button exists; six slots on a non-for-sale car; tile focus `49% 40%`; scripts parse; function boots and rejects bad tokens.
+**Not verified:** the new judge fields against a live photo — that needs a signed-in capture.
