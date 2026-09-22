@@ -608,15 +608,18 @@ html[dir="rtl"] #reelProg .rbar i{transform-origin:right center}
 
 /* comments + hunter sheets */
 #view-rewards .vhead{position:relative}
+/* Both icons clear the status bar: the header text pads for the safe-area
+   inset, and these must too, or on a notched phone they sit under the clock
+   where iOS takes the tap. */
 /* Refresh sits beside the bell as an icon; it used to be a full-width row
    taking the first 56px of the feed. Spins while the reload is in flight. */
-#feedRefresh{position:absolute;top:14px;right:66px;width:42px;height:42px;border:1px solid var(--line);border-radius:999px;background:var(--panel);display:flex;align-items:center;justify-content:center;color:var(--muted)}
+#feedRefresh{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:66px;width:42px;height:42px;border:1px solid var(--line);border-radius:999px;background:var(--panel);display:flex;align-items:center;justify-content:center;color:var(--muted)}
 #feedRefresh[aria-busy="true"] svg{animation:sp .8s linear infinite}
 @media (prefers-reduced-motion:reduce){#feedRefresh[aria-busy="true"] svg{animation:none}}
 /* Arabic sets the header text on the right, where the icons sit (the bell alone
    already covered the title); keep the text clear of the pair. */
 html[dir="rtl"] #view-rewards .vhead>:is(.eyebrow,h2,.meta){margin-right:100px}
-#inboxBell{position:absolute;top:14px;right:16px;width:42px;height:42px;border:1px solid var(--line);border-radius:999px;background:var(--panel);display:flex;align-items:center;justify-content:center;color:var(--muted)}
+#inboxBell{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:16px;width:42px;height:42px;border:1px solid var(--line);border-radius:999px;background:var(--panel);display:flex;align-items:center;justify-content:center;color:var(--muted)}
 #inboxDot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:var(--fill-a);color:var(--on-fill);font:800 10px var(--mono);display:none;align-items:center;justify-content:center;padding:0 4px}
 #inboxDot.on{display:inline-flex}
 #cmtSheet,#hunterSheet,#bountySheet,#eventSheet,#inboxSheet{position:absolute;inset:0;z-index:var(--z-social);display:none;flex-direction:column;background:var(--carbon)}
