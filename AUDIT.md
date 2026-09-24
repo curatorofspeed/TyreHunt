@@ -1027,3 +1027,36 @@ Every value moved by at most .02em, except the intro's one-off .46em subtitle, w
 
 **Verified:** in the preview with the real photo at 375×812, with and without a simulated 59px inset (car centred between the buttons, below the clock); verdict card prompt renders and its button exists; six slots on a non-for-sale car; tile focus `49% 40%`; scripts parse; function boots and rejects bad tokens.
 **Not verified:** the new judge fields against a live photo — that needs a signed-in capture.
+
+---
+
+# Star Car page — 2026-09-24
+**Trigger:** Drew: "Does the Stable feel like a hero feature? Make it feel like CarDomain used to — the HERO profile for your car." Live numbers agreed: one owned car, no Star Car named, no sightings. **Method:** four readers mapped the Star Car, shell, website and database paths; three independent designs were scored by a judge (plumbing-first rails, hero-first poster grafted on, owner-loop hooks kept); built as guarded patches; driven live in the preview; a four-lens review with adversarial verification found 12 real defects, all fixed before shipping.
+
+## What changed
+- **The car page** (`#carPage`, z `--z-car` tied to the profile on purpose, later in the DOM). Hero framed on the car (`frameHeroIn`, shared with the dossier), the given name on a bottom scrim, make · year · rarity, then SIGHTINGS / HUNTERS / FIRST TO FIND, a gold **Needs you** card of pending sightings (THAT'S MINE ✓ / NOT IT), the naming card, SHARE CARD / BOUNTY / EDIT DETAILS / COPY LINK, the public **story** editor, the local **gallery** (angle photos), **The paparazzi**, and the owner/since foot. Visitors (`/?car=<id>`, or a car that is not mine) get the same layout read-only from the anon-safe `star_car` RPC. The page paints from local state first and enriches from the server.
+- **The Stable moved to the profile:** one wide tile per owned car (`stableTileHtml`), name on the photo, fame line under it, a real 44px bounty button once the dossier is full. The Garage's STABLE segment, `#segStable`, `renderStable` and the `#stableGrid` listener were retired together. The dossier keeps THIS ONE'S MINE and gains an OPEN ITS PAGE launcher; its back button reads ‹ ITS PAGE after a hand-off.
+- **Routes:** the `/?car=` boot redirect to www is gone; the deep link (which the sighting push already sends) opens the page in the app. Inbox sighting rows read REVIEW IT → and open the page. `carLink()` beside the other link builders.
+- **Website `car.html`:** poster hero (name on the photo), fame sentence, story / mods / gallery slots (mods and gallery render only when the RPC sends them), no coordinates on a public page, `encodeURI` for storage paths, "Open in the app". Nav and footer link Star Cars.
+- **Database (`star_car_page_lockdown_story`):** `star_cars.story` (≤600); authenticated may INSERT (capture_id, name) and UPDATE (name, hidden, story) only, with a BEFORE UPDATE pin trigger; `sightings` UPDATE (status) only; `star_car()` returns story and capture_id. Proven in a rolled-back transaction: the app's insert/update/curation still work; re-pointing a car, rewriting a sighting's hunter and deleting are refused; anon RPC returns the story.
+- **Rule kept:** owned cars stay out of Registry, rank and odometer (nothing in `hunterStats`, `codexAgg`, `odoCount` or `recompute_hunter_stats` changed).
+
+## Review findings fixed before shipping
+- 🔴 A failed request (offline, expired token, 5xx) was read as "no Star Car" and written to local storage; the page then offered to name a car that already had a row. → both fetches read `error` and throw into the catch that keeps the cache.
+- 🟠 The server repaint reset the hero crop to centre; every curation tap did the same. → `paintCarPage` re-frames after every paint.
+- 🟠 A repaint wiped a half-typed story and the scroll position. → `paintCarPage(keep)` carries drafts, focus and scroll across server repaints.
+- 🟠 Before the rows landed the stats showed zeros. → cached `s.star` counts stand in, with "Loading…".
+- 🟡 Naming while another car's page had opened touched the wrong page. → guarded on `cpSpot === s`.
+- 🟡 The dossier's launcher, tapped in a dossier opened from the page, opened a second copy. → routes through ‹ ITS PAGE.
+- 🟡 Swipe-dismissing the dossier, deleting the spot, or un-owning it left a stale return. → swipe = back; delete and un-own clear it.
+- 🟡 Sign-in resume left the tag sheet stacked above the page. → the resume drops the sheet first.
+- 🟡 Swipe-dismiss did not see `#cpBody` (or `#dBody`) as the scroller. → `scrollableIn` covers both.
+- 🟢 The nameplate painted over the full-photo button; the rarity chip lost its palette in light theme; sighting rows squeezed the handle at 320px. → plate z removed, `#cpPlate` in the dark-scope list, rows wrap with an ellipsised handle.
+
+## Verified (preview, 375×812, simulated 59px notch)
+Profile tile → page (‹ STABLE) → EDIT DETAILS → dossier (‹ ITS PAGE) → back → page → close → profile re-rendered; dossier launcher → page (‹ BACK); Escape closes; owner mode with a stubbed client: Needs you → THAT'S MINE ✓ moves the row and the counts, story saves, naming flips the page to STAR CAR with COPY LINK and the editor; visitor mode read-only; a missing car toasts and stays closed; deep link by public id lands the owner on their own page; inbox sighting → page; light theme keeps the hero pills dark over the photo; Garage segment taps clean; failed fetch keeps the cached car; draft and scroll survive a repaint; the full-photo button is hit-testable; the website page at phone and desktop widths with a stubbed RPC.
+
+## Recommended (not done)
+- Step two: `star_cars.mods` and a `star_car_photos` table with upload from the page (slots are reserved on both pages); likes/comments on the car; rename/unpublish; a hunter-facing "your sighting was confirmed" notification; XP for naming and for confirmed sightings (amounts undecided).
+- Per-car share previews need a prerender step; `car.html`'s `<title>`/og tags stay static.
+- The live DB still has no Star Car; the first real one is the true test of the sighting trigger → Needs you → confirm loop.
