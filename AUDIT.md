@@ -1060,3 +1060,36 @@ Profile tile → page (‹ STABLE) → EDIT DETAILS → dossier (‹ ITS PAGE) �
 - Step two: `star_cars.mods` and a `star_car_photos` table with upload from the page (slots are reserved on both pages); likes/comments on the car; rename/unpublish; a hunter-facing "your sighting was confirmed" notification; XP for naming and for confirmed sightings (amounts undecided).
 - Per-car share previews need a prerender step; `car.html`'s `<title>`/og tags stay static.
 - The live DB still has no Star Car; the first real one is the true test of the sighting trigger → Needs you → confirm loop.
+
+---
+
+# Star Car page, step two — 2026-09-24
+**Trigger:** Drew: "do the remaining pieces." **Scope:** mods, a public gallery, likes and comments on the car, owner tools, XP for naming and confirmed sightings, the hunter's "sighting confirmed" notice. **Method:** DB first (proven in a rolled-back transaction), then guarded app patches driven live in the preview with a stubbed client, a four-lens review with adversarial verification (11 confirmed, fixed), then ship.
+
+## What changed
+- **Database (`star_car_step_two`):** `star_cars.mods` jsonb (≤40 entries, part ≤60, note ≤240, checked by `star_mods_ok`); table `star_car_photos` (owner INSERT of (car_id, path, caption) through `star_car_photos_fill`, which forces the owner from the car, requires the path to start `<uid>/car-`, and stops at twelve; owner DELETE; public read of non-hidden cars); notifications kind `sighting_ok`; XP `star_car_named` 15 (once per car, hanging off the owner's capture) and `sighting_confirmed` 10 to the hunter (five a day, reversed if the owner hides it, never paid twice); `sightings_after` writes the hunter's notice on confirm; `star_car()` returns mods, gallery, likes, comments and the last 20 comment rows.
+- **App:** ♥ and 💬 on the page, keyed on the car's hero capture so the Feed and the page agree; a mods editor (owner) and list (visitors); a gallery of uploaded photos with ADD PHOTO, PUBLISH on this phone's angle shots, and a two-tap ✕; Owner tools: SAVE NAME, HIDE / SHOW ON MOST WANTED, two-tap REMOVE STAR CAR; "+15 XP" on the naming card; the inbox understands `sighting_ok` ("confirmed your sighting of … · SEE ITS PAGE →") and the owner's confirm also pushes the hunter.
+- **Website:** likes/comments line, comments list, mods and gallery render from the RPC. **Admin:** XP labels for the new events.
+
+## Review findings fixed before shipping
+- 🔴 A write made while the page was still loading was overwritten by the older server row (mods vanished after "saved", HIDE stuck). → every owner write goes through `cpPatch`, and a load that overlapped a write keeps the page's newer values.
+- 🔴 Opening a car by its public id fetched it without `mods`, so ADD MOD could replace the server list with one entry. → the select carries mods.
+- 🟠 Two mod edits in flight lost one. → all mod controls lock during a write.
+- 🟠 REMOVE STAR CAR raced a load in flight and the deleted car came back. → a generation token voids older loads; a forced refresh waits for the one in flight.
+- 🟠 A late likes reply for the previous car painted on the current one. → replies are dropped when the page has moved on.
+- 🟠 The like button never read the result. → failures roll the button back; a duplicate insert counts as success.
+- 🟠 PUBLISH / ADD PHOTO had no in-flight guard and a repaint re-enabled them. → one upload at a time, painted as busy.
+- 🟠 A photo path went unescaped into `url('…')` on an inline style, on the app and the site. → `thumbUrl` and the site's `img()` encode quotes, parentheses, spaces and backslashes.
+- 🟡 Storage removals were unchecked and REMOVE used a cache that never held the gallery. → object first, checked, then the row; the car's photo list comes from the server. Uploads insert the row first so the twelve-cap answers before bytes move.
+- 🟡 PUBLISH uploaded the 480px thumbnail. → the original file is used when this session still has it.
+- 🟢 ✕ and PUBLISH hit areas were under 44px; German PUBLISH ("VERÖFFENTLICHEN") clipped. → sizes fixed; "POSTEN" and an ellipsis guard.
+- 🟢 The inbox line was one glued text node, so its verbs could never translate (pre-existing, all kinds). → split into spans; the verbs, "SEE THE SPOT →", the empty-state sentence and the example name now have keys.
+
+## Verified (preview, stubbed client)
+Like toggle and rollback on a failed insert; add and delete a mod with the controls locked; rename updates the page, the tile cache and the row; hide/show flips the eyebrow and the note; comments sheet opens on the hero capture with the car's name; publishing a local angle uploads a fresh `<uid>/car-<id>-<ts>.jpg`, inserts the row and drops the local cell; a failed upload leaves no row; two-tap photo delete removes the object then the row; two-tap remove deletes the car and a load in flight cannot bring it back; a write during a load survives the load; visitor sees mods and gallery read-only with no controls; signed-out ♥ asks to sign in; the hunter's inbox row renders with its verb translated; the site renders the social line, mods, a captioned gallery and escaped comments; a hostile photo path cannot escape `url()`.
+**Database (rolled back):** naming pays 15 once; rename does not double-pay; a confirmed sighting pays the hunter 10 and writes the notice; hidden reverses, re-confirm does not re-pay; a bad mod is refused; photos outside the owner's folder, with the wrong prefix, or from a stranger are refused; the anon RPC returns the new keys.
+
+## Recommended (not done)
+- Comments posted from the car page do not push the owner (the inbox row is written by the server trigger, as for likes).
+- A hunter's confirmed sighting that is later hidden keeps its XP reversed even if re-confirmed (deliberate: it blocks flip-flop farming).
+- Amounts (15 / 10, five a day) are placeholders for Drew to confirm.
