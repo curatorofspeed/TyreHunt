@@ -1093,3 +1093,23 @@ Like toggle and rollback on a failed insert; add and delete a mod with the contr
 - Comments posted from the car page do not push the owner (the inbox row is written by the server trigger, as for likes).
 - A hunter's confirmed sighting that is later hidden keeps its XP reversed even if re-confirmed (deliberate: it blocks flip-flop farming).
 - Amounts (15 / 10, five a day) are placeholders for Drew to confirm.
+
+---
+
+# The Paddock: race cars, and a judge that learns — 2026-09-25
+**Trigger:** two Barber Motorsports Park captures: a BMW M4 GT4 judged "Toyota GR86 race car", and another judged "BMW M2 GT4" (no such car). The Registry held no race cars at all, so even a correct call filed as a loose "x:" entry. **Method:** judge prompt first, then the Registry, then a correction loop; parity of the Car of the Day rotation proven by SHA-256 over 194 days per lane, app against SQL.
+
+## What changed
+- **Judge (`verify` v36):** a RACE CARS ladder beside the semis one: identify by silhouette and class stickers, name the homologated model from the GT4 / GT3 / TCR-cup / prototype / stock-car lists, "M2 GT4" is named as a non-car, never write "race car" into the model, GT4/GT3/TCR/cup are rare and prototypes/open-wheel/NASCAR/historic works cars are legendary. The judge now also reads `judge_confusions` (the most repeated hunter corrections, cached ten minutes per instance) and is told "X was really Y".
+- **Registry:** a 33-car Paddock appended to the season-0 volume (n96–n128): ten GT4, ten GT3, six cup/TCR, seven prototypes, stock and historic cars, each with lore in `registry_lore`. Entries carry `race:1` (a race-tagged capture files here first; an untagged one never does, so a road 911 GT3 keeps its entry), `late:1` (out of the pre-cutover formula) and `since: 2026-10-04` (out of every day already computed and headlined). `cotd_rotation` honours `since`; rows from Oct 4 without a headline were regenerated: race cars take 95 of the remaining days.
+- **Corrections:** SAVE DOSSIER now writes a corrected make/model/year to the capture row, recomputes the Registry key, and upserts `judge_corrections` (owner forced from the capture by trigger; one per capture). The dossier says "Wrong call? Fix the make and model and the judge learns from it." The admin console has a Judge tab: the lessons the judge is shown, and every correction with its photo.
+- **Data:** captures 145 and 146 corrected to BMW M4 GT4 (n96) and seeded as the first two lessons.
+
+## Verified
+- Rolled back on the live DB: a hunter's row update and correction upsert succeed; a correction on someone else's capture and an update of someone else's rows are refused.
+- Preview: race-tagged M4 GT4 → n96; road "BMW M4" → nothing (no road entry); road 911 GT3 → n19; race-tagged 911 GT3 R → GT3 R; 911 GT3 Cup → Cup; race-tagged GR Supra GT4 → the GT4, road Supra → n23; untagged "M4 GT4" → nothing; SAVE DOSSIER on the GR86 row sends the update and the upsert and toasts "the judge takes note".
+- Rotation parity: moto lane and the pre-cutover car lane identical to SQL; the car lane identical on every day the app can name (the only blanks are picks from volumes not yet unlocked, which the server supplies, as before).
+
+## Recommended (not done)
+- An event roster for race weekends (car number → entry) would beat silhouette guessing at a track; the judge already reads numbers.
+- The 1000-day review page (`cotd-1000-days.html`) predates the Paddock; regenerate it if you want to read the rotation again.
