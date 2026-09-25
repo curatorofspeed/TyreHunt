@@ -1113,3 +1113,25 @@ Like toggle and rollback on a failed insert; add and delete a mod with the contr
 ## Recommended (not done)
 - An event roster for race weekends (car number → entry) would beat silhouette guessing at a track; the judge already reads numbers.
 - The 1000-day review page (`cotd-1000-days.html`) predates the Paddock; regenerate it if you want to read the rotation again.
+
+---
+
+# Track weekend rosters — 2026-09-25
+**Trigger:** Drew: "a track weekend roster makes most sense — DTM, WEC, Asian Le Mans, Le Mans, Ferrari Challenge and the public series in between." **Method:** rosters are data you feed, never invented: the judge reads the number on the door against the event's entry list; an operator loads entry lists through the console, with Claude structuring a pasted page or URL.
+
+## What changed
+- **Database (`race_roster`):** `race_series` (49 public series seeded), `race_venues` (88 circuits seeded with coordinates, note "seeded"), `race_events` (series, venue, lat/lng, radius, dates, source URL), `race_entries` (number, make, model, class, team, drivers). Public read; operator write through `admin_race_event_save(jsonb)` (event + its whole list, blank numbers dropped, "#" stripped), `admin_race_events()`, `admin_race_event_delete(id)`. `race_event_at(lat, lng, at)` returns the nearest active event within its radius (a day either side). `captures.race_event_id` and `captures.race_number`.
+- **Judge (`verify` v37):** the app now sends the shot's position; at an event the entry list rides along with the photo ("ROSTER: the hunter is at … Entry list: #36 BMW M4 GT4 (Pro) · Turner Motorsport; …"), the judge returns `race_number`, and a number on the list with a body shape the judge agrees with takes the entry's make and model (confidence ≥ 88 when the number is unique, 72 when two classes share it and the make decides). The roster is cached ten minutes per instance.
+- **`roster-import` (new edge function, operators only):** takes an entry-list URL or pasted text, strips the page to text (tables survive as `|` rows), and has Claude return one row per car plus series/event/venue/dates. Nothing is written by the function; the console saves through the RPC with the operator's own token.
+- **App:** the capture card shows "AT THE TRACK · venue · #number · team · class"; the spot and the row remember the hit.
+- **Console:** a Rosters tab: series and circuit pickers (a circuit fills its coordinates), dates, radius, URL or pasted list → READ THE LIST → editable rows (one per line: number | make | model | class | team | drivers) → SAVE EVENT; edit and two-tap delete.
+
+## Verified
+- Rolled back on the live DB: save with four rows (one blank number dropped, "#7" kept as "7"), the paddock at 0.36 km finds the event, downtown Birmingham and next week do not, anon reads the list and cannot write, a hunter cannot delete.
+- Preview: the verify request carries lat/lng; a stubbed roster verdict paints the card line; the capture insert carries `race_event_id` and `race_number`. Console tab with a stubbed client: list, new event, circuit pick fills coordinates, READ THE LIST fills rows and the event name, SAVE sends the event with its rows.
+- Both functions deploy, boot and refuse a bad token.
+- **Not verified live:** `roster-import` against a real entry-list page (needs an operator token); Drew's first paste is the test.
+
+## Recommended (not done)
+- A hunt-view chip ("You're at Barber · GT4 America") from `race_event_at`; the RPC is public already.
+- Series entry lists change round to round; rosters are per event on purpose. A yearly series roster could be a later shortcut.
