@@ -1135,3 +1135,12 @@ Like toggle and rollback on a failed insert; add and delete a mod with the contr
 ## Recommended (not done)
 - A hunt-view chip ("You're at Barber · GT4 America") from `race_event_at`; the RPC is public already.
 - Series entry lists change round to round; rosters are per event on purpose. A yearly series roster could be a later shortcut.
+
+---
+
+# At the track, and season rosters — 2026-09-25
+**Trigger:** Drew: "do the two ideas."
+- **The camera says where you are.** A gold pill under the wordmark, "YOU'RE AT Barber Motorsports Park · Pirelli GT4 America", when `race_event_at` finds an event around the hunter. It asks for the position only where location is already granted (the capture flow asks properly), once every ten minutes, after every capture, and when the app comes back to the front; tapping it says the judge has this weekend's entry list. Sits at inset + 60px, under the HUD and above the frame corners.
+- **Season rosters.** `race_series_entries` holds a series' field for a year (`admin_race_series_roster_save/delete/rosters`). `race_roster_for_event(id)` gives the judge the event's own list first, then the season list for numbers the round did not name; `verify` (v38) reads that. The console's Rosters tab has a SEASON ROSTER form beside NEW EVENT, same reader, same row format, and lists season rosters above events.
+
+**Verified:** rolled back on the live DB, the round's own #36 wins over the season's, the season's #53 and #7 fill in, blanks drop and "#" strips, anon reads, a hunter cannot save; preview, the chip appears centred under the HUD and clear of the frame, hides when nothing answers, reads without a series, refreshes after a capture; console, the season list renders, EDIT loads its rows, READ THE LIST fills rows, SAVE sends series, season and rows.
