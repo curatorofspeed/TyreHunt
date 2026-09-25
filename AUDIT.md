@@ -1144,3 +1144,9 @@ Like toggle and rollback on a failed insert; add and delete a mod with the contr
 - **Season rosters.** `race_series_entries` holds a series' field for a year (`admin_race_series_roster_save/delete/rosters`). `race_roster_for_event(id)` gives the judge the event's own list first, then the season list for numbers the round did not name; `verify` (v38) reads that. The console's Rosters tab has a SEASON ROSTER form beside NEW EVENT, same reader, same row format, and lists season rosters above events.
 
 **Verified:** rolled back on the live DB, the round's own #36 wins over the season's, the season's #53 and #7 fill in, blanks drop and "#" strips, anon reads, a hunter cannot save; preview, the chip appears centred under the HUD and clear of the frame, hides when nothing answers, reads without a series, refreshes after a capture; console, the season list renders, EDIT loads its rows, READ THE LIST fills rows, SAVE sends series, season and rows.
+
+---
+
+# Dossier → Spot and Walkaround — 2026-09-25
+**Trigger:** Drew: "rethink the wording for Dossier." Chosen: the edit page is just the spot (SAVE SPOT, "Spot saved", dialog label "Spot details"); three verified angles are a FULL WALKAROUND (meta chip, angle sheet, toast), the record is WALKAROUNDS, the title asks for "3 walkarounds", the quest "File 3 walkarounds". The angle sheet's progress line was one glued string ("FULL DOSSIER ✓ · 3/5 VERIFIED") that could never translate; it is now three spans. "Star some spots first." Website: "Full walkarounds", "Correct it in the spot", "spot details". XP catalogue label "Full walkaround" (internal). Code identifiers (`#dossier`, `openDossier`, `isFullDossier`) unchanged.
+**Verified:** preview in English and French: SAVE SPOT / ENREGISTRER LE SPOT, "FULL WALKAROUND ✓ · 3/5 VERIFIED", "1/5 VÉRIFIÉES · TOUR COMPLET À TROIS", the WALKAROUNDS record, the title requirement, the toast.
