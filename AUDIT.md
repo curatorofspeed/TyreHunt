@@ -1172,3 +1172,9 @@ Preview: car, moto and both hunters get the right picks, chip, cards and share b
 # Collection reel removed — 2026-09-26
 **Trigger:** Drew: "lets remove the collection reel.. it doesnt work." Removed the Garage's ▶ COLLECTION REEL button, each expedition's ▶ REEL button, `makeReel` (the in-browser video renderer), the `#reelProg` overlay and its CSS (light-theme and reduced-motion lists included). The Hunter's Edition perk now says "Your share cards carry the Hunter's Edition mark…" (re-keyed in all eight languages); the website's free-tier list says "Share cards". Share cards, SHARE MY TOP 8 and expedition RECAP cards are unchanged. The homepage's "judge's reel" animation is a different thing and stays.
 **Verified:** preview: the Garage shows only SHARE MY TOP 8, expeditions show only RECAP, `makeReel`, `#reelBtn` and `#reelProg` are gone, the perk reads the new line, no script errors.
+
+---
+
+# Flash out, last capture in — 2026-09-26
+**Trigger:** Drew: the flash slot is valuable real estate and the flash isn't needed (iOS web views expose no torch, so it only ever worked on Android). Replaced with the camera-app convention: the latest capture as a round thumbnail right of the shutter, a gold badge with today's count, "TODAY" under it, a small pop when a new capture lands. Tapping it opens the Garage's Spots list with a new TODAY filter, newest first; the filter tools now show whenever a filter or search is active, so the filter can always be cleared. Torch code removed from `startCam`.
+**Verified:** preview at 375×812: hidden with no captures; with three today and two older, badge "3", aligned with the shutter; tap lands on the Garage with TODAY on and three cards ("3 of 5 shown"); ALL restores five and hides the tools again.
